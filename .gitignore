@@ -22,7 +22,7 @@ build/
 *.tsbuildinfo
 
 # Prisma
-packages/database/prisma/generated/
+packages/database/generated/
 
 # Config synced to JSON at install time (see packages/shared/scripts/sync-config.mjs)
 packages/shared/src/generated/

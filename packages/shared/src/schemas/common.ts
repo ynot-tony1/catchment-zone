@@ -78,5 +78,5 @@ export type Bbox = z.infer<typeof BboxSchema>;
 /** Parses a "minLon,minLat,maxLon,maxLat" query-string bbox param. */
 export const BboxQuerySchema = z
   .string()
-  .transform((s) => s.split(",").map((n) => Number(n.trim())))
+  .transform((s) => s.split(",").map((n) => Number(n.trim())) as [unknown, unknown, unknown, unknown])
   .pipe(BboxSchema);

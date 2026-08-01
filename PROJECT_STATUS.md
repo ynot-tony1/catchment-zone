@@ -1,122 +1,117 @@
 # Project status
 
-Snapshot taken 2026-08-01, mid-build, on user request to pause. This file
-reflects what was verified on disk at pause time, not what was intended or
-in flight. Two background build agents (Python ingestion service, Next.js
-web app) were still running when this snapshot was taken; their work up to
-this point is included below, anything after this point is not.
+Updated 2026-08-01. Reflects what has actually been run and verified on
+disk, not what is intended.
 
 ## Completed and verified
 
-* **Monorepo scaffold**: `pnpm-workspace.yaml`, root `package.json`,
-  `.gitignore`, `.env.example`, `docker-compose.yml`. No secrets committed;
-  verified `.env`, `.env.local`, `apps/web/.env.local`,
-  `packages/database/.env` are all gitignored and were not staged.
-* **Database schema**: `packages/database/prisma/schema.prisma` complete,
-  covering every model in the spec (School, AcademyTrust,
-  SchoolRelationship, LocalAuthority, SchoolMetric, CatchmentSource,
-  CatchmentArea, SchoolCatchmentArea join table, AdmissionArrangement,
-  HistoricalOffer, PostcodeCache, IngestionRun). No migration has been
-  generated yet (`packages/database/prisma/migrations/` is empty); that
-  requires `prisma migrate dev` against a real database, which does not
-  exist yet.
-* **Source registry config**: `config/catchment-sources.yml`,
-  `config/statistics-sources.yml`, `config/metric-definitions.yml`. The
-  catchment source (Sheffield City Council, primary and secondary
-  boundaries, academic year 2025-2026) was verified against the publisher's
-  live ArcGIS item metadata (licence, Feature Service URL) via direct fetch,
-  not fabricated. GIAS and DfE Explore Education Statistics API endpoints
-  were similarly verified against real documentation.
-* **GitHub Actions workflows**: `ci.yml`, `ingest-gias.yml`,
-  `ingest-school-statistics.yml`, `ingest-catchments.yml`,
-  `migrate-production.yml`, plus `dependabot.yml`, issue templates, and a PR
-  template. Not yet run for real (no GitHub remote connected yet), so their
-  YAML has not been validated by an actual Actions run.
-* **Documentation**: `README.md`, `LICENSE`, and all ten files under
-  `docs/` (architecture, admissions-and-catchments, database, data-sources,
-  deployment, ingestion, methodology, operations, privacy, troubleshooting),
-  plus `scripts/bootstrap-cockroachdb.sh` and
-  `scripts/calibration-report.md` (report template, not yet populated with
-  real numbers).
-* **Python ingestion service** (`services/ingestor/`): CLI (`cli.py`),
-  config, structured logging, db helpers, pydantic models, geometry
-  utilities, pipeline orchestration, and four adapters (GIAS, statistics,
-  catchments, admissions) are written. Verified by actually running the
-  tools in this session:
-  * `ruff check .` -> all checks passed
-  * `mypy src` -> no issues found in 13 source files
-  * `pytest -q` -> **45 passed**, 0 failed
-  * These tests run against invented fixtures
-    (`tests/fixtures/gias_sample.csv`, `tests/fixtures/sheffield_catchment_sample.geojson`)
-    and mocked database access; nothing here has been exercised against a
-    real GIAS download, a real EES API response, or a live database.
+* **Monorepo baseline is green.** `pnpm install`, `pnpm -r typecheck`,
+  `pnpm -r lint`, and `pnpm -r test` all pass across every workspace
+  package (`packages/shared`: 39 tests, `apps/web`: 25 tests). A real
+  `pnpm --filter @schoolscope/web build` (Next.js production build, with a
+  fake local `DATABASE_URL` so Prisma can generate its client) also
+  succeeds.
+* **Toolchain compatibility fixes** made while establishing that baseline:
+  * `typescript` pinned to `~6.0.3` in `apps/web` and `packages/shared`
+    (the default `^7.0.2` resolved to the new TS 7 compiler, which
+    `typescript-eslint` 8.65.0 does not support yet).
+  * `apps/web`'s ESLint config rewritten to use `eslint-config-next`'s
+    native flat-config exports (`eslint-config-next/core-web-vitals`,
+    `eslint-config-next/typescript`) instead of the legacy `FlatCompat`
+    bridge, which crashed under ESLint 10 with a circular-JSON error.
+  * `apps/web`'s `eslint` pinned to `~9.39.5`: `eslint-plugin-react`
+    7.37.5 (pulled in by `eslint-config-next`) calls a `context.getFilename`
+    API that ESLint 10 removed, crashing on any component file.
+  * `next.config.ts`'s `eslint.dirs` option removed: Next.js 16 dropped
+    the built-in ESLint integration entirely, so that key no longer exists
+    on `NextConfig`.
+  * `packages/shared/src/schemas/common.ts`'s `BboxQuerySchema` fixed: the
+    `.transform().pipe()` chain did not typecheck against zod v4's tuple
+    input type; the transform now casts to the tuple's own declared input
+    shape.
+  * `apps/web/lib/geo.ts`'s `distanceToBoundaryMetres` fixed: it only
+    handled a `LineString` result from `polygonToLine`, but a
+    `MultiPolygon` produces `MultiLineString`, which
+    `pointToLineDistance` cannot take directly; now normalised via
+    `@turf/flatten` first.
+  * **A real `.gitignore` bug found and fixed**: it excluded
+    `packages/database/prisma/generated/`, but the schema's actual
+    `output` path (`packages/database/prisma/schema.prisma`, `output =
+    "../generated"`) resolves to `packages/database/generated`, one level
+    up. The compiled Prisma client, including a native query-engine binary,
+    was untracked-but-unignored until this was corrected.
+* **Next.js app now has real pages**, not just scaffolding:
+  * `app/layout.tsx`, `app/page.tsx` (home dashboard with live open
+    school / trust / local authority counts, ISR-revalidated hourly).
+  * `app/schools/page.tsx`: search form (name, postcode, status) plus a
+    results table, backed by `lib/queries/schools.ts`, which supports
+    filtering, keyset (not offset) pagination via the existing
+    `encodeCursor`/`decodeCursor` helpers, and a distance-from-point sort
+    (bounding-box prefilter, then exact great-circle sort/filter in
+    memory, since there is no PostGIS).
+  * `app/schools/[urn]/page.tsx`: school detail, address, local authority
+    and trust links, and a de-duplicated latest-value-per-metric-code
+    table with suppressed/provisional labelling.
+  * `app/api/schools/route.ts`: JSON GET endpoint over the same query
+    function, Node runtime, safe error envelope, cache headers.
+  * `app/about/data/page.tsx`: static sourcing and metric-definition copy,
+    no fabricated sources, matches `docs/data-sources.md`.
+  * `app/status/page.tsx`: live database connectivity check, deployed git
+    SHA, and the 10 most recent `IngestionRun` rows.
+  * New unit tests: `lib/geo.test.ts`, `lib/format.test.ts` (25 tests,
+    listed above).
+* **`services/ingestor/Dockerfile`** now exists (multi-stage, non-root
+  runtime user, config mounted at container-run time since it lives
+  outside the Docker build context). Not yet verified with a real `docker
+  build` in this session (Docker was not invoked here).
+* **`services/ingestor` adapters/statistics.py** was reworked (by the
+  background agent, verified by re-running the full check suite in this
+  session): `ruff check .` passes, `mypy src` passes (13 files), `pytest
+  -q` passes (45 tests). It now resolves EES publication IDs via the
+  search endpoint rather than assuming a slug works directly as an id, and
+  leaves an explicit, documented TODO in `fetch_dataset_rows` about
+  mapping opaque indicator/filter IDs to this repo's metric codes, which
+  needs confirming against a real dataset response before
+  `import_statistics` can persist rows.
 
 ## Unfinished
 
-* **`services/ingestor/Dockerfile` does not exist yet.** The service cannot
-  currently be containerized or run via
-  `docker compose --profile ingestion`. This blocks the "Docker build" CI
-  job and any container-based deployment of the ingestor.
-* **Next.js web app (`apps/web/`) is scaffolding only, not a working app.**
-  Present: package/tool config (`package.json`, `tsconfig.json`,
-  `next.config.ts`, ESLint, Vitest, Playwright configs), shadcn-style UI
-  primitives under `components/ui/`, and library helpers (`lib/env.ts`,
-  `lib/logger.ts`, `lib/prisma.ts`, `lib/api-response.ts`,
-  `lib/safe-query.ts`, `lib/utils.ts`). **Missing**: `app/layout.tsx`,
-  `app/page.tsx`, every route under section 7 of the spec (`/schools`,
-  `/schools/[urn]`, `/admissions`, `/map`, `/trusts`, `/local-authorities`,
-  `/about/data`, `/status`), and every API route under `app/api/`. Only
-  `app/globals.css` exists under `app/`. **`pnpm install` has not been run**
-  (no `node_modules` anywhere in the workspace), so nothing has been built,
-  linted, typechecked, or tested for this package. Any claim that the web
-  app "builds" or "passes tests" would be false at this snapshot.
-* **`packages/shared`** has Zod schemas (`school.ts`, `catchment.ts`,
-  `common.ts`, `trust.ts`, `map.ts`), constants, and a config-sync script
-  (`scripts/sync-config.mjs`, presumably meant to turn the YAML files in
-  `config/` into `packages/shared/src/generated/` at install time, per the
-  `.gitignore` entry added for that path) with several `*.test.ts` files
-  present. None of these tests have been run yet (same `pnpm install`
-  blocker as above).
-* **No GitHub repository created or pushed.** `git status` shows "No
-  commits yet" until this session's commit. `gh repo create` has not been
-  run.
-* **No CockroachDB Cloud connection.** The `aqua-roach` cluster has not
-  been bootstrapped. `scripts/bootstrap-cockroachdb.sh` exists but has never
-  been executed; `COCKROACH_BOOTSTRAP_URL` has not been provided.
-* **No GitHub secrets or variables configured** (`INGEST_DATABASE_URL`,
-  `MIGRATION_DATABASE_URL`, `INGESTION_ENABLED`,
-  `CATCHMENT_INGESTION_ENABLED`). Blocked on the CockroachDB bootstrap
-  above.
-* **No Vercel project linked.** `vercel link` has not been run against this
-  directory; no environment variables have been set on Vercel.
-* **No migration has ever been applied to any real database**, local or
-  cloud.
-* **No data has been imported.** The free-tier calibration report
-  (`scripts/calibration-report.md`) is an unfilled template.
-* **No production deployment exists.** There is no live URL.
+* **Still missing app routes**: `/admissions` (catchment/postcode check,
+  with the mandatory disclaimer and near-boundary text), `/map`
+  (MapLibre view), `/trusts` and `/trusts/[id]`, `/local-authorities` and
+  `/local-authorities/[code]`, and their supporting API routes
+  (`/api/admissions/check`, `/api/map/schools` or similar, `/api/trusts`,
+  `/api/local-authorities`).
+* **No GitHub repository created or pushed.**
+* **No CockroachDB Cloud connection.** `scripts/bootstrap-cockroachdb.sh`
+  now supports reading `COCKROACH_BOOTSTRAP_URL` from a gitignored
+  `.env.cockroach.local` file at the repo root as well as a shell
+  variable, but it has not been run: it still needs a GitHub repo (for
+  `gh secret set`) and a linked Vercel project (for `vercel env add`) to
+  exist first.
+* **No GitHub secrets/variables, no Vercel project link, no migration
+  applied to any real database, no data imported, no production
+  deployment.** Same as before, unchanged.
+* **`docker build` for `services/ingestor` has not been run** in this
+  session; the Dockerfile exists but is unverified end-to-end.
 
 ## Known failing tests
 
-None. Every test suite that was actually run (`services/ingestor`, 45
-tests) passed. The web app and `packages/shared` test suites have not been
-run at all (blocked on `pnpm install`), so "no failures" there means
-"unverified," not "passing."
+None. Every test suite that was run passed: `packages/shared` (39),
+`apps/web` (25), `services/ingestor` (45).
 
 ## Exact next steps, in order
 
-1. Run `pnpm install` at the repo root, then `pnpm --filter @schoolscope/database generate`, `pnpm typecheck`, `pnpm lint`, `pnpm test` to get a real baseline for `apps/web` and `packages/shared`. Expect failures given `app/layout.tsx` etc. do not exist yet; that is the actual next build task, not a regression.
-2. Finish `apps/web/app/`: root layout, home dashboard, and the remaining seven routes plus API routes listed above.
-3. Write `services/ingestor/Dockerfile` and verify `docker build`.
-4. Once both `apps/web` and `services/ingestor` build/lint/typecheck/test cleanly, commit that work, then run `gh repo create` and push.
-5. You export `COCKROACH_BOOTSTRAP_URL` for the `aqua-roach` cluster in your own shell (never in chat) and run `scripts/bootstrap-cockroachdb.sh`; this writes `MIGRATION_DATABASE_URL` / `INGEST_DATABASE_URL` to GitHub secrets and `DATABASE_URL` to Vercel directly, then you unset the bootstrap variable.
-6. Run the `migrate-production` GitHub Actions workflow manually to apply the first migration to `school_intelligence`.
-7. `vercel link`, set root directory to `apps/web`, connect the GitHub integration, verify a preview deployment.
-8. Run the bounded pilot import (10,000 schools, trusts, selected metrics, Sheffield catchments), fill in `scripts/calibration-report.md` with real before/after numbers, and get your explicit go-ahead before any larger import.
-9. Verify a real production deployment end-to-end against the acceptance criteria checklist in the original spec.
-
-## What was committed in this pause
-
-Everything currently on disk except gitignored files (`node_modules`,
-`.venv`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.env`
-and `.env.local` variants, Prisma generated client output). This is the
-first commit on `main`; nothing has been pushed to any remote.
+1. Build the remaining four route groups (`/admissions`, `/map`,
+   `/trusts`, `/local-authorities`) and their API routes, with tests, the
+   same way the schools routes were done.
+2. Verify `docker build` for `services/ingestor`.
+3. Commit that work, then `gh repo create` and push.
+4. Bootstrap `aqua-roach` via `scripts/bootstrap-cockroachdb.sh` (needs
+   step 3 done first), writing scoped credentials to GitHub secrets and
+   Vercel.
+5. Run the `migrate-production` GitHub Actions workflow manually.
+6. `vercel link`, root directory `apps/web`, verify a preview deployment.
+7. Run the bounded pilot import, fill in `scripts/calibration-report.md`
+   with real numbers, get explicit go-ahead before any larger import.
+8. Verify a real production deployment end-to-end.

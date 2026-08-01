@@ -1,6 +1,7 @@
 import {
   booleanPointInPolygon,
   distance as turfDistance,
+  flatten,
   point as turfPoint,
   polygonToLine,
   pointToLineDistance,
@@ -50,11 +51,13 @@ export function isPointInGeometry(lat: number, lon: number, geometry: Polygon | 
 export function distanceToBoundaryMetres(lat: number, lon: number, geometry: Polygon | MultiPolygon): number {
   const boundary = polygonToLine(geometry);
   const pt = turfPoint([lon, lat]);
-  if (boundary.type === "FeatureCollection") {
-    const distances = boundary.features.map((f) => pointToLineDistance(pt, f, { units: "meters" }));
-    return Math.min(...distances);
-  }
-  return pointToLineDistance(pt, boundary, { units: "meters" });
+  // polygonToLine returns a LineString feature for a Polygon but a
+  // MultiLineString feature (or feature collection) for a MultiPolygon;
+  // flatten normalises every shape into single-LineString features so
+  // pointToLineDistance, which only accepts LineString, always works.
+  const lines = flatten(boundary);
+  const distances = lines.features.map((f) => pointToLineDistance(pt, f, { units: "meters" }));
+  return Math.min(...distances);
 }
 
 /** Great-circle distance in kilometres between two points, used for the

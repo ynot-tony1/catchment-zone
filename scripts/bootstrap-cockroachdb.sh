@@ -2,22 +2,42 @@
 # Bootstraps the school_intelligence database and its three scoped SQL users
 # on the aqua-roach CockroachDB Cloud cluster.
 #
-# Requires COCKROACH_BOOTSTRAP_URL to be set in the CALLING SHELL, never
-# inside this repository. This script never echoes, logs, or writes that
-# value, or any generated password, to disk or stdout. It writes the three
-# resulting scoped connection strings directly into GitHub secrets and
-# Vercel environment variables via the gh and vercel CLIs, then reminds you
-# to unset COCKROACH_BOOTSTRAP_URL yourself.
+# Requires COCKROACH_BOOTSTRAP_URL, either exported in the calling shell or
+# placed in a gitignored .env.cockroach.local file at the repo root (see
+# .gitignore's ".env.*.local" rule). This script never echoes, logs, or
+# writes that value, or any generated password, to disk or stdout. It writes
+# the three resulting scoped connection strings directly into GitHub secrets
+# and Vercel environment variables via the gh and vercel CLIs, then reminds
+# you to unset COCKROACH_BOOTSTRAP_URL yourself if it came from your shell.
 #
-# Usage: COCKROACH_BOOTSTRAP_URL=... ./scripts/bootstrap-cockroachdb.sh
+# Usage:
+#   COCKROACH_BOOTSTRAP_URL=... ./scripts/bootstrap-cockroachdb.sh
+# or, with .env.cockroach.local already in place:
+#   ./scripts/bootstrap-cockroachdb.sh
 
 set -euo pipefail
 
 DATABASE_NAME="school_intelligence"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+LOCAL_ENV_FILE="${REPO_ROOT}/.env.cockroach.local"
+
+# Convenience path: if COCKROACH_BOOTSTRAP_URL was not already exported in
+# this shell, but a gitignored .env.cockroach.local file exists at the repo
+# root, source just that one variable from it. Nothing from this file is
+# ever echoed, logged, or written back out by this script.
+if [[ -z "${COCKROACH_BOOTSTRAP_URL:-}" && -f "${LOCAL_ENV_FILE}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${LOCAL_ENV_FILE}"
+  set +a
+fi
 
 if [[ -z "${COCKROACH_BOOTSTRAP_URL:-}" ]]; then
-  echo "COCKROACH_BOOTSTRAP_URL is not set. Set it in your shell before running this script:" >&2
-  echo '  export COCKROACH_BOOTSTRAP_URL="<admin connection string>"' >&2
+  echo "COCKROACH_BOOTSTRAP_URL is not set. Either export it directly:" >&2
+  echo '  COCKROACH_BOOTSTRAP_URL="<admin connection string>" ./scripts/bootstrap-cockroachdb.sh' >&2
+  echo "or create ${LOCAL_ENV_FILE} containing:" >&2
+  echo '  COCKROACH_BOOTSTRAP_URL="<admin connection string>"' >&2
   exit 1
 fi
 

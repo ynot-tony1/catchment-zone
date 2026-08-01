@@ -39,10 +39,6 @@ const nextConfig: NextConfig = {
   // treating it as pre-built library code.
   transpilePackages: ["@schoolscope/shared"],
 
-  eslint: {
-    dirs: ["app", "components", "lib", "tests"],
-  },
-
   async headers() {
     return [
       {
