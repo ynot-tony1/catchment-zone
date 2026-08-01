@@ -49,15 +49,21 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
-      # scripts/bootstrap-cockroachdb.sh cannot grant school_app write
-      # access to postcode_cache before this table exists, so it is
-      # granted here instead, every run, using the same least-privilege
-      # school_migrator credential rather than the admin bootstrap
-      # credential. Idempotent: re-granting an already-granted privilege
-      # is a no-op.
-      - name: Grant school_app access to postcode_cache
+      # ALTER DEFAULT PRIVILEGES (set once, for the admin role, by
+      # scripts/bootstrap-cockroachdb.sh) only applies to objects created
+      # by the same role that ran it. Tables are created here by
+      # school_migrator, not the admin bootstrap role, so those defaults
+      # never take effect and school_app/school_ingestor end up with no
+      # privileges on any newly migrated table. Re-granting explicitly
+      # after every deploy, using the least-privilege school_migrator
+      # credential (which owns the tables it just created) rather than the
+      # admin bootstrap credential, fixes this for good. Idempotent:
+      # re-granting an already-granted privilege is a no-op.
+      - name: Re-grant scoped-user privileges on all current tables
         run: |
           sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql "${DATABASE_URL}&sslrootcert=system" -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO school_ingestor;"
+          psql "${DATABASE_URL}&sslrootcert=system" -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO school_app;"
           psql "${DATABASE_URL}&sslrootcert=system" -c "GRANT SELECT, INSERT, UPDATE, DELETE ON postcode_cache TO school_app;"
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
