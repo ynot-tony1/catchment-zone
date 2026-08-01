@@ -63,7 +63,27 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
+      - name: Drop every enum type this project created
+        # DROP TABLE does not cascade to the enum types a dropped column
+        # used, only to objects that depended on the table itself, so
+        # these are left behind after the step above and block a clean
+        # re-apply of the CREATE TYPE statements.
+        run: |
+          psql "${DATABASE_URL}&sslrootcert=system" -c "
+            DROP TYPE IF EXISTS
+              \"SchoolStatus\",
+              \"RelationshipType\",
+              \"CatchmentCoverageStatus\",
+              \"CatchmentSourceStatus\",
+              \"IngestionStatus\"
+            CASCADE;
+          "
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
       - name: Confirm empty
-        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW TABLES;"
+        run: |
+          psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW TABLES;"
+          psql "${DATABASE_URL}&sslrootcert=system" -c "SELECT typname FROM pg_type WHERE typname IN ('SchoolStatus','RelationshipType','CatchmentCoverageStatus','CatchmentSourceStatus','IngestionStatus');"
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
