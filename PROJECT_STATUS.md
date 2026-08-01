@@ -42,24 +42,24 @@ disk, not what is intended.
      use), which blocks the `ADD CONSTRAINT` foreign-key statements
      Prisma generates afterward.
   3. The first fix attempt (`ALTER TABLE ... SET (schema_locked =
-     false)` right before the foreign keys) still failed intermittently:
+false)` right before the foreign keys) still failed intermittently:
      that ALTER triggers an async CockroachDB schema-change job, and
      Prisma's engine does not wait for it to finish before sending the
      next statement, unlike `psql`. Fixed properly by setting
      `schema_locked = false` directly in each `CREATE TABLE ... WITH
-     (...)` statement, so the table is never locked in the first place.
+(...)` statement, so the table is never locked in the first place.
   4. Recovering from the partially-applied migration needed a temporary,
      explicitly-confirmed reset workflow (dropped the 12 tables, then
      separately the 5 enum types, since `DROP TABLE` does not cascade to
      types a column used, and CockroachDB does not implement `DROP TYPE
-     ... CASCADE` at all). Deleted once no longer needed.
-  Verified independently afterward via read-only queries: 13 tables
-  (12 plus `_prisma_migrations`), both foreign keys on `schools` present,
-  all indexes present, migration tracking row shows a clean success. The
-  `postcode_cache` grant to `school_app` that the bootstrap script had to
-  defer (the table did not exist yet) now runs as a permanent step in
-  `migrate-production.yml` after every deploy, using the least-privilege
-  `school_migrator` credential, not the admin one.
+... CASCADE` at all). Deleted once no longer needed.
+     Verified independently afterward via read-only queries: 13 tables
+     (12 plus `_prisma_migrations`), both foreign keys on `schools` present,
+     all indexes present, migration tracking row shows a clean success. The
+     `postcode_cache` grant to `school_app` that the bootstrap script had to
+     defer (the table did not exist yet) now runs as a permanent step in
+     `migrate-production.yml` after every deploy, using the least-privilege
+     `school_migrator` credential, not the admin one.
 
   Every one of the diagnostic/recovery steps above ran through GitHub
   Actions using the already-stored `MIGRATION_DATABASE_URL` secret; the
@@ -137,7 +137,7 @@ disk, not what is intended.
   manual `vercel deploy --prod` from `apps/web` confirmed this concretely
   (`npm install` failed, since a bare subdirectory has no pnpm workspace
   context). Fixed via `vercel api /v9/projects/... -X PATCH -F
-  rootDirectory=apps/web` (the CLI has no dedicated command for this
+rootDirectory=apps/web` (the CLI has no dedicated command for this
   setting). This push should trigger the first real GitHub-integration
   deployment; not yet confirmed successful.
 - **No data imported.** All 12 production tables exist and are empty.
