@@ -24,7 +24,8 @@ export function getServerEnv(): z.infer<typeof ServerEnvSchema> {
   cached = ServerEnvSchema.parse({
     DATABASE_URL: process.env.DATABASE_URL,
     POSTCODE_GEOCODER: process.env.POSTCODE_GEOCODER,
-    CATCHMENT_BOUNDARY_WARNING_METRES: process.env.CATCHMENT_BOUNDARY_WARNING_METRES,
+    CATCHMENT_BOUNDARY_WARNING_METRES:
+      process.env.CATCHMENT_BOUNDARY_WARNING_METRES,
     LOG_LEVEL: process.env.LOG_LEVEL,
   });
   return cached;
@@ -36,13 +37,18 @@ export function getServerEnv(): z.infer<typeof ServerEnvSchema> {
 export function getPublicEnv() {
   return {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-    mapStyleUrl: process.env.NEXT_PUBLIC_MAP_STYLE_URL ?? "https://demotiles.maplibre.org/style.json",
-    mapAttribution: process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ?? "OpenStreetMap contributors",
+    mapStyleUrl:
+      process.env.NEXT_PUBLIC_MAP_STYLE_URL ??
+      "https://demotiles.maplibre.org/style.json",
+    mapAttribution:
+      process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ?? "OpenStreetMap contributors",
   };
 }
 
 /** Build-time / deploy-time identifier for /status. Vercel sets
  * VERCEL_GIT_COMMIT_SHA automatically; falls back to "unknown" locally. */
 export function getGitSha(): string {
-  return process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GIT_SHA ?? UNKNOWN_GIT_SHA;
+  return (
+    process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GIT_SHA ?? UNKNOWN_GIT_SHA
+  );
 }

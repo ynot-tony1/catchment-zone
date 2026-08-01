@@ -4,7 +4,14 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatSchoolStatus } from "@/lib/format";
 import { getPrismaClient } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
@@ -19,7 +26,13 @@ async function getTrust(trustId: string) {
       schools: {
         where: { status: "OPEN" },
         orderBy: { schoolName: "asc" },
-        select: { urn: true, schoolName: true, phaseName: true, town: true, status: true },
+        select: {
+          urn: true,
+          schoolName: true,
+          phaseName: true,
+          town: true,
+          status: true,
+        },
       },
     },
   });
@@ -31,7 +44,11 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const result = await safeQuery("trust-detail-metadata", () => getTrust(id), null);
+  const result = await safeQuery(
+    "trust-detail-metadata",
+    () => getTrust(id),
+    null,
+  );
   if (!result.ok || !result.data) return { title: "Academy trust" };
   return { title: result.data.trustName };
 }
@@ -48,7 +65,9 @@ export default async function TrustDetailPage({
     return (
       <Alert variant="warning">
         <AlertTitle>Trust details temporarily unavailable</AlertTitle>
-        <AlertDescription>We could not reach the database. Please try again shortly.</AlertDescription>
+        <AlertDescription>
+          We could not reach the database. Please try again shortly.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -65,8 +84,14 @@ export default async function TrustDetailPage({
           </Link>{" "}
           / {trust.trustName}
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{trust.trustName}</h1>
-        {trust.trustType && <Badge variant="secondary" className="mt-2">{trust.trustType}</Badge>}
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          {trust.trustName}
+        </h1>
+        {trust.trustType && (
+          <Badge variant="secondary" className="mt-2">
+            {trust.trustType}
+          </Badge>
+        )}
       </div>
 
       <Card>
@@ -76,10 +101,15 @@ export default async function TrustDetailPage({
         <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-muted-foreground text-xs">Address</dt>
-            <dd>{[trust.address, trust.postcode].filter(Boolean).join(", ") || "Not available"}</dd>
+            <dd>
+              {[trust.address, trust.postcode].filter(Boolean).join(", ") ||
+                "Not available"}
+            </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-xs">Companies House number</dt>
+            <dt className="text-muted-foreground text-xs">
+              Companies House number
+            </dt>
             <dd>{trust.companiesHouseNumber ?? "Not available"}</dd>
           </div>
         </CardContent>
@@ -91,7 +121,9 @@ export default async function TrustDetailPage({
         </CardHeader>
         <CardContent>
           {trust.schools.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No open schools recorded for this trust.</p>
+            <p className="text-muted-foreground text-sm">
+              No open schools recorded for this trust.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -106,7 +138,10 @@ export default async function TrustDetailPage({
                 {trust.schools.map((school) => (
                   <TableRow key={school.urn}>
                     <TableCell>
-                      <Link href={`/schools/${school.urn}`} className="text-primary underline underline-offset-2">
+                      <Link
+                        href={`/schools/${school.urn}`}
+                        className="text-primary underline underline-offset-2"
+                      >
                         {school.schoolName}
                       </Link>
                     </TableCell>

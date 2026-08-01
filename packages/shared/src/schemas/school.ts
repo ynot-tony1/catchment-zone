@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { coerceBooleanParam, firstValue, LatitudeSchema, LongitudeSchema, splitCsv } from "./common";
+import {
+  coerceBooleanParam,
+  firstValue,
+  LatitudeSchema,
+  LongitudeSchema,
+  splitCsv,
+} from "./common";
 
 // Mirrors the Prisma `SchoolStatus` enum in packages/database/prisma/schema.prisma.
 // Duplicated intentionally rather than imported from the generated Prisma
@@ -60,25 +66,35 @@ export const SchoolSearchFiltersSchema = z
     cursor: z.string().trim().min(1).max(500).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(20),
   })
-  .refine((v) => v.sort !== "distance" || (v.lat !== undefined && v.lon !== undefined), {
-    message: "Sorting by distance requires both lat and lon",
-    path: ["sort"],
-  })
+  .refine(
+    (v) =>
+      v.sort !== "distance" || (v.lat !== undefined && v.lon !== undefined),
+    {
+      message: "Sorting by distance requires both lat and lon",
+      path: ["sort"],
+    },
+  )
   .refine((v) => v.lat === undefined || v.lon !== undefined, {
     message: "lat requires lon",
     path: ["lon"],
   })
-  .refine((v) => v.minAge === undefined || v.maxAge === undefined || v.minAge <= v.maxAge, {
-    message: "minAge must be less than or equal to maxAge",
-    path: ["minAge"],
-  });
+  .refine(
+    (v) =>
+      v.minAge === undefined || v.maxAge === undefined || v.minAge <= v.maxAge,
+    {
+      message: "minAge must be less than or equal to maxAge",
+      path: ["minAge"],
+    },
+  );
 
 export type SchoolSearchFilters = z.infer<typeof SchoolSearchFiltersSchema>;
 
 /** Parses Next.js `searchParams` (or a URLSearchParams-derived record) into
  * validated, typed filters. Throws a ZodError on invalid input; callers in
  * route handlers should catch and return a 400 safe error envelope. */
-export function parseSchoolSearchParams(raw: RawSearchParams): SchoolSearchFilters {
+export function parseSchoolSearchParams(
+  raw: RawSearchParams,
+): SchoolSearchFilters {
   return SchoolSearchFiltersSchema.parse({
     q: firstValue(raw.q),
     urn: firstValue(raw.urn),
@@ -97,7 +113,9 @@ export function parseSchoolSearchParams(raw: RawSearchParams): SchoolSearchFilte
     minAge: firstValue(raw.minAge),
     maxAge: firstValue(raw.maxAge),
     urbanRuralCode: firstValue(raw.urbanRuralCode),
-    hasCatchmentData: coerceBooleanParam.parse(firstValue(raw.hasCatchmentData)),
+    hasCatchmentData: coerceBooleanParam.parse(
+      firstValue(raw.hasCatchmentData),
+    ),
     lat: firstValue(raw.lat),
     lon: firstValue(raw.lon),
     radiusKm: firstValue(raw.radiusKm),
@@ -110,7 +128,9 @@ export function parseSchoolSearchParams(raw: RawSearchParams): SchoolSearchFilte
 /** Serialises filters back into a URLSearchParams instance, dropping
  * defaults so the URL stays clean (e.g. no `?sort=name_asc&limit=20` for
  * the default view). Round-trips with parseSchoolSearchParams. */
-export function schoolFiltersToSearchParams(filters: Partial<SchoolSearchFilters>): URLSearchParams {
+export function schoolFiltersToSearchParams(
+  filters: Partial<SchoolSearchFilters>,
+): URLSearchParams {
   const params = new URLSearchParams();
   const set = (key: string, value: unknown) => {
     if (value === undefined || value === null || value === "") return;

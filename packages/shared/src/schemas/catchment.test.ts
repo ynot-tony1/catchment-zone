@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { CatchmentCheckRequestSchema, CatchmentCheckStatusEnum } from "./catchment";
+import {
+  CatchmentCheckRequestSchema,
+  CatchmentCheckStatusEnum,
+} from "./catchment";
 
 describe("CatchmentCheckRequestSchema", () => {
   it("accepts a request with a postcode", () => {
-    const result = CatchmentCheckRequestSchema.parse({ postcode: "S1 2HH", phase: "primary" });
+    const result = CatchmentCheckRequestSchema.parse({
+      postcode: "S1 2HH",
+      phase: "primary",
+    });
     expect(result.postcode).toBe("S1 2HH");
   });
 
@@ -16,7 +22,9 @@ describe("CatchmentCheckRequestSchema", () => {
   });
 
   it("rejects a request with neither postcode nor point", () => {
-    expect(() => CatchmentCheckRequestSchema.parse({ phase: "primary" })).toThrow();
+    expect(() =>
+      CatchmentCheckRequestSchema.parse({ phase: "primary" }),
+    ).toThrow();
   });
 
   it("rejects a request with both postcode and point", () => {
@@ -31,7 +39,11 @@ describe("CatchmentCheckRequestSchema", () => {
 
   it("rejects a malformed academic year", () => {
     expect(() =>
-      CatchmentCheckRequestSchema.parse({ postcode: "S1 2HH", phase: "primary", academicYear: "2025" }),
+      CatchmentCheckRequestSchema.parse({
+        postcode: "S1 2HH",
+        phase: "primary",
+        academicYear: "2025",
+      }),
     ).toThrow();
   });
 });

@@ -11,11 +11,11 @@ authorization for a larger import.
 1. Record cluster storage and monthly compute usage before import (CockroachDB
    Cloud console, Cluster > Metrics).
 2. Import 10,000 representative school records (`ingestor import-gias
-   --row-limit 10000`).
+--row-limit 10000`).
 3. Import trust relationships (`ingestor import-trusts`).
 4. Import a selected set of metrics (`ingestor import-statistics`).
 5. Import catchments for the Sheffield pilot authority (`ingestor
-   import-catchments --local-authority 373`).
+import-catchments --local-authority 373`).
 6. Build the indexes defined in `packages/database/prisma/schema.prisma`
    (already applied by `prisma migrate deploy`).
 7. Record cluster storage and monthly compute usage again.
@@ -32,10 +32,10 @@ authorization for a larger import.
 
 ## Report
 
-| Measurement | Before | After | Delta |
-|---|---|---|---|
-| Storage used | _pending first real import_ | | |
-| Monthly compute (est.) | _pending first real import_ | | |
+| Measurement            | Before                      | After | Delta |
+| ---------------------- | --------------------------- | ----- | ----- |
+| Storage used           | _pending first real import_ |       |       |
+| Monthly compute (est.) | _pending first real import_ |       |       |
 
 **Rows imported:** _pending_
 **Geometry records imported:** _pending_

@@ -32,12 +32,18 @@ describe("parseSchoolSearchParams", () => {
   });
 
   it("accepts sort=distance with lat and lon", () => {
-    const parsed = parseSchoolSearchParams({ sort: "distance", lat: "53.38", lon: "-1.47" });
+    const parsed = parseSchoolSearchParams({
+      sort: "distance",
+      lat: "53.38",
+      lon: "-1.47",
+    });
     expect(parsed.sort).toBe("distance");
   });
 
   it("rejects minAge greater than maxAge", () => {
-    expect(() => parseSchoolSearchParams({ minAge: "11", maxAge: "3" })).toThrow();
+    expect(() =>
+      parseSchoolSearchParams({ minAge: "11", maxAge: "3" }),
+    ).toThrow();
   });
 
   it("rejects a non-numeric URN", () => {

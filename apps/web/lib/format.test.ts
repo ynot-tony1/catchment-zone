@@ -37,7 +37,9 @@ describe("formatDate / formatDateTime", () => {
 describe("formatSchoolStatus", () => {
   it("maps every known enum value to a human label", () => {
     expect(formatSchoolStatus("OPEN")).toBe("Open");
-    expect(formatSchoolStatus("OPEN_BUT_PROPOSED_TO_CLOSE")).toBe("Open, proposed to close");
+    expect(formatSchoolStatus("OPEN_BUT_PROPOSED_TO_CLOSE")).toBe(
+      "Open, proposed to close",
+    );
     expect(formatSchoolStatus("PROPOSED_TO_OPEN")).toBe("Proposed to open");
     expect(formatSchoolStatus("CLOSED")).toBe("Closed");
   });

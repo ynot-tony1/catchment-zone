@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+packages/database/generated/
+packages/shared/src/generated/
+services/ingestor/tests/fixtures/
+apps/web/.next/
+apps/web/next-env.d.ts
+coverage/
+playwright-report/
+test-results/

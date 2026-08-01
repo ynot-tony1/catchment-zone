@@ -21,7 +21,8 @@ const eslintConfig = [
         "warn",
         {
           selector: "Literal[value=/\\u2014/]",
-          message: "Do not use an em dash; use a period, comma, or parentheses instead.",
+          message:
+            "Do not use an em dash; use a period, comma, or parentheses instead.",
         },
       ],
     },

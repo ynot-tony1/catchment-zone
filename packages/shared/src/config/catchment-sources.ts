@@ -55,7 +55,9 @@ export function listCatchmentCandidates(): CatchmentCandidate[] {
 /** Distinct local authority codes with at least one enabled catchment
  * source, regardless of academic year or primary/secondary phase. */
 export function getPilotLocalAuthorityCodes(): string[] {
-  return Array.from(new Set(listEnabledCatchmentSources().map((s) => s.local_authority_code)));
+  return Array.from(
+    new Set(listEnabledCatchmentSources().map((s) => s.local_authority_code)),
+  );
 }
 
 /** Whether a given local authority + academic year combination has an
@@ -78,6 +80,10 @@ export function findCatchmentSource(
 /** Whether any enabled source exists for a local authority, in any academic
  * year. Used to distinguish "we have never covered this LA" from "we cover
  * this LA but not this particular academic year". */
-export function hasAnyCatchmentSourceForLa(localAuthorityCode: string): boolean {
-  return listEnabledCatchmentSources().some((s) => s.local_authority_code === localAuthorityCode);
+export function hasAnyCatchmentSourceForLa(
+  localAuthorityCode: string,
+): boolean {
+  return listEnabledCatchmentSources().some(
+    (s) => s.local_authority_code === localAuthorityCode,
+  );
 }

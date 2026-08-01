@@ -5,7 +5,8 @@ export function SiteFooter() {
     <footer className="border-border mt-16 border-t">
       <div className="text-muted-foreground mx-auto max-w-6xl px-4 py-8 text-sm">
         <p>
-          Contains public sector information from the Department for Education, licensed under the{" "}
+          Contains public sector information from the Department for Education,
+          licensed under the{" "}
           <a
             href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
             className="underline underline-offset-2"
@@ -20,8 +21,8 @@ export function SiteFooter() {
           for source details and update frequency.
         </p>
         <p className="mt-2">
-          SchoolScope England is an independent project, not affiliated with the Department for Education
-          or any local authority.
+          SchoolScope England is an independent project, not affiliated with the
+          Department for Education or any local authority.
         </p>
       </div>
     </footer>

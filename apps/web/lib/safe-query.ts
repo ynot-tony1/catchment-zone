@@ -1,8 +1,7 @@
 import { logger } from "@/lib/logger";
 
 export type SafeQueryResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; data: T; unavailable: true };
+  { ok: true; data: T } | { ok: false; data: T; unavailable: true };
 
 /**
  * Runs a Prisma-backed query for a Server Component and never lets a
@@ -26,7 +25,10 @@ export async function safeQuery<T>(
   } catch (error) {
     logger.error("Database query failed", {
       label,
-      error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+      error:
+        error instanceof Error
+          ? { name: error.name, message: error.message }
+          : String(error),
     });
     return { ok: false, data: fallback, unavailable: true };
   }

@@ -14,7 +14,8 @@ export default function MapPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Map</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Schools currently in view are loaded as you pan and zoom. Select a school for details.
+          Schools currently in view are loaded as you pan and zoom. Select a
+          school for details.
         </p>
       </div>
       <SchoolMap styleUrl={mapStyleUrl} attribution={mapAttribution} />

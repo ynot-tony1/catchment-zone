@@ -4,7 +4,14 @@ import { notFound } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getPrismaClient } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 
@@ -23,7 +30,14 @@ async function getLocalAuthority(code: string) {
       },
       catchmentSources: {
         orderBy: { academicYear: "desc" },
-        select: { id: true, academicYear: true, sourceType: true, licence: true, status: true, sourceUrl: true },
+        select: {
+          id: true,
+          academicYear: true,
+          sourceType: true,
+          licence: true,
+          status: true,
+          sourceUrl: true,
+        },
       },
     },
   });
@@ -35,7 +49,11 @@ export async function generateMetadata({
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
   const { code } = await params;
-  const result = await safeQuery("local-authority-detail-metadata", () => getLocalAuthority(code), null);
+  const result = await safeQuery(
+    "local-authority-detail-metadata",
+    () => getLocalAuthority(code),
+    null,
+  );
   if (!result.ok || !result.data) return { title: "Local authority" };
   return { title: result.data.name };
 }
@@ -46,13 +64,19 @@ export default async function LocalAuthorityDetailPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const result = await safeQuery("local-authority-detail", () => getLocalAuthority(code), null);
+  const result = await safeQuery(
+    "local-authority-detail",
+    () => getLocalAuthority(code),
+    null,
+  );
 
   if (!result.ok) {
     return (
       <Alert variant="warning">
         <AlertTitle>Local authority details temporarily unavailable</AlertTitle>
-        <AlertDescription>We could not reach the database. Please try again shortly.</AlertDescription>
+        <AlertDescription>
+          We could not reach the database. Please try again shortly.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -64,12 +88,17 @@ export default async function LocalAuthorityDetailPage({
     <div className="flex flex-col gap-6">
       <div>
         <p className="text-muted-foreground text-sm">
-          <Link href="/local-authorities" className="underline underline-offset-2">
+          <Link
+            href="/local-authorities"
+            className="underline underline-offset-2"
+          >
             Local authorities
           </Link>{" "}
           / {la.name}
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">{la.name}</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          {la.name}
+        </h1>
       </div>
 
       <Card>
@@ -79,7 +108,11 @@ export default async function LocalAuthorityDetailPage({
         <CardContent className="grid gap-2 text-sm">
           {la.admissionsWebsite && (
             <p>
-              <a href={la.admissionsWebsite} className="text-primary underline underline-offset-2" rel="noreferrer">
+              <a
+                href={la.admissionsWebsite}
+                className="text-primary underline underline-offset-2"
+                rel="noreferrer"
+              >
                 Official admissions information
               </a>
             </p>
@@ -97,7 +130,9 @@ export default async function LocalAuthorityDetailPage({
             </p>
           )}
           {!la.admissionsWebsite && !la.officialCatchmentCheckerUrl && (
-            <p className="text-muted-foreground">No official admissions links recorded yet.</p>
+            <p className="text-muted-foreground">
+              No official admissions links recorded yet.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -109,18 +144,32 @@ export default async function LocalAuthorityDetailPage({
         <CardContent>
           {la.catchmentSources.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              No catchment boundary source is available for this local authority yet.
+              No catchment boundary source is available for this local authority
+              yet.
             </p>
           ) : (
             <ul className="flex flex-col gap-2 text-sm">
               {la.catchmentSources.map((source) => (
-                <li key={source.id} className="flex flex-wrap items-center gap-2">
-                  <Badge variant={source.status === "VALID" ? "success" : "secondary"}>{source.status}</Badge>
+                <li
+                  key={source.id}
+                  className="flex flex-wrap items-center gap-2"
+                >
+                  <Badge
+                    variant={
+                      source.status === "VALID" ? "success" : "secondary"
+                    }
+                  >
+                    {source.status}
+                  </Badge>
                   <span>{source.sourceType}</span>
                   <span className="text-muted-foreground">
                     {source.academicYear} &middot; {source.licence}
                   </span>
-                  <a href={source.sourceUrl} className="text-primary underline underline-offset-2" rel="noreferrer">
+                  <a
+                    href={source.sourceUrl}
+                    className="text-primary underline underline-offset-2"
+                    rel="noreferrer"
+                  >
                     Source
                   </a>
                 </li>
@@ -136,7 +185,9 @@ export default async function LocalAuthorityDetailPage({
         </CardHeader>
         <CardContent>
           {la.schools.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No open schools recorded for this local authority.</p>
+            <p className="text-muted-foreground text-sm">
+              No open schools recorded for this local authority.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -150,7 +201,10 @@ export default async function LocalAuthorityDetailPage({
                 {la.schools.map((school) => (
                   <TableRow key={school.urn}>
                     <TableCell>
-                      <Link href={`/schools/${school.urn}`} className="text-primary underline underline-offset-2">
+                      <Link
+                        href={`/schools/${school.urn}`}
+                        className="text-primary underline underline-offset-2"
+                      >
                         {school.schoolName}
                       </Link>
                     </TableCell>

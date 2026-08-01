@@ -24,23 +24,23 @@ ingestor run                Run the full pipeline in order
 
 ## Design rules
 
-* **Stream, don't load.** GIAS and EES files are processed in batches (see
+- **Stream, don't load.** GIAS and EES files are processed in batches (see
   `services/ingestor/src/schoolscope_ingestor/db.py`), never read fully into
   memory before the first row is written.
-* **Batch writes.** Upserts use batched `executemany`/multi-row statements,
+- **Batch writes.** Upserts use batched `executemany`/multi-row statements,
   never one `INSERT` per row.
-* **Checksum before import.** Every source records a SHA-256 checksum of the
+- **Checksum before import.** Every source records a SHA-256 checksum of the
   retrieved file or feature response; an unchanged checksum skips the import
   and records `SKIPPED_UNCHANGED` on the `IngestionRun`, unless `--force` is
   passed.
-* **Defensive parsing.** A malformed row is rejected and counted, not a
+- **Defensive parsing.** A malformed row is rejected and counted, not a
   reason to abort the whole run. `ingestor verify` is what catches a
   systemic problem (e.g. a changed header layout) after the fact.
-* **Preserve on failure.** A failed catchment import for one local authority
+- **Preserve on failure.** A failed catchment import for one local authority
   does not touch the previously valid `CatchmentArea` rows for that
   authority; the previous valid version stays live until a new import
   succeeds and is verified.
-* **Transactional per source.** Each `CatchmentSource` import is one
+- **Transactional per source.** Each `CatchmentSource` import is one
   transaction: either the whole source's boundaries land, or none do.
 
 ## Geometry pipeline

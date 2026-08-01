@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
 import { getGitSha } from "@/lib/env";
 import { getPrismaClient } from "@/lib/prisma";
@@ -23,7 +30,9 @@ async function getStatus() {
   return { schoolCount, recentRuns };
 }
 
-function runStatusVariant(status: string): "success" | "warning" | "destructive" | "secondary" {
+function runStatusVariant(
+  status: string,
+): "success" | "warning" | "destructive" | "secondary" {
   switch (status) {
     case "SUCCEEDED":
       return "success";
@@ -37,7 +46,10 @@ function runStatusVariant(status: string): "success" | "warning" | "destructive"
 }
 
 export default async function StatusPage() {
-  const result = await safeQuery("status-page", getStatus, { schoolCount: 0, recentRuns: [] });
+  const result = await safeQuery("status-page", getStatus, {
+    schoolCount: 0,
+    recentRuns: [],
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,7 +80,8 @@ export default async function StatusPage() {
         <Alert variant="destructive">
           <AlertTitle>Database unreachable</AlertTitle>
           <AlertDescription>
-            The application could not reach the database when this page was rendered.
+            The application could not reach the database when this page was
+            rendered.
           </AlertDescription>
         </Alert>
       )}
@@ -79,7 +92,9 @@ export default async function StatusPage() {
         </CardHeader>
         <CardContent>
           {result.data.recentRuns.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No ingestion runs recorded yet.</p>
+            <p className="text-muted-foreground text-sm">
+              No ingestion runs recorded yet.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -95,7 +110,9 @@ export default async function StatusPage() {
                   <TableRow key={run.id}>
                     <TableCell>{run.source}</TableCell>
                     <TableCell>
-                      <Badge variant={runStatusVariant(run.status)}>{run.status}</Badge>
+                      <Badge variant={runStatusVariant(run.status)}>
+                        {run.status}
+                      </Badge>
                     </TableCell>
                     <TableCell>{formatDateTime(run.startedAt)}</TableCell>
                     <TableCell>{run.rowsProcessed}</TableCell>

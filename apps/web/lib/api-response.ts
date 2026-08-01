@@ -60,11 +60,18 @@ export function errorResponse(
 /** Logs the real error server-side (safe to include stack traces in server
  * logs, just never in the HTTP response) and returns a generic envelope
  * for the client. Use this in every route handler's catch block. */
-export function internalErrorResponse(requestId: string, route: string, error: unknown): NextResponse {
+export function internalErrorResponse(
+  requestId: string,
+  route: string,
+  error: unknown,
+): NextResponse {
   logger.error("Unhandled route error", {
     requestId,
     route,
-    error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+    error:
+      error instanceof Error
+        ? { name: error.name, message: error.message }
+        : String(error),
   });
   return errorResponse(
     "INTERNAL_ERROR",

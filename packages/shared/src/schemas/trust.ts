@@ -2,7 +2,12 @@ import { z } from "zod";
 import { firstValue } from "./common";
 import type { RawSearchParams } from "./school";
 
-export const TRUST_SORT_VALUES = ["name_asc", "name_desc", "size_desc", "size_asc"] as const;
+export const TRUST_SORT_VALUES = [
+  "name_asc",
+  "name_desc",
+  "size_desc",
+  "size_asc",
+] as const;
 export const TrustSortEnum = z.enum(TRUST_SORT_VALUES);
 
 export const TrustSearchFiltersSchema = z.object({
@@ -14,7 +19,9 @@ export const TrustSearchFiltersSchema = z.object({
 });
 export type TrustSearchFilters = z.infer<typeof TrustSearchFiltersSchema>;
 
-export function parseTrustSearchParams(raw: RawSearchParams): TrustSearchFilters {
+export function parseTrustSearchParams(
+  raw: RawSearchParams,
+): TrustSearchFilters {
   return TrustSearchFiltersSchema.parse({
     q: firstValue(raw.q),
     trustType: firstValue(raw.trustType),
@@ -27,13 +34,19 @@ export function parseTrustSearchParams(raw: RawSearchParams): TrustSearchFilters
 export const LocalAuthoritySearchFiltersSchema = z.object({
   q: z.string().trim().min(1).max(200).optional(),
   regionCode: z.string().trim().min(1).max(10).optional(),
-  catchmentCoverageStatus: z.enum(["NOT_AVAILABLE", "PILOT", "PARTIAL", "FULL"]).optional(),
+  catchmentCoverageStatus: z
+    .enum(["NOT_AVAILABLE", "PILOT", "PARTIAL", "FULL"])
+    .optional(),
   cursor: z.string().trim().min(1).max(500).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
-export type LocalAuthoritySearchFilters = z.infer<typeof LocalAuthoritySearchFiltersSchema>;
+export type LocalAuthoritySearchFilters = z.infer<
+  typeof LocalAuthoritySearchFiltersSchema
+>;
 
-export function parseLocalAuthoritySearchParams(raw: RawSearchParams): LocalAuthoritySearchFilters {
+export function parseLocalAuthoritySearchParams(
+  raw: RawSearchParams,
+): LocalAuthoritySearchFilters {
   return LocalAuthoritySearchFiltersSchema.parse({
     q: firstValue(raw.q),
     regionCode: firstValue(raw.regionCode),

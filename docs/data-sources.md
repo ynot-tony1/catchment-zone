@@ -35,8 +35,8 @@ Catchment Boundaries (academic year 2025-2026), published via the council's
 ArcGIS Feature Service under the Open Government Licence v3.0 (contains OS
 data, Crown copyright and database right). Source item pages:
 
-* `https://sheffield-city-council-open-data-sheffieldcc.hub.arcgis.com/datasets/1cfbc328f918482bb25f4d092eb45d8b_1/about` (primary)
-* `https://sheffield-city-council-open-data-sheffieldcc.hub.arcgis.com/datasets/a3883491804f4886a33c1b66b59fbe47_3/about` (secondary)
+- `https://sheffield-city-council-open-data-sheffieldcc.hub.arcgis.com/datasets/1cfbc328f918482bb25f4d092eb45d8b_1/about` (primary)
+- `https://sheffield-city-council-open-data-sheffieldcc.hub.arcgis.com/datasets/a3883491804f4886a33c1b66b59fbe47_3/about` (secondary)
 
 ## Admission arrangements
 
@@ -56,8 +56,8 @@ cache only the postcode-to-coordinate result (see `PostcodeCache` in
 
 ## What we deliberately do not use
 
-* Interactive council map applications with no documented API or reuse
+- Interactive council map applications with no documented API or reuse
   licence. We do not scrape these.
-* Any source without an explicit, checkable licence statement.
-* A composite or aggregated "best school" ranking; see
+- Any source without an explicit, checkable licence statement.
+- A composite or aggregated "best school" ranking; see
   `docs/methodology.md` for why.

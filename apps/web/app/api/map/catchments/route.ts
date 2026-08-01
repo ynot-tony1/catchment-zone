@@ -1,7 +1,12 @@
 import { NextRequest } from "next/server";
 import { parseMapCatchmentsQuery } from "@schoolscope/shared";
 import { z } from "zod";
-import { errorResponse, internalErrorResponse, jsonResponse, newRequestId } from "@/lib/api-response";
+import {
+  errorResponse,
+  internalErrorResponse,
+  jsonResponse,
+  newRequestId,
+} from "@/lib/api-response";
 import { getPrismaClient } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 
@@ -12,11 +17,15 @@ export async function GET(request: NextRequest) {
 
   let query;
   try {
-    query = parseMapCatchmentsQuery(Object.fromEntries(request.nextUrl.searchParams));
+    query = parseMapCatchmentsQuery(
+      Object.fromEntries(request.nextUrl.searchParams),
+    );
   } catch (error) {
     return errorResponse(
       "BAD_REQUEST",
-      error instanceof z.ZodError ? error.issues.map((issue) => issue.message).join(" ") : "Invalid query parameters.",
+      error instanceof z.ZodError
+        ? error.issues.map((issue) => issue.message).join(" ")
+        : "Invalid query parameters.",
       requestId,
     );
   }
@@ -33,7 +42,13 @@ export async function GET(request: NextRequest) {
         minimumLongitude: { lte: maxLon },
         maximumLongitude: { gte: minLon },
       },
-      select: { id: true, areaName: true, areaType: true, academicYear: true, simplifiedGeometryGeojson: true },
+      select: {
+        id: true,
+        areaName: true,
+        areaType: true,
+        academicYear: true,
+        simplifiedGeometryGeojson: true,
+      },
       take: query.limit,
     });
 
@@ -45,7 +60,9 @@ export async function GET(request: NextRequest) {
       } catch {
         // A single malformed stored geometry should not fail the whole map
         // request; skip it and log for the ingestion team to investigate.
-        logger.warn("Skipping catchment area with malformed stored geometry", { areaId: area.id });
+        logger.warn("Skipping catchment area with malformed stored geometry", {
+          areaId: area.id,
+        });
         continue;
       }
       features.push({
@@ -61,7 +78,10 @@ export async function GET(request: NextRequest) {
     }
 
     const featureCollection = { type: "FeatureCollection" as const, features };
-    return jsonResponse(featureCollection, { requestId, cacheControl: "public, max-age=300, stale-while-revalidate=600" });
+    return jsonResponse(featureCollection, {
+      requestId,
+      cacheControl: "public, max-age=300, stale-while-revalidate=600",
+    });
   } catch (error) {
     return internalErrorResponse(requestId, "GET /api/map/catchments", error);
   }

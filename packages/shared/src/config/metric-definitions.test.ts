@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getMetricDefinition, listMetricDefinitions, METRIC_CODES } from "./metric-definitions";
+import {
+  getMetricDefinition,
+  listMetricDefinitions,
+  METRIC_CODES,
+} from "./metric-definitions";
 
 describe("metric definitions loaded from config/metric-definitions.yml", () => {
   it("loads at least the known baseline metrics", () => {

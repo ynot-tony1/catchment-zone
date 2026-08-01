@@ -45,12 +45,12 @@ go-ahead based on that report.
 
 Handled by `ingestor cleanup`, scheduled as part of `ingestor run`:
 
-* Expired `PostcodeCache` rows
-* Superseded `CatchmentArea` simplified display geometry for academic years
+- Expired `PostcodeCache` rows
+- Superseded `CatchmentArea` simplified display geometry for academic years
   no longer shown in the UI (full-detail geometry and source metadata for
   required historical years are preserved)
-* Old successful `IngestionRun` rows beyond a rolling retention window
-* Any staged/temporary data from a failed import
+- Old successful `IngestionRun` rows beyond a rolling retention window
+- Any staged/temporary data from a failed import
 
 ## Monitoring
 

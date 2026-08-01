@@ -16,9 +16,16 @@ export function SiteHeader() {
         <Link href="/" className="font-semibold tracking-tight">
           SchoolScope England
         </Link>
-        <nav aria-label="Primary" className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <nav
+          aria-label="Primary"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+        >
           {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="text-muted-foreground hover:text-foreground">
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-muted-foreground hover:text-foreground"
+            >
               {link.label}
             </Link>
           ))}

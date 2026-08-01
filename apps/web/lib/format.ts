@@ -4,7 +4,10 @@ import type { MetricDefinition } from "@schoolscope/shared";
  * Centralised so every place a metric is shown (school detail, charts,
  * exports) agrees on formatting. Returns a clear placeholder for null,
  * never "0" or a blank string that could be misread as a real zero. */
-export function formatMetricValue(value: number | null, definition: MetricDefinition | null): string {
+export function formatMetricValue(
+  value: number | null,
+  definition: MetricDefinition | null,
+): string {
   if (value === null || value === undefined) return "Not available";
   const unit = definition?.unit ?? "";
   switch (unit) {
@@ -21,17 +24,25 @@ export function formatMetricValue(value: number | null, definition: MetricDefini
 }
 
 export function formatNumber(value: number, maximumFractionDigits = 0): string {
-  return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(value);
+  return new Intl.NumberFormat("en-GB", { maximumFractionDigits }).format(
+    value,
+  );
 }
 
 export function formatDate(value: Date | string | null | undefined): string {
   if (!value) return "Not available";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "Not available";
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
 }
 
-export function formatDateTime(value: Date | string | null | undefined): string {
+export function formatDateTime(
+  value: Date | string | null | undefined,
+): string {
   if (!value) return "Not available";
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "Not available";

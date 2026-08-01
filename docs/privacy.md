@@ -9,18 +9,18 @@ data of any kind.
 
 ## What this application does not store
 
-* **Home addresses or coordinates.** A user's clicked map point or typed
+- **Home addresses or coordinates.** A user's clicked map point or typed
   address is used in-memory for a single request to compute a catchment
   result and is never written to the database.
-* **Submitted postcodes tied to identity.** `PostcodeCache` stores only a
+- **Submitted postcodes tied to identity.** `PostcodeCache` stores only a
   normalised postcode, its centroid coordinates, and a source/expiry, exactly
   like a public postcode lookup API's own cache would. There is no user
   identifier column anywhere in that table, and nothing links a cached
   postcode back to a session, IP address, or account.
-* **Postcodes in analytics.** No analytics event, log line, or error report
+- **Postcodes in analytics.** No analytics event, log line, or error report
   in this codebase includes a submitted postcode or coordinate value. If you
   add analytics instrumentation, this rule applies to it too.
-* **Accounts, in the MVP.** There is no user authentication system; nothing
+- **Accounts, in the MVP.** There is no user authentication system; nothing
   here requires creating one to use the application's public features.
 
 ## Logging
@@ -40,8 +40,8 @@ error.
 
 ## Third-party data processors
 
-* **postcodes.io** (or whichever provider `POSTCODE_GEOCODER` is configured
+- **postcodes.io** (or whichever provider `POSTCODE_GEOCODER` is configured
   to) receives the postcode a user enters, exactly as any postcode lookup
   service would. Review that provider's own privacy policy if you change the
   default.
-* No advertising or cross-site tracking script is included in this project.
+- No advertising or cross-site tracking script is included in this project.

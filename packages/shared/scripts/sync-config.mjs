@@ -34,6 +34,10 @@ const files = [
 for (const [source, target] of files) {
   const yamlText = readFileSync(join(configDir, source), "utf-8");
   const data = load(yamlText);
-  writeFileSync(join(outDir, target), JSON.stringify(data, null, 2) + "\n", "utf-8");
+  writeFileSync(
+    join(outDir, target),
+    JSON.stringify(data, null, 2) + "\n",
+    "utf-8",
+  );
   console.log(`[sync-config] ${source} -> src/generated/${target}`);
 }

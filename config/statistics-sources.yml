@@ -37,7 +37,8 @@ publications:
 
   - publication_slug: "pupil-attendance-in-schools"
     display_name: "Pupil attendance in schools"
-    metric_codes: ["overall_absence_rate", "persistent_absence_rate", "reason_for_absence"]
+    metric_codes:
+      ["overall_absence_rate", "persistent_absence_rate", "reason_for_absence"]
     update_frequency: "weekly_experimental_and_termly_official"
     applies_to_phases: ["primary", "secondary", "special"]
     notes: >

@@ -10,7 +10,12 @@ export const MapSchoolsQuerySchema = z.object({
   establishmentTypeCode: z.string().trim().min(1).max(20).optional(),
   trustId: z.string().trim().min(1).max(50).optional(),
   status: z.array(SchoolStatusEnum).optional(),
-  limit: z.coerce.number().int().min(1).max(MAX_MAP_FEATURES).default(MAX_MAP_FEATURES),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_MAP_FEATURES)
+    .default(MAX_MAP_FEATURES),
 });
 export type MapSchoolsQuery = z.infer<typeof MapSchoolsQuerySchema>;
 
@@ -33,11 +38,18 @@ export const MapCatchmentsQuerySchema = z.object({
     .regex(/^\d{4}-\d{4}$/)
     .optional(),
   areaType: z.string().trim().min(1).max(30).optional(),
-  limit: z.coerce.number().int().min(1).max(MAX_MAP_FEATURES).default(MAX_MAP_FEATURES),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_MAP_FEATURES)
+    .default(MAX_MAP_FEATURES),
 });
 export type MapCatchmentsQuery = z.infer<typeof MapCatchmentsQuerySchema>;
 
-export function parseMapCatchmentsQuery(raw: RawSearchParams): MapCatchmentsQuery {
+export function parseMapCatchmentsQuery(
+  raw: RawSearchParams,
+): MapCatchmentsQuery {
   return MapCatchmentsQuerySchema.parse({
     bbox: firstValue(raw.bbox),
     academicYear: firstValue(raw.academicYear),

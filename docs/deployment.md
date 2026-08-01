@@ -47,10 +47,10 @@ vercel link                  # link this directory to the schoolscope-england pr
 
 In the Vercel project settings (or via `vercel env add`):
 
-* Root directory: `apps/web`
-* `DATABASE_URL`: the `school_app` scoped connection string, added as a
+- Root directory: `apps/web`
+- `DATABASE_URL`: the `school_app` scoped connection string, added as a
   secret environment variable (Production and Preview)
-* Public config, non-secret: `NEXT_PUBLIC_SITE_URL`,
+- Public config, non-secret: `NEXT_PUBLIC_SITE_URL`,
   `NEXT_PUBLIC_MAP_STYLE_URL`, `NEXT_PUBLIC_MAP_ATTRIBUTION`,
   `POSTCODE_GEOCODER`, `CATCHMENT_BOUNDARY_WARNING_METRES`, `LOG_LEVEL`
 
@@ -68,12 +68,12 @@ workflow run migrate-production.yml -f confirm=migrate`) once
 
 ## Ongoing deployment flow
 
-* Every pull request gets a Vercel preview deployment and a CI run.
-* Merging to `main` triggers a Vercel production deployment.
-* Schema changes require a manual run of `migrate-production.yml` before (or
+- Every pull request gets a Vercel preview deployment and a CI run.
+- Merging to `main` triggers a Vercel production deployment.
+- Schema changes require a manual run of `migrate-production.yml` before (or
   as part of, if the migration is backward compatible) merging the
   application code that depends on the new schema.
-* Ingestion is entirely scheduled/manual GitHub Actions; it does not run as
+- Ingestion is entirely scheduled/manual GitHub Actions; it does not run as
   part of the Vercel build.
 
 ## Rollback

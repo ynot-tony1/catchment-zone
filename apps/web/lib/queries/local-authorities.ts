@@ -1,5 +1,9 @@
 import type { Prisma } from "@schoolscope/database";
-import { decodeCursor, encodeCursor, type LocalAuthoritySearchFilters } from "@schoolscope/shared";
+import {
+  decodeCursor,
+  encodeCursor,
+  type LocalAuthoritySearchFilters,
+} from "@schoolscope/shared";
 import { getPrismaClient } from "@/lib/prisma";
 
 export type LocalAuthoritySearchResultItem = {
@@ -14,11 +18,14 @@ export type LocalAuthoritySearchResult = {
   nextCursor: string | null;
 };
 
-function buildWhere(filters: LocalAuthoritySearchFilters): Prisma.LocalAuthorityWhereInput {
+function buildWhere(
+  filters: LocalAuthoritySearchFilters,
+): Prisma.LocalAuthorityWhereInput {
   const where: Prisma.LocalAuthorityWhereInput = {};
   if (filters.q) where.name = { contains: filters.q, mode: "insensitive" };
   if (filters.regionCode) where.regionCode = filters.regionCode;
-  if (filters.catchmentCoverageStatus) where.catchmentCoverageStatus = filters.catchmentCoverageStatus;
+  if (filters.catchmentCoverageStatus)
+    where.catchmentCoverageStatus = filters.catchmentCoverageStatus;
   return where;
 }
 
@@ -28,19 +35,31 @@ export async function searchLocalAuthorities(
   const prisma = getPrismaClient();
   const where = buildWhere(filters);
 
-  const cursor = filters.cursor ? decodeCursor<{ k: string; u: string }>(filters.cursor) : null;
+  const cursor = filters.cursor
+    ? decodeCursor<{ k: string; u: string }>(filters.cursor)
+    : null;
   if (cursor) {
     Object.assign(where, {
       AND: [
         { ...where },
-        { OR: [{ name: { gt: cursor.k } }, { name: cursor.k, code: { gt: cursor.u } }] },
+        {
+          OR: [
+            { name: { gt: cursor.k } },
+            { name: cursor.k, code: { gt: cursor.u } },
+          ],
+        },
       ],
     });
   }
 
   const rows = await prisma.localAuthority.findMany({
     where,
-    select: { code: true, name: true, regionCode: true, catchmentCoverageStatus: true },
+    select: {
+      code: true,
+      name: true,
+      regionCode: true,
+      catchmentCoverageStatus: true,
+    },
     orderBy: [{ name: "asc" }, { code: "asc" }],
     take: filters.limit + 1,
   });
@@ -48,7 +67,8 @@ export async function searchLocalAuthorities(
   const hasMore = rows.length > filters.limit;
   const page = hasMore ? rows.slice(0, filters.limit) : rows;
   const last = page[page.length - 1];
-  const nextCursor = hasMore && last ? encodeCursor({ k: last.name, u: last.code }) : null;
+  const nextCursor =
+    hasMore && last ? encodeCursor({ k: last.name, u: last.code }) : null;
 
   return { items: page, nextCursor };
 }

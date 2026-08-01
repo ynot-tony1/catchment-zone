@@ -48,12 +48,20 @@ export function checkRateLimit(key: string, cost = 1): RateLimitResult {
 
   if (bucket.tokens >= cost) {
     bucket.tokens -= cost;
-    return { allowed: true, remaining: Math.floor(bucket.tokens), retryAfterSeconds: 0 };
+    return {
+      allowed: true,
+      remaining: Math.floor(bucket.tokens),
+      retryAfterSeconds: 0,
+    };
   }
 
   const deficit = cost - bucket.tokens;
   const retryAfterSeconds = Math.ceil(deficit / (REFILL_PER_MS * 1000));
-  return { allowed: false, remaining: Math.floor(bucket.tokens), retryAfterSeconds };
+  return {
+    allowed: false,
+    remaining: Math.floor(bucket.tokens),
+    retryAfterSeconds,
+  };
 }
 
 /** Derives a rate-limit key from a request. Prefers the standard proxy

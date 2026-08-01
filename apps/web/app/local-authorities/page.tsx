@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { parseLocalAuthoritySearchParams, type RawSearchParams } from "@schoolscope/shared";
+import {
+  parseLocalAuthoritySearchParams,
+  type RawSearchParams,
+} from "@schoolscope/shared";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { searchLocalAuthorities } from "@/lib/queries/local-authorities";
 import { safeQuery } from "@/lib/safe-query";
 
@@ -14,7 +24,9 @@ export const metadata: Metadata = {
   title: "Local authorities",
 };
 
-function coverageBadgeVariant(status: string): "success" | "warning" | "secondary" {
+function coverageBadgeVariant(
+  status: string,
+): "success" | "warning" | "secondary" {
   switch (status) {
     case "FULL":
       return "success";
@@ -54,25 +66,33 @@ export default async function LocalAuthoritiesPage({
       <Alert variant="destructive">
         <AlertTitle>Invalid search</AlertTitle>
         <AlertDescription>
-          {error instanceof z.ZodError ? error.issues.map((issue) => issue.message).join(" ") : "Invalid search."}
+          {error instanceof z.ZodError
+            ? error.issues.map((issue) => issue.message).join(" ")
+            : "Invalid search."}
         </AlertDescription>
       </Alert>
     );
   }
 
-  const result = await safeQuery("local-authorities-search", () => searchLocalAuthorities(filters), {
-    items: [],
-    nextCursor: null,
-  });
+  const result = await safeQuery(
+    "local-authorities-search",
+    () => searchLocalAuthorities(filters),
+    {
+      items: [],
+      nextCursor: null,
+    },
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Local authorities</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Local authorities
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Catchment coverage varies by local authority. Only authorities with a verified, licensed
-          boundary source show mapped priority areas; the rest show as not available rather than a
-          guess.
+          Catchment coverage varies by local authority. Only authorities with a
+          verified, licensed boundary source show mapped priority areas; the
+          rest show as not available rather than a guess.
         </p>
       </div>
 
@@ -81,7 +101,12 @@ export default async function LocalAuthoritiesPage({
           <label htmlFor="q" className="text-sm font-medium">
             Local authority name
           </label>
-          <Input id="q" name="q" defaultValue={filters.q ?? ""} placeholder="e.g. Sheffield" />
+          <Input
+            id="q"
+            name="q"
+            defaultValue={filters.q ?? ""}
+            placeholder="e.g. Sheffield"
+          />
         </div>
         <Button type="submit">Search</Button>
       </form>
@@ -89,7 +114,9 @@ export default async function LocalAuthoritiesPage({
       {!result.ok && (
         <Alert variant="warning">
           <AlertTitle>Search temporarily unavailable</AlertTitle>
-          <AlertDescription>We could not reach the database. Please try again shortly.</AlertDescription>
+          <AlertDescription>
+            We could not reach the database. Please try again shortly.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -113,7 +140,9 @@ export default async function LocalAuthoritiesPage({
                   </Link>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={coverageBadgeVariant(item.catchmentCoverageStatus)}>
+                  <Badge
+                    variant={coverageBadgeVariant(item.catchmentCoverageStatus)}
+                  >
                     {coverageLabel(item.catchmentCoverageStatus)}
                   </Badge>
                 </TableCell>

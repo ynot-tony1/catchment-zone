@@ -43,20 +43,20 @@ deployment flow) are in `docs/architecture.md` and `docs/database.md`.
 
 ## Features
 
-* School search with URN, name, postcode, local authority, phase,
+- School search with URN, name, postcode, local authority, phase,
   establishment type, trust, and more, kept in the URL, keyset paginated
-* School detail pages showing every field GIAS publishes, plus statistics
+- School detail pages showing every field GIAS publishes, plus statistics
   with their definitions, academic years, and suppression status
-* Academy trust and local authority explorers, without an opaque composite
+- Academy trust and local authority explorers, without an opaque composite
   ranking
-* An admissions and catchments explorer returning one of a fixed, honest set
+- An admissions and catchments explorer returning one of a fixed, honest set
   of statuses (never "eligible" or "guaranteed"), backed by real
   point-in-polygon geometry checks against officially published boundaries
-* A MapLibre GL map with clustering, viewport-based queries, and an
+- A MapLibre GL map with clustering, viewport-based queries, and an
   accessible list-view alternative
-* A methodology page explaining every source, limitation, and why there is
+- A methodology page explaining every source, limitation, and why there is
   no overall school score
-* A `/status` page reporting data freshness without exposing infrastructure
+- A `/status` page reporting data freshness without exposing infrastructure
   detail
 
 ## Technology stack
@@ -148,16 +148,16 @@ before any larger import proceeds. See `docs/operations.md`.
 
 ## Known limitations
 
-* Catchment coverage is one pilot local authority, not national.
-* Historical offer data, where present, is illustrative context only, not a
+- Catchment coverage is one pilot local authority, not national.
+- Historical offer data, where present, is illustrative context only, not a
   predictor.
-* No user accounts or saved searches in this MVP.
+- No user accounts or saved searches in this MVP.
 
 ## Roadmap
 
-* Expand catchment source coverage local authority by local authority.
-* Add more EES publications (key stage outcomes, destinations).
-* Optional saved-preference feature with explicit consent, if ever added,
+- Expand catchment source coverage local authority by local authority.
+- Add more EES publications (key stage outcomes, destinations).
+- Optional saved-preference feature with explicit consent, if ever added,
   keeping the no-stored-address rule for anonymous use intact.
 
 ## License

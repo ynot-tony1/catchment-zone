@@ -12,7 +12,11 @@ export const metadata: Metadata = {
     "Search and compare English schools, academy trusts, local authorities and published admissions catchment areas, using official government data.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en-GB">
       <body className="min-h-screen antialiased">

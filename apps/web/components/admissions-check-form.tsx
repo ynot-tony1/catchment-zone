@@ -12,13 +12,20 @@ import { Label } from "@/components/ui/label";
 const STATUS_LABEL: Record<CatchmentCheckResult["status"], string> = {
   INSIDE_OFFICIAL_PRIORITY_AREA: "Inside the published priority area",
   OUTSIDE_OFFICIAL_PRIORITY_AREA: "Outside the published priority area",
-  NO_FIXED_CATCHMENT_USED: "This admission authority does not use a fixed catchment",
-  OFFICIAL_BOUNDARY_NOT_AVAILABLE: "No official catchment boundary is available for this area",
-  POSTCODE_RESULT_NEAR_BOUNDARY: "Too close to the boundary for a reliable postcode-level result",
-  ACADEMIC_YEAR_NOT_AVAILABLE: "No catchment data is available for the selected academic year",
+  NO_FIXED_CATCHMENT_USED:
+    "This admission authority does not use a fixed catchment",
+  OFFICIAL_BOUNDARY_NOT_AVAILABLE:
+    "No official catchment boundary is available for this area",
+  POSTCODE_RESULT_NEAR_BOUNDARY:
+    "Too close to the boundary for a reliable postcode-level result",
+  ACADEMIC_YEAR_NOT_AVAILABLE:
+    "No catchment data is available for the selected academic year",
 };
 
-const STATUS_VARIANT: Record<CatchmentCheckResult["status"], "success" | "warning" | "secondary"> = {
+const STATUS_VARIANT: Record<
+  CatchmentCheckResult["status"],
+  "success" | "warning" | "secondary"
+> = {
   INSIDE_OFFICIAL_PRIORITY_AREA: "success",
   OUTSIDE_OFFICIAL_PRIORITY_AREA: "secondary",
   NO_FIXED_CATCHMENT_USED: "secondary",
@@ -49,18 +56,27 @@ export function AdmissionsCheckForm() {
       });
       const body = await response.json();
       if (!response.ok) {
-        setState({ status: "error", message: body.error?.message ?? "Something went wrong." });
+        setState({
+          status: "error",
+          message: body.error?.message ?? "Something went wrong.",
+        });
         return;
       }
       setState({ status: "success", result: body as CatchmentCheckResult });
     } catch {
-      setState({ status: "error", message: "Could not reach the server. Please try again." });
+      setState({
+        status: "error",
+        message: "Could not reach the server. Please try again.",
+      });
     }
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-3 sm:items-end">
+      <form
+        onSubmit={handleSubmit}
+        className="grid gap-4 sm:grid-cols-3 sm:items-end"
+      >
         <div>
           <Label htmlFor="postcode">Postcode</Label>
           <Input
@@ -78,7 +94,9 @@ export function AdmissionsCheckForm() {
             id="phase"
             name="phase"
             value={phase}
-            onChange={(event) => setPhase(event.target.value as "primary" | "secondary")}
+            onChange={(event) =>
+              setPhase(event.target.value as "primary" | "secondary")
+            }
             className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
           >
             <option value="primary">Primary</option>
@@ -99,9 +117,17 @@ export function AdmissionsCheckForm() {
 
       {state.status === "success" && (
         <div className="flex flex-col gap-4">
-          <Alert variant={STATUS_VARIANT[state.result.status] === "success" ? "success" : "default"}>
+          <Alert
+            variant={
+              STATUS_VARIANT[state.result.status] === "success"
+                ? "success"
+                : "default"
+            }
+          >
             <AlertTitle>
-              <Badge variant={STATUS_VARIANT[state.result.status]}>{STATUS_LABEL[state.result.status]}</Badge>
+              <Badge variant={STATUS_VARIANT[state.result.status]}>
+                {STATUS_LABEL[state.result.status]}
+              </Badge>
             </AlertTitle>
             <AlertDescription>
               {state.result.localAuthorityName
@@ -113,7 +139,9 @@ export function AdmissionsCheckForm() {
           {state.result.nearBoundaryWarning && (
             <Alert variant="warning">
               <AlertTitle>Near the boundary</AlertTitle>
-              <AlertDescription>{state.result.nearBoundaryWarning}</AlertDescription>
+              <AlertDescription>
+                {state.result.nearBoundaryWarning}
+              </AlertDescription>
             </Alert>
           )}
 
@@ -124,7 +152,10 @@ export function AdmissionsCheckForm() {
                 <ul className="mt-2 list-inside list-disc">
                   {state.result.servedSchools.map((school) => (
                     <li key={school.urn}>
-                      <Link href={`/schools/${school.urn}`} className="text-primary underline underline-offset-2">
+                      <Link
+                        href={`/schools/${school.urn}`}
+                        className="text-primary underline underline-offset-2"
+                      >
                         {school.schoolName}
                       </Link>
                     </li>

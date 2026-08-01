@@ -21,14 +21,14 @@ flowchart TD
 
 ## Why this split
 
-* **GitHub Actions** owns anything that has to run on a schedule or be
+- **GitHub Actions** owns anything that has to run on a schedule or be
   triggered manually with an audit trail: ingestion, migrations, CI. GitHub
   secrets hold the two privileged database credentials (`INGEST_DATABASE_URL`,
   `MIGRATION_DATABASE_URL`) that the browser must never see.
-* **CockroachDB Cloud** is the single production datastore. The browser never
+- **CockroachDB Cloud** is the single production datastore. The browser never
   talks to it directly; every read goes through a Next.js Node.js runtime
   route handler or server component using the least-privilege `DATABASE_URL`.
-* **Vercel** owns the application runtime: server rendering, API routes,
+- **Vercel** owns the application runtime: server rendering, API routes,
   preview deployments per pull request, and production deployments on merge
   to `main`. Vercel only ever holds the low-privilege application connection
   string, never the migration or ingestion credentials.

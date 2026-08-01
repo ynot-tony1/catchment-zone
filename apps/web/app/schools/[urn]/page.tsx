@@ -5,8 +5,19 @@ import { getMetricDefinition } from "@schoolscope/shared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDate, formatMetricValue, formatSchoolStatus } from "@/lib/format";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  formatDate,
+  formatMetricValue,
+  formatSchoolStatus,
+} from "@/lib/format";
 import { getPrismaClient } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 
@@ -30,7 +41,11 @@ export async function generateMetadata({
   params: Promise<{ urn: string }>;
 }): Promise<Metadata> {
   const { urn } = await params;
-  const result = await safeQuery("school-detail-metadata", () => getSchool(urn), null);
+  const result = await safeQuery(
+    "school-detail-metadata",
+    () => getSchool(urn),
+    null,
+  );
   if (!result.ok || !result.data) return { title: "School" };
   return { title: result.data.schoolName };
 }
@@ -47,7 +62,9 @@ export default async function SchoolDetailPage({
     return (
       <Alert variant="warning">
         <AlertTitle>School details temporarily unavailable</AlertTitle>
-        <AlertDescription>We could not reach the database. Please try again shortly.</AlertDescription>
+        <AlertDescription>
+          We could not reach the database. Please try again shortly.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -55,9 +72,13 @@ export default async function SchoolDetailPage({
   const school = result.data;
   if (!school) notFound();
 
-  const latestMetricsByCode = new Map<string, (typeof school.metrics)[number]>();
+  const latestMetricsByCode = new Map<
+    string,
+    (typeof school.metrics)[number]
+  >();
   for (const metric of school.metrics) {
-    if (!latestMetricsByCode.has(metric.metricCode)) latestMetricsByCode.set(metric.metricCode, metric);
+    if (!latestMetricsByCode.has(metric.metricCode))
+      latestMetricsByCode.set(metric.metricCode, metric);
   }
 
   return (
@@ -70,13 +91,16 @@ export default async function SchoolDetailPage({
           / {school.schoolName}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{school.schoolName}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {school.schoolName}
+          </h1>
           <Badge variant={school.status === "OPEN" ? "success" : "secondary"}>
             {formatSchoolStatus(school.status)}
           </Badge>
         </div>
         <p className="text-muted-foreground mt-1 text-sm">
-          {school.establishmentTypeName} &middot; {school.phaseName} &middot; URN {school.urn}
+          {school.establishmentTypeName} &middot; {school.phaseName} &middot;
+          URN {school.urn}
         </p>
       </div>
 
@@ -87,13 +111,22 @@ export default async function SchoolDetailPage({
           </CardHeader>
           <CardContent className="grid gap-2 text-sm">
             <DetailRow label="Address">
-              {[school.street, school.locality, school.town, school.county, school.postcode]
+              {[
+                school.street,
+                school.locality,
+                school.town,
+                school.county,
+                school.postcode,
+              ]
                 .filter(Boolean)
                 .join(", ") || "Not available"}
             </DetailRow>
             <DetailRow label="Local authority">
               {school.localAuthority ? (
-                <Link href={`/local-authorities/${school.localAuthority.code}`} className="text-primary underline underline-offset-2">
+                <Link
+                  href={`/local-authorities/${school.localAuthority.code}`}
+                  className="text-primary underline underline-offset-2"
+                >
                   {school.localAuthority.name}
                 </Link>
               ) : (
@@ -102,7 +135,10 @@ export default async function SchoolDetailPage({
             </DetailRow>
             <DetailRow label="Academy trust">
               {school.trust ? (
-                <Link href={`/trusts/${school.trust.trustId}`} className="text-primary underline underline-offset-2">
+                <Link
+                  href={`/trusts/${school.trust.trustId}`}
+                  className="text-primary underline underline-offset-2"
+                >
                   {school.trust.trustName}
                 </Link>
               ) : (
@@ -114,14 +150,28 @@ export default async function SchoolDetailPage({
                 ? `${school.minimumAge} to ${school.maximumAge}`
                 : "Not available"}
             </DetailRow>
-            <DetailRow label="Gender">{school.gender ?? "Not available"}</DetailRow>
-            <DetailRow label="Religious character">{school.religiousCharacter ?? "None"}</DetailRow>
-            <DetailRow label="Capacity">{school.capacity ?? "Not available"}</DetailRow>
-            <DetailRow label="Number on roll">{school.numberOfPupils ?? "Not available"}</DetailRow>
-            <DetailRow label="Opening date">{formatDate(school.openingDate)}</DetailRow>
+            <DetailRow label="Gender">
+              {school.gender ?? "Not available"}
+            </DetailRow>
+            <DetailRow label="Religious character">
+              {school.religiousCharacter ?? "None"}
+            </DetailRow>
+            <DetailRow label="Capacity">
+              {school.capacity ?? "Not available"}
+            </DetailRow>
+            <DetailRow label="Number on roll">
+              {school.numberOfPupils ?? "Not available"}
+            </DetailRow>
+            <DetailRow label="Opening date">
+              {formatDate(school.openingDate)}
+            </DetailRow>
             <DetailRow label="Website">
               {school.website ? (
-                <a href={school.website} className="text-primary underline underline-offset-2" rel="noreferrer">
+                <a
+                  href={school.website}
+                  className="text-primary underline underline-offset-2"
+                  rel="noreferrer"
+                >
                   {school.website}
                 </a>
               ) : (
@@ -154,11 +204,16 @@ export default async function SchoolDetailPage({
                     const definition = getMetricDefinition(metric.metricCode);
                     return (
                       <TableRow key={metric.id}>
-                        <TableCell>{definition?.label ?? metric.metricCode}</TableCell>
+                        <TableCell>
+                          {definition?.label ?? metric.metricCode}
+                        </TableCell>
                         <TableCell>
                           {metric.suppressed
                             ? "Suppressed (small cohort)"
-                            : formatMetricValue(metric.valueNumeric, definition)}
+                            : formatMetricValue(
+                                metric.valueNumeric,
+                                definition,
+                              )}
                           {metric.provisional && (
                             <Badge variant="outline" className="ml-2">
                               Provisional
@@ -179,7 +234,13 @@ export default async function SchoolDetailPage({
   );
 }
 
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="text-muted-foreground text-xs">{label}</dt>

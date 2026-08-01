@@ -34,11 +34,15 @@ export type GeocodeResult = {
  * postcode. Returns null if the postcode is not found. Throws only for an
  * unexpected upstream failure (network error, non-404 error status),
  * which callers should translate into a safe 503-style error response. */
-export async function geocodePostcode(rawPostcode: string): Promise<GeocodeResult | null> {
+export async function geocodePostcode(
+  rawPostcode: string,
+): Promise<GeocodeResult | null> {
   const normalised = normalisePostcode(rawPostcode);
   const prisma = getPrismaClient();
 
-  const cached = await prisma.postcodeCache.findUnique({ where: { normalisedPostcode: normalised } });
+  const cached = await prisma.postcodeCache.findUnique({
+    where: { normalisedPostcode: normalised },
+  });
   if (cached && cached.expiresAt > new Date()) {
     return {
       lat: cached.latitude,
@@ -54,9 +58,12 @@ export async function geocodePostcode(rawPostcode: string): Promise<GeocodeResul
     throw new Error(`Unsupported POSTCODE_GEOCODER: ${env.POSTCODE_GEOCODER}`);
   }
 
-  const response = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(normalised)}`, {
-    headers: { Accept: "application/json" },
-  });
+  const response = await fetch(
+    `https://api.postcodes.io/postcodes/${encodeURIComponent(normalised)}`,
+    {
+      headers: { Accept: "application/json" },
+    },
+  );
 
   if (response.status === 404) {
     return null;
@@ -66,12 +73,18 @@ export async function geocodePostcode(rawPostcode: string): Promise<GeocodeResul
   }
 
   const body = (await response.json()) as {
-    result?: { latitude: number; longitude: number; codes?: { admin_district?: string } };
+    result?: {
+      latitude: number;
+      longitude: number;
+      codes?: { admin_district?: string };
+    };
   };
   if (!body.result) return null;
 
   const onsCode = body.result.codes?.admin_district;
-  const localAuthorityCode = onsCode ? (ONS_TO_DFE_LA_CODE[onsCode] ?? null) : null;
+  const localAuthorityCode = onsCode
+    ? (ONS_TO_DFE_LA_CODE[onsCode] ?? null)
+    : null;
 
   const result: GeocodeResult = {
     lat: body.result.latitude,

@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SCHOOL_STATUS_VALUES, parseSchoolSearchParams, type RawSearchParams } from "@schoolscope/shared";
+import {
+  SCHOOL_STATUS_VALUES,
+  parseSchoolSearchParams,
+  type RawSearchParams,
+} from "@schoolscope/shared";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatSchoolStatus, formatDistanceMetres } from "@/lib/format";
 import { searchSchools } from "@/lib/queries/schools";
 import { safeQuery } from "@/lib/safe-query";
@@ -15,7 +26,9 @@ export const metadata: Metadata = {
   title: "Search schools",
 };
 
-function statusBadgeVariant(status: string): "success" | "warning" | "destructive" | "secondary" {
+function statusBadgeVariant(
+  status: string,
+): "success" | "warning" | "destructive" | "secondary" {
   switch (status) {
     case "OPEN":
       return "success";
@@ -54,15 +67,21 @@ export default async function SchoolsPage({
     );
   }
 
-  const result = await safeQuery("schools-search", () => searchSchools(filters), {
-    items: [],
-    nextCursor: null,
-  });
+  const result = await safeQuery(
+    "schools-search",
+    () => searchSchools(filters),
+    {
+      items: [],
+      nextCursor: null,
+    },
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Search schools</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Search schools
+        </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Filter open schools by name, location, phase and admissions type.
         </p>
@@ -73,13 +92,23 @@ export default async function SchoolsPage({
           <label htmlFor="q" className="text-sm font-medium">
             School name
           </label>
-          <Input id="q" name="q" defaultValue={filters.q ?? ""} placeholder="e.g. Park View Academy" />
+          <Input
+            id="q"
+            name="q"
+            defaultValue={filters.q ?? ""}
+            placeholder="e.g. Park View Academy"
+          />
         </div>
         <div>
           <label htmlFor="postcode" className="text-sm font-medium">
             Postcode
           </label>
-          <Input id="postcode" name="postcode" defaultValue={filters.postcode ?? ""} placeholder="e.g. S1" />
+          <Input
+            id="postcode"
+            name="postcode"
+            defaultValue={filters.postcode ?? ""}
+            placeholder="e.g. S1"
+          />
         </div>
         <div>
           <label htmlFor="status" className="text-sm font-medium">
@@ -107,7 +136,8 @@ export default async function SchoolsPage({
         <Alert variant="warning">
           <AlertTitle>Search temporarily unavailable</AlertTitle>
           <AlertDescription>
-            We could not reach the database for this search. Please try again shortly.
+            We could not reach the database for this search. Please try again
+            shortly.
           </AlertDescription>
         </Alert>
       )}
@@ -115,7 +145,10 @@ export default async function SchoolsPage({
       {result.ok && result.data.items.length === 0 && (
         <Alert>
           <AlertTitle>No schools found</AlertTitle>
-          <AlertDescription>Try widening your search, for example by clearing the postcode filter.</AlertDescription>
+          <AlertDescription>
+            Try widening your search, for example by clearing the postcode
+            filter.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -134,18 +167,31 @@ export default async function SchoolsPage({
             {result.data.items.map((item) => (
               <TableRow key={item.urn}>
                 <TableCell>
-                  <Link href={`/schools/${item.urn}`} className="text-primary font-medium underline underline-offset-2">
+                  <Link
+                    href={`/schools/${item.urn}`}
+                    className="text-primary font-medium underline underline-offset-2"
+                  >
                     {item.schoolName}
                   </Link>
-                  <div className="text-muted-foreground text-xs">{item.town ?? item.postcode ?? ""}</div>
+                  <div className="text-muted-foreground text-xs">
+                    {item.town ?? item.postcode ?? ""}
+                  </div>
                 </TableCell>
                 <TableCell>{item.phaseName}</TableCell>
-                <TableCell>{item.localAuthorityName ?? "Not available"}</TableCell>
                 <TableCell>
-                  <Badge variant={statusBadgeVariant(item.status)}>{formatSchoolStatus(item.status)}</Badge>
+                  {item.localAuthorityName ?? "Not available"}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={statusBadgeVariant(item.status)}>
+                    {formatSchoolStatus(item.status)}
+                  </Badge>
                 </TableCell>
                 {filters.sort === "distance" && (
-                  <TableCell>{item.distanceKm !== null ? formatDistanceMetres(item.distanceKm * 1000) : "Not available"}</TableCell>
+                  <TableCell>
+                    {item.distanceKm !== null
+                      ? formatDistanceMetres(item.distanceKm * 1000)
+                      : "Not available"}
+                  </TableCell>
                 )}
               </TableRow>
             ))}

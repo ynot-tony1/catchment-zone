@@ -17,12 +17,22 @@ type SchoolFeatureProperties = {
   status: string;
 };
 
-const ENGLAND_BOUNDS: [number, number, number, number] = [-6.5, 49.8, 2.1, 55.9];
+const ENGLAND_BOUNDS: [number, number, number, number] = [
+  -6.5, 49.8, 2.1, 55.9,
+];
 
-export function SchoolMap({ styleUrl, attribution }: { styleUrl: string; attribution: string }) {
+export function SchoolMap({
+  styleUrl,
+  attribution,
+}: {
+  styleUrl: string;
+  attribution: string;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const [selected, setSelected] = useState<SchoolFeatureProperties | null>(null);
+  const [selected, setSelected] = useState<SchoolFeatureProperties | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,11 +89,17 @@ export function SchoolMap({ styleUrl, attribution }: { styleUrl: string; attribu
 
   return (
     <div className="flex flex-col gap-2">
-      <div ref={containerRef} className="border-border h-[70vh] w-full rounded-lg border" />
+      <div
+        ref={containerRef}
+        className="border-border h-[70vh] w-full rounded-lg border"
+      />
       {error && <p className="text-destructive text-sm">{error}</p>}
       {selected && (
         <div className="border-border rounded-md border p-3 text-sm">
-          <Link href={`/schools/${selected.urn}`} className="text-primary font-medium underline underline-offset-2">
+          <Link
+            href={`/schools/${selected.urn}`}
+            className="text-primary font-medium underline underline-offset-2"
+          >
             {selected.schoolName}
           </Link>
           <p className="text-muted-foreground">
@@ -95,12 +111,22 @@ export function SchoolMap({ styleUrl, attribution }: { styleUrl: string; attribu
   );
 }
 
-async function loadSchoolsInView(map: MapLibreMap, setError: (message: string | null) => void) {
+async function loadSchoolsInView(
+  map: MapLibreMap,
+  setError: (message: string | null) => void,
+) {
   const bounds = map.getBounds();
-  const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(",");
+  const bbox = [
+    bounds.getWest(),
+    bounds.getSouth(),
+    bounds.getEast(),
+    bounds.getNorth(),
+  ].join(",");
 
   try {
-    const response = await fetch(`/api/map/schools?bbox=${encodeURIComponent(bbox)}`);
+    const response = await fetch(
+      `/api/map/schools?bbox=${encodeURIComponent(bbox)}`,
+    );
     if (!response.ok) {
       setError("Could not load schools for this area.");
       return;

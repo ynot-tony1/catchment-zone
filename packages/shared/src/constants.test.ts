@@ -31,7 +31,9 @@ describe("disclaimer copy", () => {
   it("the disclaimer text does not itself contain a forbidden word", () => {
     for (const forbidden of FORBIDDEN_ADMISSIONS_WORDS) {
       expect(CATCHMENT_DISCLAIMER_TEXT.toUpperCase()).not.toContain(forbidden);
-      expect(CATCHMENT_NEAR_BOUNDARY_TEXT.toUpperCase()).not.toContain(forbidden);
+      expect(CATCHMENT_NEAR_BOUNDARY_TEXT.toUpperCase()).not.toContain(
+        forbidden,
+      );
     }
   });
 
@@ -40,7 +42,10 @@ describe("disclaimer copy", () => {
   });
 
   it("uses no em dash or double-hyphen punctuation", () => {
-    for (const text of [CATCHMENT_DISCLAIMER_TEXT, CATCHMENT_NEAR_BOUNDARY_TEXT]) {
+    for (const text of [
+      CATCHMENT_DISCLAIMER_TEXT,
+      CATCHMENT_NEAR_BOUNDARY_TEXT,
+    ]) {
       expect(text).not.toContain("—");
       expect(text).not.toContain("--");
     }

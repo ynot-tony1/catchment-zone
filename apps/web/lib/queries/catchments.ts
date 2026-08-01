@@ -9,7 +9,11 @@ import {
 } from "@schoolscope/shared";
 import { geocodePostcode } from "@/lib/geocoder";
 import { getServerEnv } from "@/lib/env";
-import { distanceToBoundaryMetres, isPointInGeometry, parseCatchmentGeometry } from "@/lib/geo";
+import {
+  distanceToBoundaryMetres,
+  isPointInGeometry,
+  parseCatchmentGeometry,
+} from "@/lib/geo";
 import { getPrismaClient } from "@/lib/prisma";
 
 const PHASE_TO_SOURCE_TYPE: Record<"primary" | "secondary", string> = {
@@ -37,7 +41,9 @@ export type CatchmentCheckOutcome =
  * CatchmentCheckStatus values; there is deliberately no path that can
  * report a guaranteed or eligible outcome.
  */
-export async function checkCatchmentPoint(request: CatchmentCheckRequest): Promise<CatchmentCheckOutcome> {
+export async function checkCatchmentPoint(
+  request: CatchmentCheckRequest,
+): Promise<CatchmentCheckOutcome> {
   let point: { lat: number; lon: number };
   let fromPostcode = false;
   let localAuthorityCode = request.localAuthorityCode ?? null;
@@ -73,7 +79,9 @@ export async function checkCatchmentPoint(request: CatchmentCheckRequest): Promi
     localAuthorityName,
   };
 
-  const notAvailable = (status: CatchmentCheckStatus): CatchmentCheckOutcome => ({
+  const notAvailable = (
+    status: CatchmentCheckStatus,
+  ): CatchmentCheckOutcome => ({
     ok: true,
     result: {
       ...base,
@@ -105,7 +113,11 @@ export async function checkCatchmentPoint(request: CatchmentCheckRequest): Promi
       minimumLongitude: { lte: point.lon },
       maximumLongitude: { gte: point.lon },
     },
-    include: { schools: { include: { school: { select: { urn: true, schoolName: true } } } } },
+    include: {
+      schools: {
+        include: { school: { select: { urn: true, schoolName: true } } },
+      },
+    },
   });
 
   let matched: (typeof candidateAreas)[number] | null = null;
@@ -115,13 +127,20 @@ export async function checkCatchmentPoint(request: CatchmentCheckRequest): Promi
     if (!geometry) continue;
     if (isPointInGeometry(point.lat, point.lon, geometry)) {
       matched = area;
-      boundaryDistanceMetres = distanceToBoundaryMetres(point.lat, point.lon, geometry);
+      boundaryDistanceMetres = distanceToBoundaryMetres(
+        point.lat,
+        point.lon,
+        geometry,
+      );
       break;
     }
   }
 
   const warningMetres = getServerEnv().CATCHMENT_BOUNDARY_WARNING_METRES;
-  const isNearBoundary = fromPostcode && boundaryDistanceMetres !== null && boundaryDistanceMetres < warningMetres;
+  const isNearBoundary =
+    fromPostcode &&
+    boundaryDistanceMetres !== null &&
+    boundaryDistanceMetres < warningMetres;
 
   const status: CatchmentCheckStatus = matched
     ? isNearBoundary
@@ -135,9 +154,18 @@ export async function checkCatchmentPoint(request: CatchmentCheckRequest): Promi
       ...base,
       status,
       nearBoundaryWarning: isNearBoundary ? CATCHMENT_NEAR_BOUNDARY_TEXT : null,
-      matchedArea: matched ? { id: matched.id, areaName: matched.areaName, areaType: matched.areaType } : null,
+      matchedArea: matched
+        ? {
+            id: matched.id,
+            areaName: matched.areaName,
+            areaType: matched.areaType,
+          }
+        : null,
       servedSchools: matched
-        ? matched.schools.map((link) => ({ urn: link.school.urn, schoolName: link.school.schoolName }))
+        ? matched.schools.map((link) => ({
+            urn: link.school.urn,
+            schoolName: link.school.schoolName,
+          }))
         : [],
       distanceToBoundaryMetres: boundaryDistanceMetres,
     },

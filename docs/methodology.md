@@ -15,12 +15,12 @@ weighting.
 
 ## Suppression, provisional, and comparability
 
-* **Suppressed** values are withheld by the source, typically to protect
+- **Suppressed** values are withheld by the source, typically to protect
   small cohorts from identification. A suppressed value is not a zero and is
   never displayed as one.
-* **Provisional** values may be revised in a later release. The UI marks
+- **Provisional** values may be revised in a later release. The UI marks
   provisional figures as such.
-* Metrics are never compared across academic years or across incompatible
+- Metrics are never compared across academic years or across incompatible
   definitions without a visible warning; see `config/metric-definitions.yml`
   for the comparability note attached to each metric code.
 

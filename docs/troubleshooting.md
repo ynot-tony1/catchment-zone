@@ -2,13 +2,13 @@
 
 ## `prisma migrate deploy` fails in the migration workflow
 
-* Confirm `MIGRATION_DATABASE_URL` is set as a GitHub secret and hasn't
+- Confirm `MIGRATION_DATABASE_URL` is set as a GitHub secret and hasn't
   expired or been rotated on the CockroachDB side without updating the
   secret.
-* Run `prisma migrate status` (the workflow does this first, before deploy)
+- Run `prisma migrate status` (the workflow does this first, before deploy)
   to see whether the drift is a pending migration or a genuinely diverged
   schema.
-* Never resolve a stuck migration with a production reset. Write a new
+- Never resolve a stuck migration with a production reset. Write a new
   forward migration instead.
 
 ## `next build` fails on Prisma client generation

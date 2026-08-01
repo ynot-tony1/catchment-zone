@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { BboxQuerySchema, decodeCursor, encodeCursor, firstValue, splitCsv } from "./common";
+import {
+  BboxQuerySchema,
+  decodeCursor,
+  encodeCursor,
+  firstValue,
+  splitCsv,
+} from "./common";
 
 describe("firstValue", () => {
   it("returns the value unchanged for a single string", () => {
