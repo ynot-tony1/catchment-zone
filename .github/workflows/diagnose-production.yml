@@ -1,0 +1,27 @@
+name: Diagnose production database
+
+# Temporary, read-only diagnostic workflow used while recovering from a
+# partially-applied migration. Prints table names and migration tracking
+# rows to the Actions log; never prints MIGRATION_DATABASE_URL itself.
+# Remove this file once the migration issue it was added to debug is
+# resolved, it is not part of the normal operational workflow set.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Show tables
+        run: psql "$DATABASE_URL" -c "SHOW TABLES;"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      - name: Show migration tracking rows
+        run: psql "$DATABASE_URL" -c "SELECT id, migration_name, started_at, finished_at, applied_steps_count, logs FROM _prisma_migrations;" || echo "_prisma_migrations does not exist or is empty"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
