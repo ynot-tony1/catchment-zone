@@ -334,6 +334,24 @@ CREATE INDEX "postcode_cache_expires_at_idx" ON "postcode_cache"("expires_at");
 -- CreateIndex
 CREATE INDEX "ingestion_runs_source_started_at_idx" ON "ingestion_runs"("source", "started_at");
 
+-- UnlockTables
+-- CockroachDB Cloud locks newly created tables by default (schema_locked)
+-- for changefeed performance, which blocks the ADD CONSTRAINT statements
+-- below. This project does not use changefeeds, so tables are left
+-- unlocked rather than re-locked after.
+ALTER TABLE "schools" SET (schema_locked = false);
+ALTER TABLE "academy_trusts" SET (schema_locked = false);
+ALTER TABLE "school_relationships" SET (schema_locked = false);
+ALTER TABLE "local_authorities" SET (schema_locked = false);
+ALTER TABLE "school_metrics" SET (schema_locked = false);
+ALTER TABLE "catchment_sources" SET (schema_locked = false);
+ALTER TABLE "catchment_areas" SET (schema_locked = false);
+ALTER TABLE "school_catchment_areas" SET (schema_locked = false);
+ALTER TABLE "admission_arrangements" SET (schema_locked = false);
+ALTER TABLE "historical_offers" SET (schema_locked = false);
+ALTER TABLE "postcode_cache" SET (schema_locked = false);
+ALTER TABLE "ingestion_runs" SET (schema_locked = false);
+
 -- AddForeignKey
 ALTER TABLE "schools" ADD CONSTRAINT "schools_local_authority_code_fkey" FOREIGN KEY ("local_authority_code") REFERENCES "local_authorities"("code") ON DELETE SET NULL ON UPDATE CASCADE;
 
