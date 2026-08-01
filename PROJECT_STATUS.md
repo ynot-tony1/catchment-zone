@@ -17,9 +17,54 @@ disk, not what is intended.
   (ran `prettier --write` for the first time, added `.prettierignore` for
   the lockfile/generated output/a test fixture).
 - **Vercel project linked**: `vercel link` created and linked
-  `tony-f5c4/schoolscope-england` for `apps/web`. No environment variables
-  are set yet and no deployment has been verified; that needs
-  `DATABASE_URL`, which depends on the CockroachDB bootstrap below.
+  `tony-f5c4/schoolscope-england` for `apps/web`.
+- **`aqua-roach` bootstrapped and migrated for real.**
+  `scripts/bootstrap-cockroachdb.sh` was run against the live cluster:
+  `school_intelligence` created, three least-privilege users created
+  (`school_migrator`, `school_ingestor`, `school_app`) with the grants
+  from `docs/database.md`, `MIGRATION_DATABASE_URL`/
+  `INGEST_DATABASE_URL` written to GitHub secrets, `DATABASE_URL` written
+  to Vercel (Production and Preview). Found and fixed two real bugs in
+  the script in the process: `CREATE USER IF NOT EXISTS` silently skips
+  the password clause on an already-existing user, breaking re-runs
+  (fixed with an unconditional `ALTER USER ... WITH PASSWORD` after); and
+  the Vercel commands ran from the repo root instead of `apps/web`, where
+  the actual project link lives (fixed with `--cwd`).
+
+  The `migrate-production` workflow then took several real attempts to
+  get right, each a genuine bug caught by actually running it against
+  production, not something guessed in advance:
+  1. `prisma migrate status` exits 1 whenever migrations are pending,
+     which is the normal state before every deploy; the workflow treated
+     that as a hard failure and never reached the deploy step.
+  2. CockroachDB Cloud creates new tables with `schema_locked = true` by
+     default (a changefeed-performance feature this project does not
+     use), which blocks the `ADD CONSTRAINT` foreign-key statements
+     Prisma generates afterward.
+  3. The first fix attempt (`ALTER TABLE ... SET (schema_locked =
+     false)` right before the foreign keys) still failed intermittently:
+     that ALTER triggers an async CockroachDB schema-change job, and
+     Prisma's engine does not wait for it to finish before sending the
+     next statement, unlike `psql`. Fixed properly by setting
+     `schema_locked = false` directly in each `CREATE TABLE ... WITH
+     (...)` statement, so the table is never locked in the first place.
+  4. Recovering from the partially-applied migration needed a temporary,
+     explicitly-confirmed reset workflow (dropped the 12 tables, then
+     separately the 5 enum types, since `DROP TABLE` does not cascade to
+     types a column used, and CockroachDB does not implement `DROP TYPE
+     ... CASCADE` at all). Deleted once no longer needed.
+  Verified independently afterward via read-only queries: 13 tables
+  (12 plus `_prisma_migrations`), both foreign keys on `schools` present,
+  all indexes present, migration tracking row shows a clean success. The
+  `postcode_cache` grant to `school_app` that the bootstrap script had to
+  defer (the table did not exist yet) now runs as a permanent step in
+  `migrate-production.yml` after every deploy, using the least-privilege
+  `school_migrator` credential, not the admin one.
+
+  Every one of the diagnostic/recovery steps above ran through GitHub
+  Actions using the already-stored `MIGRATION_DATABASE_URL` secret; the
+  real database credentials were never read, held, or handled directly
+  in this session, only ever passed through as opaque secret references.
 
 - **Monorepo baseline is green.** `pnpm install`, `pnpm -r typecheck`,
   `pnpm -r lint`, `pnpm -r test`, and a real
@@ -83,17 +128,13 @@ disk, not what is intended.
 
 ## Unfinished
 
-- **No CockroachDB Cloud connection yet.**
-  `scripts/bootstrap-cockroachdb.sh` supports reading
-  `COCKROACH_BOOTSTRAP_URL` from a gitignored `.env.cockroach.local` file
-  at the repo root as well as a shell variable. Both prerequisites it
-  needs (a GitHub repo for `gh secret set`, a linked Vercel project for
-  `vercel env add`) now exist, so this is the actual next blocking step,
-  and it has to be run by the account owner in their own terminal, never
-  by an assistant, since it requires a real admin database credential.
-- **No GitHub secrets/variables, no migration applied to any real
-  database, no data imported, no production deployment.** All downstream
-  of the bootstrap step above.
+- **No Vercel deployment verified yet.** `DATABASE_URL` is set on Vercel
+  and the production schema exists, but no build/deploy has actually been
+  triggered or checked in this session.
+- **No data imported.** All 12 production tables exist and are empty.
+  `scripts/calibration-report.md` is still an unfilled template; do not
+  run a full national import before it is filled in from a real pilot
+  run.
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
@@ -108,18 +149,12 @@ None. Every test suite that was run passed: `packages/shared` (39),
 
 ## Exact next steps, in order
 
-1. **You** run `scripts/bootstrap-cockroachdb.sh` against the `aqua-roach`
-   cluster in your own terminal (see the script's own usage comment; it
-   reads `COCKROACH_BOOTSTRAP_URL` from `.env.cockroach.local` or a shell
-   variable, never from this chat). This writes `MIGRATION_DATABASE_URL`
-   and `INGEST_DATABASE_URL` to GitHub secrets and `DATABASE_URL` to
-   Vercel directly.
-2. Run the `migrate-production` GitHub Actions workflow manually.
-3. Verify a Vercel deployment now that `DATABASE_URL` is set.
-4. Run the bounded pilot import, fill in `scripts/calibration-report.md`
+1. Verify a Vercel deployment now that `DATABASE_URL` is set and the
+   production schema exists.
+2. Run the bounded pilot import, fill in `scripts/calibration-report.md`
    with real numbers, get explicit go-ahead before any larger import.
-5. Verify a real production deployment end-to-end against the acceptance
+3. Verify a real production deployment end-to-end against the acceptance
    criteria in the original spec.
-6. Optional polish once the above is live: catchment overlay toggle on
+4. Optional polish once the above is live: catchment overlay toggle on
    `/map`, Playwright e2e coverage for the golden paths (search a school,
    check a postcode, view the map).
