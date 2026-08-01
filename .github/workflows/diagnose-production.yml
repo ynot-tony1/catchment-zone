@@ -17,11 +17,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Show tables
-        run: psql "$DATABASE_URL" -c "SHOW TABLES;"
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW TABLES;"
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
       - name: Show migration tracking rows
-        run: psql "$DATABASE_URL" -c "SELECT id, migration_name, started_at, finished_at, applied_steps_count, logs FROM _prisma_migrations;" || echo "_prisma_migrations does not exist or is empty"
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SELECT id, migration_name, started_at, finished_at, applied_steps_count, logs FROM _prisma_migrations;" || echo "_prisma_migrations does not exist or is empty"
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
