@@ -1,17 +1,25 @@
 name: Diagnose production database
 
-# Temporary, read-only diagnostic workflow used while recovering from a
-# partially-applied migration. Prints table names and migration tracking
-# rows to the Actions log; never prints MIGRATION_DATABASE_URL itself.
-# Remove this file once the migration issue it was added to debug is
-# resolved, it is not part of the normal operational workflow set.
+# Temporary workflow used while recovering from a partially-applied
+# migration. The diagnose job is read-only. The reset job drops every
+# table it created and is gated behind a typed confirmation, same pattern
+# as migrate-production.yml, since it is destructive. Remove this file
+# once the migration issue it was added to debug is resolved; it is not
+# part of the normal operational workflow set.
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      reset_confirm:
+        description: 'Type "reset-production-schema" to drop every table this project created (safe only because none have any data yet)'
+        type: string
+        required: false
+        default: ""
 
 jobs:
   diagnose:
     runs-on: ubuntu-latest
+    if: github.event.inputs.reset_confirm != 'reset-production-schema'
     steps:
       - name: Install postgresql-client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -23,5 +31,39 @@ jobs:
 
       - name: Show migration tracking rows
         run: psql "${DATABASE_URL}&sslrootcert=system" -c "SELECT id, migration_name, started_at, finished_at, applied_steps_count, logs FROM _prisma_migrations;" || echo "_prisma_migrations does not exist or is empty"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+  reset:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.reset_confirm == 'reset-production-schema'
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Drop every table this project created
+        run: |
+          psql "${DATABASE_URL}&sslrootcert=system" -c "
+            DROP TABLE IF EXISTS
+              _prisma_migrations,
+              school_metrics,
+              school_relationships,
+              school_catchment_areas,
+              admission_arrangements,
+              historical_offers,
+              catchment_areas,
+              catchment_sources,
+              postcode_cache,
+              ingestion_runs,
+              schools,
+              academy_trusts,
+              local_authorities
+            CASCADE;
+          "
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      - name: Confirm empty
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW TABLES;"
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
