@@ -67,7 +67,10 @@ jobs:
         # DROP TABLE does not cascade to the enum types a dropped column
         # used, only to objects that depended on the table itself, so
         # these are left behind after the step above and block a clean
-        # re-apply of the CREATE TYPE statements.
+        # re-apply of the CREATE TYPE statements. CockroachDB does not
+        # implement DROP TYPE ... CASCADE at all; plain DROP TYPE is fine
+        # here since the tables that referenced these types are already
+        # gone by this point.
         run: |
           psql "${DATABASE_URL}&sslrootcert=system" -c "
             DROP TYPE IF EXISTS
@@ -75,8 +78,7 @@ jobs:
               \"RelationshipType\",
               \"CatchmentCoverageStatus\",
               \"CatchmentSourceStatus\",
-              \"IngestionStatus\"
-            CASCADE;
+              \"IngestionStatus\";
           "
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
