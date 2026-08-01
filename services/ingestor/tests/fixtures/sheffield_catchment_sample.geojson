@@ -1,0 +1,60 @@
+{
+  "type": "FeatureCollection",
+  "_fixture_notice": "Invented test fixture only. Coordinates sit within Sheffield's real bounding box for plausibility but do not represent any actual published catchment boundary.",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:EPSG::4326" }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "NAME": "Test Primary Catchment A (fixture)", "SOURCE_TYPE": "primary_catchment" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-1.48, 53.38],
+            [-1.46, 53.38],
+            [-1.46, 53.40],
+            [-1.48, 53.40],
+            [-1.48, 53.38]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NAME": "Test Primary Catchment B, with hole (fixture)", "SOURCE_TYPE": "primary_catchment" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-1.44, 53.41],
+            [-1.40, 53.41],
+            [-1.40, 53.44],
+            [-1.44, 53.44],
+            [-1.44, 53.41]
+          ],
+          [
+            [-1.435, 53.415],
+            [-1.425, 53.415],
+            [-1.425, 53.425],
+            [-1.435, 53.425],
+            [-1.435, 53.415]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "NAME": "Test Secondary Catchment C, malformed non-polygon row (fixture, invalid)", "SOURCE_TYPE": "secondary_catchment" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-1.52, 53.36],
+          [-1.50, 53.38]
+        ]
+      }
+    }
+  ]
+}

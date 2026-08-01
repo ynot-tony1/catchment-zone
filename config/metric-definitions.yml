@@ -1,0 +1,71 @@
+# Canonical metric definitions. SchoolMetric.metric_code must reference an
+# entry here. The ingestion service validates metric codes at import time and
+# the web app uses this file (via packages/shared) to render definitions,
+# denominators and comparability warnings next to every figure. This is the
+# single source of truth for "what does this number mean", so no metric may
+# be displayed anywhere without a matching entry.
+
+metrics:
+  capacity_total_places:
+    label: "Total school places"
+    description: "Total number of school places reported by the local authority for the site, excluding nursery places, as reported in the annual School Capacity (SCAP) survey."
+    denominator: "n/a (count)"
+    unit: "places"
+    phases: ["primary", "secondary", "all_through"]
+    comparability_notes: "A planning estimate, not a live pupil roll. Do not compare across academic years without checking for site expansion or amalgamation in the same period."
+
+  capacity_sixth_form_places:
+    label: "Sixth form places"
+    description: "Reported sixth form capacity from the SCAP survey."
+    denominator: "n/a (count)"
+    unit: "places"
+    phases: ["secondary", "all_through"]
+    comparability_notes: "Only applicable to schools with a sixth form; absence of a value does not mean zero."
+
+  overall_absence_rate:
+    label: "Overall absence rate"
+    description: "Percentage of possible sessions missed by pupils for any reason (authorised and unauthorised)."
+    denominator: "total possible sessions"
+    unit: "percent"
+    phases: ["primary", "secondary", "special"]
+    comparability_notes: "Not comparable across academic years affected by exceptional circumstances (e.g. periods of national disruption) without the DfE's own caveats. Termly figures are not directly comparable to full-year figures."
+
+  persistent_absence_rate:
+    label: "Persistent absence rate"
+    description: "Percentage of pupils whose overall absence was 10% or more of their possible sessions."
+    denominator: "number of pupils on roll for at least one session in the period"
+    unit: "percent"
+    phases: ["primary", "secondary", "special"]
+    comparability_notes: "Threshold-based measure; small cohort schools can show large year-on-year swings from a handful of pupils crossing the 10% line."
+
+  reason_for_absence:
+    label: "Reason for absence breakdown"
+    description: "Share of absence sessions attributed to specific authorised or unauthorised reason codes."
+    denominator: "total absence sessions"
+    unit: "percent"
+    phases: ["primary", "secondary", "special"]
+    comparability_notes: "Reason coding definitions have changed between DfE series revisions; check the source release notes before comparing years."
+
+  pupil_teacher_ratio:
+    label: "Pupil to teacher ratio"
+    description: "Number of pupils per full-time-equivalent (FTE) teacher, from the School Workforce Census."
+    denominator: "FTE teacher count"
+    unit: "ratio"
+    phases: ["primary", "secondary", "special"]
+    comparability_notes: "A whole-school ratio, not a class-size figure. Census is a November point-in-time snapshot."
+
+  fte_teachers:
+    label: "Full-time equivalent teachers"
+    description: "FTE count of teachers in service at the school, from the School Workforce Census."
+    denominator: "n/a (count)"
+    unit: "fte"
+    phases: ["primary", "secondary", "special"]
+    comparability_notes: "Point-in-time November snapshot; does not reflect in-year staff turnover."
+
+  fsm_eligibility_rate:
+    label: "Free school meal eligibility"
+    description: "Percentage of pupils recorded as eligible for free school meals at the school census point."
+    denominator: "pupils on roll at census point"
+    unit: "percent"
+    phases: ["primary", "secondary", "special"]
+    comparability_notes: "A commonly used proxy for socioeconomic disadvantage, not a precise poverty measure. Eligibility rules changed with Universal Credit transitional protections; check the release's methodology note before comparing years."

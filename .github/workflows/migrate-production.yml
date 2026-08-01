@@ -1,0 +1,49 @@
+name: Migrate production database
+
+# Manual only. Never wired to a push or schedule trigger: production schema
+# changes on a shared CockroachDB cluster must be a deliberate, reviewed act.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "migrate" to confirm you intend to run prisma migrate deploy against production'
+        type: string
+        required: true
+
+concurrency:
+  group: migrate-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.inputs.confirm == 'migrate'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "11.18.0"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @schoolscope/database...
+
+      - name: Check migration status
+        run: pnpm --filter @schoolscope/database exec prisma migrate status
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      - name: Deploy migrations
+        run: pnpm --filter @schoolscope/database exec prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      # Deliberately no reset/force-reset step exists anywhere in this
+      # workflow. A destructive production reset must never be one click.

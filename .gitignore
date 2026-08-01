@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+apps/web/next-env.d.ts
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Prisma
+packages/database/prisma/generated/
+
+# Config synced to JSON at install time (see packages/shared/scripts/sync-config.mjs)
+packages/shared/src/generated/
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Vercel
+.vercel
+
+# Data (never commit source data extracts)
+services/ingestor/data/
+*.gz
+*.zip
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

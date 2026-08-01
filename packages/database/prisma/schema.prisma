@@ -1,0 +1,365 @@
+// SchoolScope England: production schema
+// Provider: CockroachDB Cloud (cluster: aqua-roach, database: school_intelligence)
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../generated"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Core directory
+// ---------------------------------------------------------------------------
+
+enum SchoolStatus {
+  OPEN
+  OPEN_BUT_PROPOSED_TO_CLOSE
+  PROPOSED_TO_OPEN
+  CLOSED
+}
+
+model School {
+  urn                     String   @id
+  schoolName              String   @map("school_name")
+  normalisedName          String   @map("normalised_name")
+  status                  SchoolStatus
+  establishmentTypeCode   String   @map("establishment_type_code")
+  establishmentTypeName   String   @map("establishment_type_name")
+  phaseCode               String   @map("phase_code")
+  phaseName               String   @map("phase_name")
+  minimumAge              Int?     @map("minimum_age")
+  maximumAge              Int?     @map("maximum_age")
+  gender                  String?
+  religiousCharacter      String?  @map("religious_character")
+  admissionsPolicyType    String?  @map("admissions_policy_type")
+
+  street                  String?
+  locality                String?
+  town                    String?
+  county                  String?
+  postcode                String?
+  postcodePrefix          String?  @map("postcode_prefix")
+
+  latitude                Float?
+  longitude                Float?
+
+  localAuthorityCode      String?  @map("local_authority_code")
+  localAuthority          LocalAuthority? @relation(fields: [localAuthorityCode], references: [code])
+  regionCode              String?  @map("region_code")
+  urbanRuralCode          String?  @map("urban_rural_code")
+
+  openingDate             DateTime? @map("opening_date")
+  closingDate             DateTime? @map("closing_date")
+  capacity                Int?
+  numberOfPupils          Int?      @map("number_of_pupils")
+
+  website                 String?
+  telephone               String?
+
+  trustId                 String?  @map("trust_id")
+  trust                   AcademyTrust? @relation(fields: [trustId], references: [trustId])
+  federationId            String?  @map("federation_id")
+
+  hasSenProvision         Boolean  @default(false) @map("has_sen_provision")
+
+  sourceUpdatedAt         DateTime? @map("source_updated_at")
+  sourceExtractDate       DateTime? @map("source_extract_date")
+
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  metrics                 SchoolMetric[]
+  admissionArrangements   AdmissionArrangement[]
+  historicalOffers        HistoricalOffer[]
+  catchmentLinks          SchoolCatchmentArea[]
+  relationshipsFrom       SchoolRelationship[] @relation("RelationshipFrom")
+  relationshipsTo         SchoolRelationship[] @relation("RelationshipTo")
+
+  @@index([normalisedName])
+  @@index([postcode])
+  @@index([postcodePrefix])
+  @@index([localAuthorityCode])
+  @@index([phaseCode])
+  @@index([establishmentTypeCode])
+  @@index([status])
+  @@index([trustId])
+  @@index([latitude, longitude])
+  @@map("schools")
+}
+
+model AcademyTrust {
+  trustId               String   @id @map("trust_id")
+  trustName             String   @map("trust_name")
+  trustType             String?  @map("trust_type")
+  companiesHouseNumber  String?  @map("companies_house_number")
+  address               String?
+  postcode              String?
+  openSchoolCount       Int      @default(0) @map("open_school_count")
+
+  sourceUpdatedAt       DateTime? @map("source_updated_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  schools               School[]
+
+  @@index([trustName])
+  @@map("academy_trusts")
+}
+
+enum RelationshipType {
+  PREDECESSOR
+  SUCCESSOR
+  TRUST_TRANSFER
+  FEDERATION
+  LINKED_ESTABLISHMENT
+}
+
+model SchoolRelationship {
+  id                String   @id @default(uuid())
+  fromUrn           String   @map("from_urn")
+  fromSchool        School   @relation("RelationshipFrom", fields: [fromUrn], references: [urn])
+  toUrn             String   @map("to_urn")
+  toSchool          School   @relation("RelationshipTo", fields: [toUrn], references: [urn])
+  relationshipType  RelationshipType @map("relationship_type")
+  effectiveDate     DateTime? @map("effective_date")
+  sourceUpdatedAt   DateTime? @map("source_updated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([fromUrn])
+  @@index([toUrn])
+  @@index([relationshipType])
+  @@map("school_relationships")
+}
+
+enum CatchmentCoverageStatus {
+  NOT_AVAILABLE
+  PILOT
+  PARTIAL
+  FULL
+}
+
+model LocalAuthority {
+  code                     String   @id
+  name                     String
+  regionCode                String?  @map("region_code")
+  admissionsWebsite         String?  @map("admissions_website")
+  officialCatchmentCheckerUrl String? @map("official_catchment_checker_url")
+  catchmentCoverageStatus   CatchmentCoverageStatus @default(NOT_AVAILABLE) @map("catchment_coverage_status")
+
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  schools                  School[]
+  catchmentSources         CatchmentSource[]
+
+  @@map("local_authorities")
+}
+
+// ---------------------------------------------------------------------------
+// Statistics / performance
+// ---------------------------------------------------------------------------
+
+model SchoolMetric {
+  id                String   @id @default(uuid())
+  schoolUrn         String   @map("school_urn")
+  school            School   @relation(fields: [schoolUrn], references: [urn])
+  metricCode        String   @map("metric_code")
+  academicYear      String   @map("academic_year")
+  valueNumeric      Float?   @map("value_numeric")
+  valueText         String?  @map("value_text")
+  denominator       String?
+  suppressed        Boolean  @default(false)
+  provisional       Boolean  @default(false)
+  sourceRelease     String?  @map("source_release")
+  sourcePublishedAt DateTime? @map("source_published_at")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([schoolUrn, metricCode, academicYear])
+  @@index([metricCode, academicYear])
+  @@index([schoolUrn, academicYear])
+  @@map("school_metrics")
+}
+
+// ---------------------------------------------------------------------------
+// Catchment / admissions geometry
+// ---------------------------------------------------------------------------
+
+enum CatchmentSourceStatus {
+  PENDING
+  VALID
+  FAILED
+  SUPERSEDED
+}
+
+model CatchmentSource {
+  id               String   @id @default(uuid())
+  localAuthorityCode String @map("local_authority_code")
+  localAuthority   LocalAuthority @relation(fields: [localAuthorityCode], references: [code])
+  academicYear     String   @map("academic_year")
+  sourceUrl        String   @map("source_url")
+  downloadUrl      String   @map("download_url")
+  sourceType       String   @map("source_type")
+  format           String
+  licence          String
+  checksum         String?
+  retrievedAt      DateTime? @map("retrieved_at")
+  verifiedAt       DateTime? @map("verified_at")
+  status           CatchmentSourceStatus @default(PENDING)
+  errorSummary     String?  @map("error_summary")
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  catchmentAreas   CatchmentArea[]
+
+  @@index([localAuthorityCode, academicYear])
+  @@map("catchment_sources")
+}
+
+model CatchmentArea {
+  id                          String   @id @default(uuid())
+  sourceId                    String   @map("source_id")
+  source                      CatchmentSource @relation(fields: [sourceId], references: [id])
+  areaName                    String   @map("area_name")
+  areaType                    String   @map("area_type")
+  academicYear                String   @map("academic_year")
+  geometryGeojson              String   @map("geometry_geojson")
+  simplifiedGeometryGeojson    String   @map("simplified_geometry_geojson")
+  minimumLatitude              Float    @map("minimum_latitude")
+  maximumLatitude              Float    @map("maximum_latitude")
+  minimumLongitude             Float    @map("minimum_longitude")
+  maximumLongitude             Float    @map("maximum_longitude")
+  geometryChecksum             String   @map("geometry_checksum")
+  validFrom                    DateTime @map("valid_from")
+  validTo                      DateTime? @map("valid_to")
+
+  createdAt                    DateTime @default(now()) @map("created_at")
+  updatedAt                    DateTime @updatedAt @map("updated_at")
+
+  schools                      SchoolCatchmentArea[]
+
+  @@index([sourceId])
+  @@index([academicYear])
+  @@index([minimumLatitude, maximumLatitude, minimumLongitude, maximumLongitude])
+  @@map("catchment_areas")
+}
+
+// Join table: a catchment area may serve more than one school (e.g. shared
+// priority area for infant + junior schools), and a school may have more
+// than one associated area across overlapping criteria.
+model SchoolCatchmentArea {
+  id              String   @id @default(uuid())
+  schoolUrn       String   @map("school_urn")
+  school          School   @relation(fields: [schoolUrn], references: [urn])
+  catchmentAreaId String   @map("catchment_area_id")
+  catchmentArea   CatchmentArea @relation(fields: [catchmentAreaId], references: [id])
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([schoolUrn, catchmentAreaId])
+  @@index([catchmentAreaId])
+  @@map("school_catchment_areas")
+}
+
+model AdmissionArrangement {
+  id                        String   @id @default(uuid())
+  schoolUrn                 String   @map("school_urn")
+  school                    School   @relation(fields: [schoolUrn], references: [urn])
+  admissionAuthorityName    String   @map("admission_authority_name")
+  academicYear              String   @map("academic_year")
+  policyUrl                 String?  @map("policy_url")
+  applicationUrl            String?  @map("application_url")
+  publishedAdmissionNumber  Int?     @map("published_admission_number")
+  usesCatchment              Boolean  @default(false) @map("uses_catchment")
+  usesDistance               Boolean  @default(false) @map("uses_distance")
+  usesNodalPoint              Boolean  @default(false) @map("uses_nodal_point")
+  usesFeederSchool            Boolean  @default(false) @map("uses_feeder_school")
+  usesFaithCriteria           Boolean  @default(false) @map("uses_faith_criteria")
+  usesSelection                Boolean  @default(false) @map("uses_selection")
+  summary                    String?
+  sourceVerifiedAt            DateTime? @map("source_verified_at")
+
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  @@unique([schoolUrn, academicYear])
+  @@index([academicYear])
+  @@map("admission_arrangements")
+}
+
+model HistoricalOffer {
+  id                        String   @id @default(uuid())
+  schoolUrn                 String   @map("school_urn")
+  school                    School   @relation(fields: [schoolUrn], references: [urn])
+  academicYear               String   @map("academic_year")
+  publishedAdmissionNumber   Int?     @map("published_admission_number")
+  applications                Int?
+  placesOffered                Int?     @map("places_offered")
+  lastCriterionOffered         String?  @map("last_criterion_offered")
+  furthestDistanceOfferedMetres Float?  @map("furthest_distance_offered_metres")
+  onTimeApplications            Int?    @map("on_time_applications")
+  lateApplications               Int?    @map("late_applications")
+  source                        String
+  methodology                   String?
+
+  createdAt                     DateTime @default(now()) @map("created_at")
+  updatedAt                     DateTime @updatedAt @map("updated_at")
+
+  @@unique([schoolUrn, academicYear])
+  @@index([academicYear])
+  @@map("historical_offers")
+}
+
+// ---------------------------------------------------------------------------
+// Ephemeral / operational
+// ---------------------------------------------------------------------------
+
+model PostcodeCache {
+  normalisedPostcode  String   @id @map("normalised_postcode")
+  latitude            Float
+  longitude           Float
+  localAuthorityCode  String?  @map("local_authority_code")
+  source              String
+  fetchedAt           DateTime @default(now()) @map("fetched_at")
+  expiresAt           DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("postcode_cache")
+}
+
+enum IngestionStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED_UNCHANGED
+}
+
+model IngestionRun {
+  id               String   @id @default(uuid())
+  source           String
+  sourceDate       DateTime? @map("source_date")
+  status           IngestionStatus @default(RUNNING)
+  rowsProcessed    Int      @default(0) @map("rows_processed")
+  rowsInserted     Int      @default(0) @map("rows_inserted")
+  rowsUpdated      Int      @default(0) @map("rows_updated")
+  rowsRejected     Int      @default(0) @map("rows_rejected")
+  geometryRecords  Int      @default(0) @map("geometry_records")
+  metricsRecords   Int      @default(0) @map("metrics_records")
+  durationSeconds  Float?   @map("duration_seconds")
+  workflowRunUrl   String?  @map("workflow_run_url")
+  gitSha           String?  @map("git_sha")
+  errorSummary     String?  @map("error_summary")
+
+  startedAt        DateTime @default(now()) @map("started_at")
+  finishedAt       DateTime? @map("finished_at")
+
+  @@index([source, startedAt])
+  @@map("ingestion_runs")
+}

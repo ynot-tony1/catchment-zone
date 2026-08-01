@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "schoolscope-ingestor"
+version = "0.1.0"
+description = "Data ingestion service for SchoolScope England. Pulls official GIAS, DfE statistics, and local authority catchment data into the shared database."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "UNLICENSED" }
+authors = [{ name = "SchoolScope England" }]
+
+dependencies = [
+  "httpx>=0.28,<0.29",
+  "pydantic>=2.9,<3",
+  "pydantic-settings>=2.6,<3",
+  "typer>=0.15,<0.16",
+  "tenacity>=9.0,<10",
+  "psycopg[binary]>=3.2,<4",
+  "shapely>=2.0,<3",
+  "pyproj>=3.7,<4",
+  "PyYAML>=6.0,<7",
+  "python-json-logger>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-cov>=6.0,<7",
+  "ruff>=0.8,<0.9",
+  "mypy>=1.13,<2",
+  "types-PyYAML>=6.0,<7",
+]
+
+[project.scripts]
+ingestor = "schoolscope_ingestor.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/schoolscope_ingestor"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "F", "W",   # pycodestyle / pyflakes
+  "I",             # isort
+  "UP",            # pyupgrade
+  "B",             # bugbear
+  "C4",            # comprehensions
+  "SIM",           # simplify
+  "RUF",           # ruff-specific
+]
+ignore = [
+  "E501", # line length is enforced by the formatter, not the linter
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["schoolscope_ingestor"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+warn_return_any = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["shapely.*", "pyproj.*", "pythonjsonlogger.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["src/schoolscope_ingestor"]

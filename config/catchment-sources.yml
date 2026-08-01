@@ -1,0 +1,61 @@
+# Catchment and priority-admission-area source registry.
+#
+# This is not a claim of national coverage. SchoolScope England begins with a
+# small pilot of local authorities that publish official, machine-readable
+# boundary data under a reuse-compatible licence. See docs/data-sources.md
+# and docs/admissions-and-catchments.md for the coverage policy.
+#
+# Every entry here was verified against the publisher's live ArcGIS item
+# metadata (licenseInfo + Feature Service url) before being added. The
+# ingestor re-verifies checksum and licence on every scheduled run and will
+# refuse to import a source whose licence field is missing or incompatible.
+#
+# format: one of geojson | shapefile_zip | geopackage | kml | csv_wkt |
+#         arcgis_feature_service | json_endpoint
+
+sources:
+  - local_authority_code: "373"
+    local_authority_name: "Sheffield"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://sheffield-city-council-open-data-sheffieldcc.hub.arcgis.com/datasets/1cfbc328f918482bb25f4d092eb45d8b_1/about"
+    download_url: "https://sheffieldcitycouncil.cloud.esriuk.com/server/rest/services/AGOL/OpenData/FeatureServer/1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-01"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      Sheffield's own metadata states catchment areas are legally defined by
+      postcode and street number, not by the mapped polygon; the boundary is
+      described by the publisher as illustrative only. The ingestor and UI
+      must preserve this caveat verbatim, not soften it.
+
+  - local_authority_code: "373"
+    local_authority_name: "Sheffield"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://sheffield-city-council-open-data-sheffieldcc.hub.arcgis.com/datasets/a3883491804f4886a33c1b66b59fbe47_3/about"
+    download_url: "https://sheffieldcitycouncil.cloud.esriuk.com/server/rest/services/AGOL/OpenData/FeatureServer/3"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-01"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      Access and Admissions Team, Sheffield City Council is the named
+      accessInformation contact on the source item.
+
+# ---------------------------------------------------------------------------
+# Candidate sources identified but not yet enabled (require manual licence
+# and format verification before flipping enabled: true). Left here so the
+# next pilot expansion has a documented starting point rather than a fresh
+# search. Do not enable without repeating the verification steps above.
+# ---------------------------------------------------------------------------
+candidates:
+  - local_authority_name: "Aberdeen City"
+    reason_not_enabled: "Scottish education/admissions system falls outside GIAS/DfE scope for this England-focused MVP."
+  - local_authority_name: "Buckinghamshire"
+    reason_not_enabled: "Identified an ArcGIS MapServer (Schools_and_Gates) but licence and exact catchment vs. walking-zone semantics not yet verified."

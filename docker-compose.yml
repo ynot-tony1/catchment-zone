@@ -1,0 +1,28 @@
+services:
+  cockroachdb:
+    image: cockroachdb/cockroach:v24.1.5
+    command: start-single-node --insecure --store=attrs=ssd,path=/cockroach/cockroach-data
+    ports:
+      - "26257:26257"
+      - "8080:8080"
+    volumes:
+      - cockroach-data:/cockroach/cockroach-data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health?ready=1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ingestor:
+    build:
+      context: ./services/ingestor
+    env_file:
+      - .env
+    depends_on:
+      cockroachdb:
+        condition: service_healthy
+    profiles:
+      - ingestion
+
+volumes:
+  cockroach-data:

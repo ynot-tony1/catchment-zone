@@ -1,0 +1,57 @@
+# Education statistics source registry.
+#
+# SchoolScope England pulls from the Explore Education Statistics (EES) API,
+# a real DfE public API (documented at https://api.education.gov.uk/statistics/docs/,
+# base URL https://api.education.gov.uk/statistics/v1). Dataset identifiers
+# inside a publication are stable UUIDs assigned by DfE; this file records the
+# publication slug and metric family. The ingestor's `discover-gias`-style
+# discovery step resolves the current dataset UUID and latest release via the
+# API's own catalogue/search endpoints at run time rather than a hardcoded
+# UUID, per the "do not hardcode a temporary download URL" rule.
+
+api:
+  base_url: "https://api.education.gov.uk/statistics/v1"
+  docs_url: "https://api.education.gov.uk/statistics/docs/"
+
+publications:
+  - publication_slug: "school-capacity"
+    display_name: "School capacity (SCAP survey)"
+    metric_codes: ["capacity_total_places", "capacity_sixth_form_places"]
+    update_frequency: "annual"
+    applies_to_phases: ["primary", "secondary", "all_through"]
+    notes: >
+      Reported by local authorities via the annual SCAP survey. Local
+      authority estimates, not a school self-report; treat as a planning
+      figure rather than a live roll count.
+
+  - publication_slug: "pupil-absence-in-schools-in-england"
+    display_name: "Pupil absence in schools in England"
+    metric_codes: ["overall_absence_rate", "persistent_absence_rate"]
+    update_frequency: "termly_and_annual"
+    applies_to_phases: ["primary", "secondary", "special"]
+    notes: >
+      DfE has been migrating this series to "Pupil attendance in schools"
+      with more frequent releases; the ingestor's discovery step must check
+      both slugs and prefer whichever the API's current publication list
+      marks active, logging which one it used in the IngestionRun record.
+
+  - publication_slug: "pupil-attendance-in-schools"
+    display_name: "Pupil attendance in schools"
+    metric_codes: ["overall_absence_rate", "persistent_absence_rate", "reason_for_absence"]
+    update_frequency: "weekly_experimental_and_termly_official"
+    applies_to_phases: ["primary", "secondary", "special"]
+    notes: >
+      Successor series to pupil-absence-in-schools-in-england. Weekly figures
+      are experimental statistics; only termly/annual releases should be
+      shown as headline figures without an experimental-statistics label.
+
+  - publication_slug: "school-workforce-in-england"
+    display_name: "School workforce in England"
+    metric_codes: ["pupil_teacher_ratio", "fte_teachers"]
+    update_frequency: "annual"
+    applies_to_phases: ["primary", "secondary", "special"]
+    notes: "Census-based; November census point-in-time snapshot."
+
+# Metric definitions (denominator, suppression rules, comparability notes)
+# live in metric-definitions.yml, not here, so a metric's meaning is defined
+# once regardless of which publication currently supplies its value.
