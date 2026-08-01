@@ -5,6 +5,22 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Pushed to GitHub**: `https://github.com/ynot-tony1/schoolscope-england`
+  (public). CI is green on `main`
+  (`https://github.com/ynot-tony1/schoolscope-england/actions/runs/30715283514`):
+  Ingestor (ruff, mypy, pytest, docker build), Secret scan, Web (lint,
+  typecheck, unit tests, build) all passed for real, on GitHub's own
+  runners, not just locally. Fixed two real CI bugs to get there: the
+  `gitleaks-action` push-diff mode fails on a repository's first push
+  (replaced with a direct `gitleaks detect` full-history scan), and
+  `prettier --check` had never actually passed since the initial commit
+  (ran `prettier --write` for the first time, added `.prettierignore` for
+  the lockfile/generated output/a test fixture).
+- **Vercel project linked**: `vercel link` created and linked
+  `tony-f5c4/schoolscope-england` for `apps/web`. No environment variables
+  are set yet and no deployment has been verified; that needs
+  `DATABASE_URL`, which depends on the CockroachDB bootstrap below.
+
 - **Monorepo baseline is green.** `pnpm install`, `pnpm -r typecheck`,
   `pnpm -r lint`, `pnpm -r test`, and a real
   `pnpm --filter @schoolscope/web build` (Next.js production build, fake
@@ -67,17 +83,17 @@ disk, not what is intended.
 
 ## Unfinished
 
-- **No GitHub repository created or pushed.** Nothing in this project has
-  left this machine.
-- **No CockroachDB Cloud connection.**
+- **No CockroachDB Cloud connection yet.**
   `scripts/bootstrap-cockroachdb.sh` supports reading
   `COCKROACH_BOOTSTRAP_URL` from a gitignored `.env.cockroach.local` file
-  at the repo root as well as a shell variable, but has not been run: it
-  needs a GitHub repo (for `gh secret set`) and a linked Vercel project
-  (for `vercel env add`) to exist first.
-- **No GitHub secrets/variables, no Vercel project link, no migration
-  applied to any real database, no data imported, no production
-  deployment.**
+  at the repo root as well as a shell variable. Both prerequisites it
+  needs (a GitHub repo for `gh secret set`, a linked Vercel project for
+  `vercel env add`) now exist, so this is the actual next blocking step,
+  and it has to be run by the account owner in their own terminal, never
+  by an assistant, since it requires a real admin database credential.
+- **No GitHub secrets/variables, no migration applied to any real
+  database, no data imported, no production deployment.** All downstream
+  of the bootstrap step above.
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
@@ -92,16 +108,18 @@ None. Every test suite that was run passed: `packages/shared` (39),
 
 ## Exact next steps, in order
 
-1. Commit this work, then `gh repo create` and push.
-2. Bootstrap `aqua-roach` via `scripts/bootstrap-cockroachdb.sh` (needs
-   step 1 done first), writing scoped credentials to GitHub secrets and
-   Vercel.
-3. Run the `migrate-production` GitHub Actions workflow manually.
-4. `vercel link`, root directory `apps/web`, verify a preview deployment.
-5. Run the bounded pilot import, fill in `scripts/calibration-report.md`
+1. **You** run `scripts/bootstrap-cockroachdb.sh` against the `aqua-roach`
+   cluster in your own terminal (see the script's own usage comment; it
+   reads `COCKROACH_BOOTSTRAP_URL` from `.env.cockroach.local` or a shell
+   variable, never from this chat). This writes `MIGRATION_DATABASE_URL`
+   and `INGEST_DATABASE_URL` to GitHub secrets and `DATABASE_URL` to
+   Vercel directly.
+2. Run the `migrate-production` GitHub Actions workflow manually.
+3. Verify a Vercel deployment now that `DATABASE_URL` is set.
+4. Run the bounded pilot import, fill in `scripts/calibration-report.md`
    with real numbers, get explicit go-ahead before any larger import.
-6. Verify a real production deployment end-to-end against the acceptance
+5. Verify a real production deployment end-to-end against the acceptance
    criteria in the original spec.
-7. Optional polish once the above is live: catchment overlay toggle on
+6. Optional polish once the above is live: catchment overlay toggle on
    `/map`, Playwright e2e coverage for the golden paths (search a school,
    check a postcode, view the map).
