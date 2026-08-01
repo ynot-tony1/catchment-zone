@@ -128,9 +128,18 @@ disk, not what is intended.
 
 ## Unfinished
 
-- **No Vercel deployment verified yet.** `DATABASE_URL` is set on Vercel
-  and the production schema exists, but no build/deploy has actually been
-  triggered or checked in this session.
+- **No Vercel deployment verified yet.** `DATABASE_URL` is set, the
+  production schema exists, the GitHub integration is connected, and a
+  real bug was found and fixed: the Vercel project's Root Directory was
+  left at `.` (repo root) because `vercel link` was run from `apps/web`,
+  which only makes ad-hoc CLI deploys from that directory work, not
+  GitHub-integration builds, which always check out the full repo. A
+  manual `vercel deploy --prod` from `apps/web` confirmed this concretely
+  (`npm install` failed, since a bare subdirectory has no pnpm workspace
+  context). Fixed via `vercel api /v9/projects/... -X PATCH -F
+  rootDirectory=apps/web` (the CLI has no dedicated command for this
+  setting). This push should trigger the first real GitHub-integration
+  deployment; not yet confirmed successful.
 - **No data imported.** All 12 production tables exist and are empty.
   `scripts/calibration-report.md` is still an unfilled template; do not
   run a full national import before it is filled in from a real pilot
