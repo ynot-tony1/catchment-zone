@@ -40,16 +40,6 @@ const nextConfig: NextConfig = {
   // treating it as pre-built library code.
   transpilePackages: ["@schoolscope/shared"],
 
-  // Prisma's generated client loads its native query-engine binary via
-  // fs/require at runtime, not a static import, so Next's serverless
-  // function file tracing does not know to bundle it on its own. Without
-  // this, every route that touches the database throws "could not locate
-  // the Query Engine" in production while working fine locally, where the
-  // whole repo is on disk regardless of tracing.
-  outputFileTracingIncludes: {
-    "/**": ["../../packages/database/generated/**/*"],
-  },
-
   // In a monorepo, Next's default file-tracing root detection (walking up
   // to the nearest lockfile) can disagree with Vercel's own root
   // calculation for packaging the deployed function, which silently drops

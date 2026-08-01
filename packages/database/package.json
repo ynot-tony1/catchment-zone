@@ -2,8 +2,8 @@
   "name": "@schoolscope/database",
   "version": "0.1.0",
   "private": true,
-  "main": "./generated/index.js",
-  "types": "./generated/index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "scripts": {
     "postinstall": "prisma generate",
     "generate": "prisma generate",

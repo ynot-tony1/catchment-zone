@@ -1,9 +1,18 @@
 // SchoolScope England: production schema
 // Provider: CockroachDB Cloud (cluster: aqua-roach, database: school_intelligence)
 
+// No custom `output` path: a monorepo-sibling generated directory
+// (packages/database/generated) confused Next.js/Vercel's serverless
+// function file tracing in production. Prisma's client search paths at
+// runtime are computed relative to standard node_modules resolution, not
+// to wherever the client happened to be generated, so a custom output
+// path outside node_modules silently breaks that lookup on Vercel even
+// though everything works fine locally. Generating into the default
+// location (node_modules/.prisma/client, re-exported via @prisma/client)
+// uses Prisma's best-tested, officially supported path for serverless
+// deployment.
 generator client {
   provider      = "prisma-client-js"
-  output        = "../generated"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
