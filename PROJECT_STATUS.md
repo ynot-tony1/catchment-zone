@@ -16,8 +16,69 @@ disk, not what is intended.
   `prettier --check` had never actually passed since the initial commit
   (ran `prettier --write` for the first time, added `.prettierignore` for
   the lockfile/generated output/a test fixture).
-- **Vercel project linked**: `vercel link` created and linked
-  `tony-f5c4/schoolscope-england` for `apps/web`.
+- **Production deployment is live and verified end-to-end**:
+  `https://schoolscope-england.vercel.app`. `/status` reports database
+  connectivity as Reachable and shows the deployed git SHA; every route
+  (`/`, `/schools`, `/schools/[urn]`, `/trusts`, `/local-authorities`,
+  `/admissions`, `/map`, `/about/data`) returns 200; `/api/schools`,
+  `/api/trusts`, `/api/local-authorities` return valid (currently empty,
+  since no data is imported yet) JSON; `POST /api/admissions/check`
+  performs a real `postcodes.io` lookup and returns the correct mandatory
+  disclaimer text and an honest `OFFICIAL_BOUNDARY_NOT_AVAILABLE` status
+  rather than fabricating an answer.
+
+  Getting there took six distinct, real bugs, each found by reading the
+  actual deployed function logs after a failed request, not guessed in
+  advance:
+  1. `vercel link` run from `apps/web` left the project's Root Directory
+     setting at `.` (repo root), which only works for ad-hoc CLI deploys
+     from that directory, not GitHub-integration builds, which check out
+     the full repo. Confirmed concretely via a manual `vercel deploy
+--prod` from `apps/web`, which failed `npm install` (no pnpm
+     workspace context in a bare subdirectory). Fixed via `vercel api
+/v9/projects/... -X PATCH -F rootDirectory=apps/web` (the CLI has no
+     dedicated command for this setting).
+  2. `packages/database` had no `postinstall`/`prepare` script, so the
+     Prisma client was never generated on Vercel (it was always generated
+     manually, locally and in CI). Fixed with `postinstall: prisma
+generate`.
+  3. That fix alone was not enough: Vercel's second deployment restored a
+     build cache, pnpm saw the lockfile unchanged and skipped install
+     entirely, and the generated client (gitignored source-tree output,
+     not part of `node_modules`) was not preserved by that cache. Same
+     problem existed for `packages/shared`'s config-sync `prepare` hook.
+     Fixed by adding a `prebuild` script to `apps/web` that always
+     regenerates both, since pnpm always runs `prebuild` as part of `pnpm
+run build`, the exact command Vercel invokes, regardless of whether
+     install was skipped.
+  4. The deployed function then failed at runtime with "Prisma Client
+     could not locate the Query Engine for runtime rhel-openssl-3.0.x".
+     Root cause, found by tracing through several dead ends (Turbopack vs
+     webpack made no difference; `outputFileTracingRoot` alone did not
+     help): the custom `output = "../generated"` path in `schema.prisma`
+     placed the client in a monorepo-sibling directory outside
+     `node_modules`, which is not Prisma's well-tested, officially
+     supported deployment shape. Removed the custom output path entirely;
+     `packages/database` now re-exports `@prisma/client` directly through
+     a thin `index.js`/`index.d.ts`.
+  5. Even on Prisma's default path, the query engine binary lives in a
+     dot-prefixed sibling package (`.prisma/client`) several symlink hops
+     deep inside pnpm's nested `node_modules/.pnpm/<hash>/node_modules`
+     structure, which Vercel's function tracer does not follow on its
+     own. Found the real file by searching the pnpm store directly rather
+     than guessing further, then added a targeted `outputFileTracingIncludes`
+     glob pointed at that exact verified location. This is what actually
+     fixed the engine-loading error.
+  6. With the engine loading correctly, the next real error was a SQL
+     permission error: `user school_app does not have SELECT privilege on
+relation schools`. Cause: `ALTER DEFAULT PRIVILEGES`, set once by the
+     admin bootstrap role, only applies to objects created by that same
+     role; the migration creates tables as `school_migrator`, so those
+     defaults never took effect. Fixed by extending the
+     `migrate-production.yml` post-deploy grant step to re-grant
+     `school_ingestor` and `school_app` privileges on every table, using
+     the least-privilege `school_migrator` credential, every run.
+
 - **`aqua-roach` bootstrapped and migrated for real.**
   `scripts/bootstrap-cockroachdb.sh` was run against the live cluster:
   `school_intelligence` created, three least-privilege users created
@@ -128,18 +189,6 @@ false)` right before the foreign keys) still failed intermittently:
 
 ## Unfinished
 
-- **No Vercel deployment verified yet.** `DATABASE_URL` is set, the
-  production schema exists, the GitHub integration is connected, and a
-  real bug was found and fixed: the Vercel project's Root Directory was
-  left at `.` (repo root) because `vercel link` was run from `apps/web`,
-  which only makes ad-hoc CLI deploys from that directory work, not
-  GitHub-integration builds, which always check out the full repo. A
-  manual `vercel deploy --prod` from `apps/web` confirmed this concretely
-  (`npm install` failed, since a bare subdirectory has no pnpm workspace
-  context). Fixed via `vercel api /v9/projects/... -X PATCH -F
-rootDirectory=apps/web` (the CLI has no dedicated command for this
-  setting). This push should trigger the first real GitHub-integration
-  deployment; not yet confirmed successful.
 - **No data imported.** All 12 production tables exist and are empty.
   `scripts/calibration-report.md` is still an unfilled template; do not
   run a full national import before it is filled in from a real pilot
@@ -158,12 +207,13 @@ None. Every test suite that was run passed: `packages/shared` (39),
 
 ## Exact next steps, in order
 
-1. Verify a Vercel deployment now that `DATABASE_URL` is set and the
-   production schema exists.
-2. Run the bounded pilot import, fill in `scripts/calibration-report.md`
-   with real numbers, get explicit go-ahead before any larger import.
-3. Verify a real production deployment end-to-end against the acceptance
-   criteria in the original spec.
-4. Optional polish once the above is live: catchment overlay toggle on
-   `/map`, Playwright e2e coverage for the golden paths (search a school,
-   check a postcode, view the map).
+1. Run the bounded pilot import (10,000 schools, trusts, selected
+   metrics, Sheffield catchments), fill in `scripts/calibration-report.md`
+   with real before/after numbers, get explicit go-ahead before any
+   larger import.
+2. Re-check `/status`, `/schools`, and the map once real data exists, to
+   confirm search, pagination, and catchment overlays behave correctly
+   against non-empty tables, not just against an empty database.
+3. Optional polish: catchment overlay toggle on `/map`, Playwright e2e
+   coverage for the golden paths (search a school, check a postcode, view
+   the map).
