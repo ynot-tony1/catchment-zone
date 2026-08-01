@@ -54,7 +54,7 @@ CREATE TABLE "schools" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "schools_pkey" PRIMARY KEY ("urn")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "academy_trusts" (
@@ -70,7 +70,7 @@ CREATE TABLE "academy_trusts" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "academy_trusts_pkey" PRIMARY KEY ("trust_id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "school_relationships" (
@@ -84,7 +84,7 @@ CREATE TABLE "school_relationships" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "school_relationships_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "local_authorities" (
@@ -98,7 +98,7 @@ CREATE TABLE "local_authorities" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "local_authorities_pkey" PRIMARY KEY ("code")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "school_metrics" (
@@ -117,7 +117,7 @@ CREATE TABLE "school_metrics" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "school_metrics_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "catchment_sources" (
@@ -138,7 +138,7 @@ CREATE TABLE "catchment_sources" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "catchment_sources_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "catchment_areas" (
@@ -160,7 +160,7 @@ CREATE TABLE "catchment_areas" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "catchment_areas_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "school_catchment_areas" (
@@ -170,7 +170,7 @@ CREATE TABLE "school_catchment_areas" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "school_catchment_areas_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "admission_arrangements" (
@@ -193,7 +193,7 @@ CREATE TABLE "admission_arrangements" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "admission_arrangements_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "historical_offers" (
@@ -213,7 +213,7 @@ CREATE TABLE "historical_offers" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "historical_offers_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "postcode_cache" (
@@ -226,7 +226,7 @@ CREATE TABLE "postcode_cache" (
     "expires_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "postcode_cache_pkey" PRIMARY KEY ("normalised_postcode")
-);
+) WITH (schema_locked = false);
 
 -- CreateTable
 CREATE TABLE "ingestion_runs" (
@@ -248,7 +248,7 @@ CREATE TABLE "ingestion_runs" (
     "finished_at" TIMESTAMP(3),
 
     CONSTRAINT "ingestion_runs_pkey" PRIMARY KEY ("id")
-);
+) WITH (schema_locked = false);
 
 -- CreateIndex
 CREATE INDEX "schools_normalised_name_idx" ON "schools"("normalised_name");
@@ -333,24 +333,6 @@ CREATE INDEX "postcode_cache_expires_at_idx" ON "postcode_cache"("expires_at");
 
 -- CreateIndex
 CREATE INDEX "ingestion_runs_source_started_at_idx" ON "ingestion_runs"("source", "started_at");
-
--- UnlockTables
--- CockroachDB Cloud locks newly created tables by default (schema_locked)
--- for changefeed performance, which blocks the ADD CONSTRAINT statements
--- below. This project does not use changefeeds, so tables are left
--- unlocked rather than re-locked after.
-ALTER TABLE "schools" SET (schema_locked = false);
-ALTER TABLE "academy_trusts" SET (schema_locked = false);
-ALTER TABLE "school_relationships" SET (schema_locked = false);
-ALTER TABLE "local_authorities" SET (schema_locked = false);
-ALTER TABLE "school_metrics" SET (schema_locked = false);
-ALTER TABLE "catchment_sources" SET (schema_locked = false);
-ALTER TABLE "catchment_areas" SET (schema_locked = false);
-ALTER TABLE "school_catchment_areas" SET (schema_locked = false);
-ALTER TABLE "admission_arrangements" SET (schema_locked = false);
-ALTER TABLE "historical_offers" SET (schema_locked = false);
-ALTER TABLE "postcode_cache" SET (schema_locked = false);
-ALTER TABLE "ingestion_runs" SET (schema_locked = false);
 
 -- AddForeignKey
 ALTER TABLE "schools" ADD CONSTRAINT "schools_local_authority_code_fkey" FOREIGN KEY ("local_authority_code") REFERENCES "local_authorities"("code") ON DELETE SET NULL ON UPDATE CASCADE;
