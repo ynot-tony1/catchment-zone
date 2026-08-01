@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "pnpm --filter @schoolscope/database run generate",
+    "prebuild": "pnpm --filter @schoolscope/database run generate && pnpm --filter @schoolscope/shared run sync-config",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
