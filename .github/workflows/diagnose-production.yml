@@ -34,6 +34,16 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
+      - name: Show schema_locked cluster settings
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SELECT variable, value, description FROM [SHOW ALL CLUSTER SETTINGS] WHERE variable ILIKE '%lock%' OR variable ILIKE '%changefeed%';"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      - name: Show CREATE TABLE for reference (any leftover table)
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW CREATE TABLE schools;" || echo "no schools table exists right now"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
   reset:
     runs-on: ubuntu-latest
     if: github.event.inputs.reset_confirm == 'reset-production-schema'
