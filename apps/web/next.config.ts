@@ -39,6 +39,16 @@ const nextConfig: NextConfig = {
   // treating it as pre-built library code.
   transpilePackages: ["@schoolscope/shared"],
 
+  // Prisma's generated client loads its native query-engine binary via
+  // fs/require at runtime, not a static import, so Next's serverless
+  // function file tracing does not know to bundle it on its own. Without
+  // this, every route that touches the database throws "could not locate
+  // the Query Engine" in production while working fine locally, where the
+  // whole repo is on disk regardless of tracing.
+  outputFileTracingIncludes: {
+    "/**": ["../../packages/database/generated/**/*"],
+  },
+
   async headers() {
     return [
       {
