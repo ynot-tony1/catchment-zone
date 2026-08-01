@@ -5,6 +5,7 @@
   "main": "./generated/index.js",
   "types": "./generated/index.d.ts",
   "scripts": {
+    "postinstall": "prisma generate",
     "generate": "prisma generate",
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
