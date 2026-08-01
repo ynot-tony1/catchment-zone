@@ -35,8 +35,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --filter @schoolscope/database...
 
+      # Informational only: `prisma migrate status` exits 1 whenever there
+      # are pending migrations, which is the normal, expected state right
+      # before every deploy (including the very first one). It must not
+      # gate the actual deploy step below.
       - name: Check migration status
-        run: pnpm --filter @schoolscope/database exec prisma migrate status
+        run: pnpm --filter @schoolscope/database exec prisma migrate status || true
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
