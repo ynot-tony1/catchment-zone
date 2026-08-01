@@ -48,6 +48,21 @@ const nextConfig: NextConfig = {
   // repo root removes that ambiguity.
   outputFileTracingRoot: path.join(__dirname, "../.."),
 
+  // Prisma's query-engine binary lives in a dot-prefixed sibling package
+  // (.prisma/client) several symlink hops deep inside pnpm's nested
+  // node_modules/.pnpm/<hash>/node_modules structure, which Vercel's
+  // serverless function file tracer does not reliably follow on its own,
+  // confirmed by locating the actual .so.node file on disk after every
+  // other fix attempt (default output path, hoisting, outputFileTracingRoot
+  // alone) still failed at runtime with "could not locate the Query Engine"
+  // in the real deployed function logs. The glob covers the version-hashed
+  // pnpm folder name without hardcoding it.
+  outputFileTracingIncludes: {
+    "/**": [
+      "../../node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/**/*",
+    ],
+  },
+
   async headers() {
     return [
       {
