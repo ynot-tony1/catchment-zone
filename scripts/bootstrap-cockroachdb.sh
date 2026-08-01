@@ -72,9 +72,17 @@ INGESTOR_PASSWORD="$(gen_password)"
 APP_PASSWORD="$(gen_password)"
 
 echo "Creating scoped SQL users (passwords generated, not displayed)..."
+# CREATE USER IF NOT EXISTS is a no-op (including the password clause) when
+# the user already exists, so an ALTER USER follows unconditionally on every
+# run. Without it, re-running this script after a partial failure would
+# generate new password variables that do not match what is actually set on
+# a pre-existing user, and every connection test below would fail.
 run_sql "CREATE USER IF NOT EXISTS school_migrator WITH PASSWORD '${MIGRATOR_PASSWORD}';"
+run_sql "ALTER USER school_migrator WITH PASSWORD '${MIGRATOR_PASSWORD}';"
 run_sql "CREATE USER IF NOT EXISTS school_ingestor WITH PASSWORD '${INGESTOR_PASSWORD}';"
+run_sql "ALTER USER school_ingestor WITH PASSWORD '${INGESTOR_PASSWORD}';"
 run_sql "CREATE USER IF NOT EXISTS school_app WITH PASSWORD '${APP_PASSWORD}';"
+run_sql "ALTER USER school_app WITH PASSWORD '${APP_PASSWORD}';"
 
 echo "Applying least-privilege grants..."
 # school_migrator: schema owner within the database, no user management.
@@ -111,8 +119,12 @@ printf '%s' "$MIGRATION_DATABASE_URL" | gh secret set MIGRATION_DATABASE_URL
 printf '%s' "$INGEST_DATABASE_URL" | gh secret set INGEST_DATABASE_URL
 
 echo "Writing DATABASE_URL to Vercel (Production and Preview)..."
-printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL production
-printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL preview
+# The Vercel project link (.vercel/project.json) lives under apps/web, not
+# the repo root this script runs from, so --cwd is required; without it the
+# vercel CLI reports "not_linked" even though `vercel link` has been run.
+WEB_DIR="${REPO_ROOT}/apps/web"
+printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL production --cwd "${WEB_DIR}" --yes
+printf '%s' "$DATABASE_URL" | vercel env add DATABASE_URL preview --cwd "${WEB_DIR}" --yes
 
 unset MIGRATOR_PASSWORD INGESTOR_PASSWORD APP_PASSWORD
 unset MIGRATION_DATABASE_URL INGEST_DATABASE_URL DATABASE_URL
