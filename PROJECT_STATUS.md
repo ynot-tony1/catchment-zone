@@ -6,112 +6,102 @@ disk, not what is intended.
 ## Completed and verified
 
 * **Monorepo baseline is green.** `pnpm install`, `pnpm -r typecheck`,
-  `pnpm -r lint`, and `pnpm -r test` all pass across every workspace
-  package (`packages/shared`: 39 tests, `apps/web`: 25 tests). A real
-  `pnpm --filter @schoolscope/web build` (Next.js production build, with a
-  fake local `DATABASE_URL` so Prisma can generate its client) also
-  succeeds.
-* **Toolchain compatibility fixes** made while establishing that baseline:
-  * `typescript` pinned to `~6.0.3` in `apps/web` and `packages/shared`
-    (the default `^7.0.2` resolved to the new TS 7 compiler, which
-    `typescript-eslint` 8.65.0 does not support yet).
-  * `apps/web`'s ESLint config rewritten to use `eslint-config-next`'s
-    native flat-config exports (`eslint-config-next/core-web-vitals`,
-    `eslint-config-next/typescript`) instead of the legacy `FlatCompat`
-    bridge, which crashed under ESLint 10 with a circular-JSON error.
-  * `apps/web`'s `eslint` pinned to `~9.39.5`: `eslint-plugin-react`
-    7.37.5 (pulled in by `eslint-config-next`) calls a `context.getFilename`
-    API that ESLint 10 removed, crashing on any component file.
-  * `next.config.ts`'s `eslint.dirs` option removed: Next.js 16 dropped
-    the built-in ESLint integration entirely, so that key no longer exists
-    on `NextConfig`.
-  * `packages/shared/src/schemas/common.ts`'s `BboxQuerySchema` fixed: the
-    `.transform().pipe()` chain did not typecheck against zod v4's tuple
-    input type; the transform now casts to the tuple's own declared input
-    shape.
-  * `apps/web/lib/geo.ts`'s `distanceToBoundaryMetres` fixed: it only
-    handled a `LineString` result from `polygonToLine`, but a
-    `MultiPolygon` produces `MultiLineString`, which
-    `pointToLineDistance` cannot take directly; now normalised via
-    `@turf/flatten` first.
-  * **A real `.gitignore` bug found and fixed**: it excluded
-    `packages/database/prisma/generated/`, but the schema's actual
-    `output` path (`packages/database/prisma/schema.prisma`, `output =
-    "../generated"`) resolves to `packages/database/generated`, one level
-    up. The compiled Prisma client, including a native query-engine binary,
-    was untracked-but-unignored until this was corrected.
-* **Next.js app now has real pages**, not just scaffolding:
-  * `app/layout.tsx`, `app/page.tsx` (home dashboard with live open
-    school / trust / local authority counts, ISR-revalidated hourly).
-  * `app/schools/page.tsx`: search form (name, postcode, status) plus a
-    results table, backed by `lib/queries/schools.ts`, which supports
-    filtering, keyset (not offset) pagination via the existing
-    `encodeCursor`/`decodeCursor` helpers, and a distance-from-point sort
-    (bounding-box prefilter, then exact great-circle sort/filter in
-    memory, since there is no PostGIS).
-  * `app/schools/[urn]/page.tsx`: school detail, address, local authority
-    and trust links, and a de-duplicated latest-value-per-metric-code
-    table with suppressed/provisional labelling.
-  * `app/api/schools/route.ts`: JSON GET endpoint over the same query
-    function, Node runtime, safe error envelope, cache headers.
-  * `app/about/data/page.tsx`: static sourcing and metric-definition copy,
-    no fabricated sources, matches `docs/data-sources.md`.
-  * `app/status/page.tsx`: live database connectivity check, deployed git
-    SHA, and the 10 most recent `IngestionRun` rows.
-  * New unit tests: `lib/geo.test.ts`, `lib/format.test.ts` (25 tests,
-    listed above).
-* **`services/ingestor/Dockerfile`** now exists (multi-stage, non-root
-  runtime user, config mounted at container-run time since it lives
-  outside the Docker build context). Not yet verified with a real `docker
-  build` in this session (Docker was not invoked here).
-* **`services/ingestor` adapters/statistics.py** was reworked (by the
-  background agent, verified by re-running the full check suite in this
-  session): `ruff check .` passes, `mypy src` passes (13 files), `pytest
-  -q` passes (45 tests). It now resolves EES publication IDs via the
-  search endpoint rather than assuming a slug works directly as an id, and
-  leaves an explicit, documented TODO in `fetch_dataset_rows` about
-  mapping opaque indicator/filter IDs to this repo's metric codes, which
-  needs confirming against a real dataset response before
-  `import_statistics` can persist rows.
+  `pnpm -r lint`, `pnpm -r test`, and a real
+  `pnpm --filter @schoolscope/web build` (Next.js production build, fake
+  local `DATABASE_URL` so Prisma can generate its client) all pass. Test
+  counts: `packages/shared` 39, `apps/web` 29, `services/ingestor` 45.
+* **Every app route from the original spec now exists and is wired to the
+  database** (degrading gracefully via `safeQuery` when unreachable, never
+  a 500 page):
+  * `/` home dashboard (live counts, ISR hourly).
+  * `/schools` search (name/postcode/status filters, keyset pagination,
+    distance-from-point sort) and `/schools/[urn]` detail (address, trust,
+    local authority, de-duplicated latest-per-metric performance table).
+  * `/trusts` and `/trusts/[id]`.
+  * `/local-authorities` and `/local-authorities/[code]` (admissions
+    links, catchment source list, schools in that authority).
+  * `/admissions`: postcode + phase catchment check, calling
+    `/api/admissions/check`, rendering the mandatory disclaimer text
+    verbatim and, when applicable, the near-boundary warning. The status
+    vocabulary and copy were written to only ever use the six allowed
+    `CatchmentCheckStatus` values, matching the forbidden-word test
+    already in `packages/shared`.
+  * `/map`: MapLibre view, schools loaded live for the current viewport
+    via `/api/map/schools`; `/api/map/catchments` also exists for
+    boundary overlays once catchment data exists.
+  * `/about/data`, `/status` (DB connectivity, git SHA, last 10 ingestion
+    runs).
+  * API routes: `/api/schools`, `/api/trusts`, `/api/local-authorities`,
+    `/api/admissions/check` (rate-limited via the existing
+    `lib/rate-limit.ts`), `/api/map/schools`, `/api/map/catchments`. All
+    Node runtime, all using the shared safe-error-envelope helpers.
+* **Query layer** (`apps/web/lib/queries/`): `schools.ts`, `trusts.ts`,
+  `local-authorities.ts`, `catchments.ts`. Catchment checking does a
+  bounding-box prefilter then exact point-in-polygon via the existing
+  `lib/geo.ts` Turf helpers, distinguishes
+  `OFFICIAL_BOUNDARY_NOT_AVAILABLE` from `ACADEMIC_YEAR_NOT_AVAILABLE`
+  using the existing `packages/shared` catchment-source-registry helpers,
+  and flags `POSTCODE_RESULT_NEAR_BOUNDARY` using the configured warning
+  distance, matching the spec's admissions-safety rules.
+* **Toolchain compatibility fixes** made while establishing the baseline
+  (see git history for detail): TypeScript pinned to `~6.0.3` in
+  `apps/web`/`packages/shared` (TS 7 not yet supported by
+  `typescript-eslint`); `apps/web` ESLint rewritten onto
+  `eslint-config-next`'s native flat-config exports and pinned to
+  `~9.39.5` (ESLint 10 breaks `eslint-plugin-react`); `next.config.ts`'s
+  removed `eslint.dirs` option (Next.js 16 dropped built-in ESLint
+  integration); a zod v4 tuple-pipe type error in
+  `packages/shared/src/schemas/common.ts`; a Turf `MultiPolygon` handling
+  bug in `apps/web/lib/geo.ts`; and a real `.gitignore` bug that left the
+  generated Prisma client, including a native binary, untracked but
+  unignored (actual `output` path is `packages/database/generated`, not
+  `packages/database/prisma/generated`).
+* **`services/ingestor/Dockerfile` verified end-to-end**: `docker build`
+  succeeds, and `docker run schoolscope-ingestor:local --help` shows the
+  expected CLI (`discover-gias`, `import-gias`, `import-trusts`,
+  `import-statistics`, `import-catchments`, `import-admissions`,
+  `refresh-metrics`, `verify`, `cleanup`, `run`). The local test image was
+  removed after verification; nothing was pushed anywhere.
+* **`services/ingestor`** full check suite still passes: `ruff check .`,
+  `mypy src` (13 files), `pytest -q` (45 tests).
 
 ## Unfinished
 
-* **Still missing app routes**: `/admissions` (catchment/postcode check,
-  with the mandatory disclaimer and near-boundary text), `/map`
-  (MapLibre view), `/trusts` and `/trusts/[id]`, `/local-authorities` and
-  `/local-authorities/[code]`, and their supporting API routes
-  (`/api/admissions/check`, `/api/map/schools` or similar, `/api/trusts`,
-  `/api/local-authorities`).
-* **No GitHub repository created or pushed.**
-* **No CockroachDB Cloud connection.** `scripts/bootstrap-cockroachdb.sh`
-  now supports reading `COCKROACH_BOOTSTRAP_URL` from a gitignored
-  `.env.cockroach.local` file at the repo root as well as a shell
-  variable, but it has not been run: it still needs a GitHub repo (for
-  `gh secret set`) and a linked Vercel project (for `vercel env add`) to
-  exist first.
+* **No GitHub repository created or pushed.** Nothing in this project has
+  left this machine.
+* **No CockroachDB Cloud connection.**
+  `scripts/bootstrap-cockroachdb.sh` supports reading
+  `COCKROACH_BOOTSTRAP_URL` from a gitignored `.env.cockroach.local` file
+  at the repo root as well as a shell variable, but has not been run: it
+  needs a GitHub repo (for `gh secret set`) and a linked Vercel project
+  (for `vercel env add`) to exist first.
 * **No GitHub secrets/variables, no Vercel project link, no migration
   applied to any real database, no data imported, no production
-  deployment.** Same as before, unchanged.
-* **`docker build` for `services/ingestor` has not been run** in this
-  session; the Dockerfile exists but is unverified end-to-end.
+  deployment.**
+* **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
+  is present but there is no `tests/e2e/` content). Not attempted this
+  session; would need a running app and, for full coverage, real data.
+* **`/map`'s catchment overlay is wired but unused**: `/api/map/catchments`
+  works, but the map page does not yet render a toggle to show catchment
+  polygons on top of school points. Schools-only view is functional.
 
 ## Known failing tests
 
 None. Every test suite that was run passed: `packages/shared` (39),
-`apps/web` (25), `services/ingestor` (45).
+`apps/web` (29), `services/ingestor` (45).
 
 ## Exact next steps, in order
 
-1. Build the remaining four route groups (`/admissions`, `/map`,
-   `/trusts`, `/local-authorities`) and their API routes, with tests, the
-   same way the schools routes were done.
-2. Verify `docker build` for `services/ingestor`.
-3. Commit that work, then `gh repo create` and push.
-4. Bootstrap `aqua-roach` via `scripts/bootstrap-cockroachdb.sh` (needs
-   step 3 done first), writing scoped credentials to GitHub secrets and
+1. Commit this work, then `gh repo create` and push.
+2. Bootstrap `aqua-roach` via `scripts/bootstrap-cockroachdb.sh` (needs
+   step 1 done first), writing scoped credentials to GitHub secrets and
    Vercel.
-5. Run the `migrate-production` GitHub Actions workflow manually.
-6. `vercel link`, root directory `apps/web`, verify a preview deployment.
-7. Run the bounded pilot import, fill in `scripts/calibration-report.md`
+3. Run the `migrate-production` GitHub Actions workflow manually.
+4. `vercel link`, root directory `apps/web`, verify a preview deployment.
+5. Run the bounded pilot import, fill in `scripts/calibration-report.md`
    with real numbers, get explicit go-ahead before any larger import.
-8. Verify a real production deployment end-to-end.
+6. Verify a real production deployment end-to-end against the acceptance
+   criteria in the original spec.
+7. Optional polish once the above is live: catchment overlay toggle on
+   `/map`, Playwright e2e coverage for the golden paths (search a school,
+   check a postcode, view the map).
