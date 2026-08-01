@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 // Content-Security-Policy is intentionally broad on connect-src/img-src for
@@ -48,6 +49,14 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**": ["../../packages/database/generated/**/*"],
   },
+
+  // In a monorepo, Next's default file-tracing root detection (walking up
+  // to the nearest lockfile) can disagree with Vercel's own root
+  // calculation for packaging the deployed function, which silently drops
+  // files outputFileTracingIncludes lists even though they appear correctly
+  // in the local .next trace manifest. Pinning it explicitly to the actual
+  // repo root removes that ambiguity.
+  outputFileTracingRoot: path.join(__dirname, "../.."),
 
   async headers() {
     return [
