@@ -49,5 +49,18 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
 
+      # scripts/bootstrap-cockroachdb.sh cannot grant school_app write
+      # access to postcode_cache before this table exists, so it is
+      # granted here instead, every run, using the same least-privilege
+      # school_migrator credential rather than the admin bootstrap
+      # credential. Idempotent: re-granting an already-granted privilege
+      # is a no-op.
+      - name: Grant school_app access to postcode_cache
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql "${DATABASE_URL}&sslrootcert=system" -c "GRANT SELECT, INSERT, UPDATE, DELETE ON postcode_cache TO school_app;"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
       # Deliberately no reset/force-reset step exists anywhere in this
       # workflow. A destructive production reset must never be one click.
