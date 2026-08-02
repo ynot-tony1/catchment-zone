@@ -15,7 +15,8 @@ export default function MapPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Map</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Schools currently in view are loaded as you pan and zoom. Select a
-          school for details.
+          school for details, or turn on catchment areas to see published
+          priority admission boundaries where they exist.
         </p>
       </div>
       <SchoolMap styleUrl={mapStyleUrl} attribution={mapAttribution} />

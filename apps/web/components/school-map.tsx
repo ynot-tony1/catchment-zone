@@ -20,6 +20,13 @@ type SchoolFeatureProperties = {
   sourceExtractDate: string | null;
 };
 
+type CatchmentFeatureProperties = {
+  id: string;
+  areaName: string;
+  areaType: string;
+  academicYear: string;
+};
+
 // Covers all four UK nations (west coast of Northern Ireland to Shetland
 // in the north-east), not just England - schools from all four nations are
 // loaded here now.
@@ -34,9 +41,13 @@ export function SchoolMap({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const showCatchmentsRef = useRef(false);
   const [selected, setSelected] = useState<SchoolFeatureProperties | null>(
     null,
   );
+  const [selectedCatchment, setSelectedCatchment] =
+    useState<CatchmentFeatureProperties | null>(null);
+  const [showCatchments, setShowCatchments] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,6 +63,29 @@ export function SchoolMap({
     map.addControl(new NavigationControl(), "top-right");
 
     map.on("load", () => {
+      map.addSource("catchments", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "catchments-fill",
+        type: "fill",
+        source: "catchments",
+        paint: {
+          "fill-color": "#f08c00",
+          "fill-opacity": 0.15,
+        },
+      });
+      map.addLayer({
+        id: "catchments-outline",
+        type: "line",
+        source: "catchments",
+        paint: {
+          "line-color": "#f08c00",
+          "line-width": 1.5,
+        },
+      });
+
       map.addSource("schools", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
@@ -71,6 +105,7 @@ export function SchoolMap({
       map.on("click", "schools-points", (event: MapLayerMouseEvent) => {
         const feature = event.features?.[0];
         if (!feature || feature.geometry.type !== "Point") return;
+        setSelectedCatchment(null);
         setSelected(feature.properties as SchoolFeatureProperties);
       });
       map.on("mouseenter", "schools-points", () => {
@@ -80,8 +115,24 @@ export function SchoolMap({
         map.getCanvas().style.cursor = "";
       });
 
+      map.on("click", "catchments-fill", (event: MapLayerMouseEvent) => {
+        const feature = event.features?.[0];
+        if (!feature) return;
+        setSelected(null);
+        setSelectedCatchment(feature.properties as CatchmentFeatureProperties);
+      });
+      map.on("mouseenter", "catchments-fill", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "catchments-fill", () => {
+        map.getCanvas().style.cursor = "";
+      });
+
       loadSchoolsInView(map, setError);
-      map.on("moveend", () => loadSchoolsInView(map, setError));
+      map.on("moveend", () => {
+        loadSchoolsInView(map, setError);
+        if (showCatchmentsRef.current) loadCatchmentsInView(map, setError);
+      });
     });
 
     return () => {
@@ -91,13 +142,51 @@ export function SchoolMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- map is created once; styleUrl/attribution are effectively static config
   }, []);
 
+  useEffect(() => {
+    showCatchmentsRef.current = showCatchments;
+    const map = mapRef.current;
+    if (!map || !showCatchments) return;
+    loadCatchmentsInView(map, setError);
+  }, [showCatchments]);
+
+  function handleShowCatchmentsChange(checked: boolean) {
+    setShowCatchments(checked);
+    if (checked) return;
+    setSelectedCatchment(null);
+    const source = mapRef.current?.getSource("catchments") as
+      GeoJSONSource | undefined;
+    source?.setData({ type: "FeatureCollection", features: [] });
+  }
+
   return (
     <div className="flex flex-col gap-2">
+      <label className="flex w-fit items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={showCatchments}
+          onChange={(event) => handleShowCatchmentsChange(event.target.checked)}
+        />
+        Show catchment areas (Sheffield, Aberdeen City pilots only)
+      </label>
       <div
         ref={containerRef}
         className="border-border h-[70vh] w-full rounded-lg border"
       />
       {error && <p className="text-destructive text-sm">{error}</p>}
+      {selectedCatchment && (
+        <div className="border-border rounded-md border p-3 text-sm">
+          <p className="font-medium">{selectedCatchment.areaName}</p>
+          <p className="text-muted-foreground">
+            {selectedCatchment.areaType} &middot;{" "}
+            {selectedCatchment.academicYear}
+          </p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Illustrative only: catchment boundaries are not a legal guarantee of
+            a school place. Check the local authority&apos;s own admissions page
+            before relying on this.
+          </p>
+        </div>
+      )}
       {selected && (
         <div className="border-border rounded-md border p-3 text-sm">
           <Link
@@ -152,5 +241,34 @@ async function loadSchoolsInView(
     setError(null);
   } catch {
     setError("Could not load schools for this area.");
+  }
+}
+
+async function loadCatchmentsInView(
+  map: MapLibreMap,
+  setError: (message: string | null) => void,
+) {
+  const bounds = map.getBounds();
+  const bbox = [
+    bounds.getWest(),
+    bounds.getSouth(),
+    bounds.getEast(),
+    bounds.getNorth(),
+  ].join(",");
+
+  try {
+    const response = await fetch(
+      `/api/map/catchments?bbox=${encodeURIComponent(bbox)}`,
+    );
+    if (!response.ok) {
+      setError("Could not load catchment areas for this area.");
+      return;
+    }
+    const featureCollection = await response.json();
+    const source = map.getSource("catchments") as GeoJSONSource | undefined;
+    source?.setData(featureCollection);
+    setError(null);
+  } catch {
+    setError("Could not load catchment areas for this area.");
   }
 }
