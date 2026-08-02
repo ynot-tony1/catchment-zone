@@ -20,20 +20,38 @@ disk, not what is intended.
   checksum-skip logic, which could never find a prior run to compare
   against before now and was silently a no-op.
 
-- **Catchment coverage now spans two nations; a real, longstanding bug
-  fixed along the way.** Aberdeen City Council's ArcGIS-hosted catchment
-  polygons (Scotland's first candidate, previously rejected in
-  `catchment-sources.yml` for being "outside GIAS/DfE scope") are live:
-  49 primary + 14 secondary areas, OGL v3.0, verified live and imported
-  with zero new adapter code (the existing generic ArcGIS FeatureServer
-  code, originally written for Sheffield, was never actually
-  England-specific). Also researched and ruled out, with real evidence
-  not guesses: Cardiff (Wales) only has an interactive address-lookup
-  tool, no downloadable dataset, excluded by this project's own
-  "what we deliberately do not use" rule; Northern Ireland's Department
-  of Education confirmed it holds no catchment-area data centrally at
-  all, each school sets its own enrolment criteria - a genuine dead end,
-  not a research gap.
+- **Catchment coverage now spans 5 local authorities across 2 nations
+  (718 real catchment areas total), plus a longstanding bug fixed along
+  the way.** Starting from Aberdeen City (Scotland's first candidate,
+  previously rejected in `catchment-sources.yml` for being "outside
+  GIAS/DfE scope"), Scotland turned out to have real, licensed,
+  ArcGIS-hosted catchment data widely published across councils - a
+  genuine surprise this session found by just checking: Aberdeen City
+  (63 areas), City of Edinburgh (123, across four ND/RC layers), Glasgow
+  City (254, across four ND/RC layers), Fife (151, across four
+  ND/denominational layers), all OGL-licensed (Fife's own wording is "no
+  conditions apply" rather than citing OGL by name - recorded as
+  actually stated, not relabelled), all imported with zero new adapter
+  code - the existing generic ArcGIS FeatureServer code, originally
+  written for Sheffield, was never actually England-specific. Also
+  researched and ruled out, with real evidence not guesses: Cardiff
+  (Wales) only has an interactive address-lookup tool, no downloadable
+  dataset, excluded by this project's own "what we deliberately do not
+  use" rule; Northern Ireland's Department of Education confirmed it
+  holds no catchment-area data centrally at all, each school sets its
+  own enrolment criteria - a genuine dead end, not a research gap.
+
+  Edinburgh, Glasgow and Fife all split catchments by denomination
+  (non-denominational vs Roman Catholic/denominational), and those
+  geographically _overlap_ (a household can sit inside both at once -
+  denominational choice is separate from geographic catchment in
+  Scotland). Importing them under the exact `primary_catchment`/
+  `secondary_catchment` `source_type` the `/admissions` checker looks up
+  would let it silently return whichever polygon matches first for a
+  household in an overlap - a real wrong answer, not a theoretical one.
+  Imported under suffixed source types instead (`_nd`/`_rc`/`_denom`):
+  real, licensed data visible on `/map`, correctly excluded from
+  `/admissions` until that feature can ask "which denomination" first.
 
   Fixed a real bug found while verifying this: nothing anywhere had ever
   set `local_authorities.catchment_coverage_status`, so Sheffield itself
@@ -41,15 +59,18 @@ disk, not what is intended.
   having 127 real catchment areas. `import-catchments` now sets it to
   `PILOT` after a successful import (upgrading only from the
   `NOT_AVAILABLE` default, never overwriting a status set some other
-  way); verified live - both Sheffield and Aberdeen City now correctly
-  show "Pilot catchment coverage".
+  way); verified live - all 5 local authorities now correctly show
+  "Pilot catchment coverage".
 
   `/map`'s catchment overlay toggle is wired up for the first time
   (`/api/map/catchments` existed since the original build but nothing
   ever rendered it): a checkbox loads catchment polygons for the current
   viewport as a translucent fill + outline layer, verified live against
-  both Sheffield (119 areas in view) and Aberdeen City (63 areas in
-  view).
+  Sheffield, Aberdeen City and Edinburgh (real school names visible in
+  Edinburgh's popups, e.g. "Boroughmuir High School" - Edinburgh's
+  layers carry the actual school name in `EST_NAME`, unlike Sheffield/
+  Aberdeen's zone-name-only sources, making it a real future
+  `SchoolCatchmentArea` candidate).
 
   Investigating the admissions-checker's `servedSchools` field (empty
   for every real match right now) confirmed `SchoolCatchmentArea`
@@ -415,28 +436,35 @@ false)` right before the foreign keys) still failed intermittently:
   zone), likely one local authority at a time, not a generic algorithm.
   Until this exists, a matched catchment on `/admissions` correctly shows
   the area name but an empty served-schools list - degraded, not wrong.
-- **Catchment coverage is two local authorities across two nations**
-  (Sheffield/England, Aberdeen City/Scotland) **out of ~200+ across the
-  UK.** Wales has no viable source found yet beyond Cardiff (ruled out);
-  other Welsh councils have not been checked. Northern Ireland is a
-  confirmed dead end (no catchment concept in its admissions system at
-  all). Scotland has 31 other council areas not yet checked - Aberdeen was
-  the one candidate already identified, not necessarily the easiest.
+- **Catchment coverage is 5 local authorities out of ~200+ across the
+  UK** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow City,
+  Fife/Scotland). Scotland turned out to have real ArcGIS-hosted catchment
+  data much more widely than expected (every Scottish council checked so
+  far has had one); 27 other Scottish council areas remain unchecked.
+  Wales has no viable source found yet beyond Cardiff (ruled out); other
+  Welsh councils have not been checked. Northern Ireland is a confirmed
+  dead end (no catchment concept in its admissions system at all).
+- **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife) are
+  map-overlay-only, not reachable via `/admissions`.** See "Completed and
+  verified" above for why (geographic overlap between denominations). The
+  checker would need to ask "which denomination" before this can extend
+  to Scotland's `/admissions` results; not attempted.
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
 
 ## Known failing tests
 
-None. Every test suite that was run passed: `packages/shared` (41),
+None. Every test suite that was run passed: `packages/shared` (42),
 `apps/web` (29), `services/ingestor` (81).
 
 ## Exact next steps, in order
 
-1. Check other Scottish council areas and Welsh councils (beyond Cardiff)
-   for real, licensed, machine-readable catchment sources, matching the
-   same verification rigor Aberdeen City got - don't assume a council
-   publishes one just because its neighbour does.
+1. Check the remaining 27 Scottish council areas for real, licensed,
+   machine-readable catchment sources, matching the same verification
+   rigor Aberdeen/Edinburgh/Glasgow/Fife got - every one checked so far
+   has had one, but don't assume the pattern holds without checking each.
+   Separately, check more Welsh councils beyond Cardiff (ruled out).
 2. Decide on a path for the metrics gap (school-level DfE source for
    England, or entirely separate research for Scotland/Wales/Northern
    Ireland's own statistics bodies) before spending more time on
@@ -450,6 +478,8 @@ None. Every test suite that was run passed: `packages/shared` (41),
    checked after each addition, not assumed to scale linearly from the
    single Sheffield sample.
 4. Optional polish: `SchoolCatchmentArea` per-source research (see
-   "Unfinished" above), `ingestion_runs` write-through, Playwright e2e
-   coverage for the golden paths (search a school, check a postcode, view
-   the map with the catchment overlay on).
+   "Unfinished" above - Edinburgh's `EST_NAME` field is the most
+   promising real starting point), a denomination-aware `/admissions`
+   flow for Scotland's ND/RC catchment splits, Playwright e2e coverage
+   for the golden paths (search a school, check a postcode, view the map
+   with the catchment overlay on).
