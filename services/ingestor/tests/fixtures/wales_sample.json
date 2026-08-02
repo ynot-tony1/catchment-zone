@@ -1,0 +1,81 @@
+{
+  "type": "FeatureCollection",
+  "_fixture_notice": "Invented test fixture only. school_code values, school names and addresses are fake and do not describe any real Welsh school. Shape matches a real response from https://datamap.gov.wales/geoserver/wfs (typeName geonode:maintained_schools_wg), verified live 2026-08-02.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "maintained_schools_wg.1",
+      "geometry": { "type": "Point", "coordinates": [-4.35, 53.41] },
+      "properties": {
+        "uprn": 90000001,
+        "school_code": 9900001,
+        "school_name": "Ysgol Prawf (fixture)",
+        "la_code": 660,
+        "local_authority": "Test Anglesey",
+        "sector": "Cynradd",
+        "governance": "Community",
+        "wm_code": null,
+        "welsh_medium": "Welsh medium school / provision (including transitional)",
+        "school_type": "Nursery, Infants & Juniors",
+        "religious_character": "---",
+        "address_1": "1 Fixture Street",
+        "address_2": "Fixture Town",
+        "address_3": null,
+        "address_4": null,
+        "postcode": "LL1 1ST",
+        "phone_number": "01234567890",
+        "pupils": "180"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "maintained_schools_wg.2",
+      "geometry": { "type": "Point", "coordinates": [-3.2, 51.5] },
+      "properties": {
+        "uprn": 90000002,
+        "school_code": 6801234,
+        "school_name": "Test Secondary School (fixture)",
+        "la_code": 680,
+        "local_authority": "Test Cardiff",
+        "sector": "Uwchradd",
+        "governance": "Voluntary aided",
+        "wm_code": null,
+        "welsh_medium": "English medium school / provision",
+        "school_type": "Secondary (ages 11-19)",
+        "religious_character": "Roman Catholic",
+        "address_1": "2 Fixture Road",
+        "address_2": null,
+        "address_3": "Fixture District",
+        "address_4": "Fixture County",
+        "postcode": "CF1 2ST",
+        "phone_number": "02912345678",
+        "pupils": "1100"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "maintained_schools_wg.3",
+      "geometry": { "type": "Point", "coordinates": [null, null] },
+      "properties": {
+        "uprn": 90000003,
+        "school_code": 0,
+        "school_name": "Rejected: invalid school_code (fixture)",
+        "la_code": 680,
+        "local_authority": "Test Cardiff",
+        "sector": "Cynradd",
+        "governance": "Community",
+        "wm_code": null,
+        "welsh_medium": "Not applicable",
+        "school_type": "Nursery",
+        "religious_character": "Not available",
+        "address_1": null,
+        "address_2": null,
+        "address_3": null,
+        "address_4": null,
+        "postcode": null,
+        "phone_number": null,
+        "pupils": null
+      }
+    }
+  ]
+}
