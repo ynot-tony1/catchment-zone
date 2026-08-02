@@ -101,7 +101,7 @@ export default async function SchoolDetailPage({
           <Badge variant="outline">{formatNation(school.nation)}</Badge>
         </div>
         <p className="text-muted-foreground mt-1 text-sm">
-          {school.establishmentTypeName} &middot; {school.phaseName} &middot;
+          {school.establishmentTypeName} &middot; {school.phaseName} &middot;{" "}
           URN {school.urn}
         </p>
       </div>
@@ -195,7 +195,7 @@ export default async function SchoolDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 self-start">
           <CardHeader>
             <CardTitle>Published performance metrics</CardTitle>
           </CardHeader>

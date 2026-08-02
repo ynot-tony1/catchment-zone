@@ -114,15 +114,15 @@ export default function AboutDataPage() {
           <p>
             There is no single national catchment dataset for Great Britain.
             Coverage is built local authority by local authority, only where a
-            verified, licensed, machine-readable boundary source exists,
-            under each publisher&apos;s own open licence (Open Government
-            Licence v3.0 or equivalent). See{" "}
+            verified, licensed, machine-readable boundary source exists, under
+            each publisher&apos;s own open licence (Open Government Licence v3.0
+            or equivalent). See{" "}
             <Link href="/admissions" className="underline underline-offset-2">
               Check an admissions area
             </Link>{" "}
-            for the current list of covered local authorities. Local
-            authorities without a listed source show as &ldquo;not
-            available&rdquo;, never a guess.
+            for the current list of covered local authorities. Local authorities
+            without a listed source show as &ldquo;not available&rdquo;, never a
+            guess.
           </p>
         </CardContent>
       </Card>
