@@ -1,9 +1,89 @@
 # Project status
 
-Updated 2026-08-01. Reflects what has actually been run and verified on
+Updated 2026-08-02. Reflects what has actually been run and verified on
 disk, not what is intended.
 
 ## Completed and verified
+
+- **Pilot data import ran for real against production** (task from the
+  previous "Exact next steps"). `scripts/calibration-report.md` is filled in
+  with real measured numbers, not a template. Result: 10,000 schools, 92
+  local authorities, 7,176 academy trusts (the full national trust
+  register — no row limit was used for trusts), and 127 Sheffield catchment
+  areas (101 primary + 26 secondary, LA code 373), all persisted and
+  verified by direct query against `aqua-roach`/`school_intelligence`, not
+  just a successful CLI exit code. Catchment re-import confirmed idempotent
+  (same ids, same row counts on a second run).
+
+  GIAS's live site had changed substantially since the original adapter was
+  written, and none of this worked on the first attempt. Real bugs found and
+  fixed, each only surfaced by running against the real, live GIAS site and
+  the real production database, not caught by any test:
+  1. GIAS's WAF 403s non-browser User-Agents; fixed with a real browser UA
+     applied only to GIAS requests.
+  2. GIAS's downloads page was completely redesigned: no more `<a href>`
+     download links, replaced by a stateful ASP.NET collate-then-poll flow
+     (`POST /Downloads/Collate` -> poll `/Downloads/GenerateAjax/<uuid>` ->
+     `POST /Downloads/Download/Extract`). Fully reverse-engineered and
+     reimplemented against the live site.
+  3. The download is a ZIP, not a raw CSV, and the CSV inside is not
+     consistently UTF-8 (real school names contain Windows-1252 characters).
+     Fixed with ZIP unwrapping and a utf-8-sig-then-cp1252 fallback decode.
+  4. `upsert_batch` never set `updated_at`, which has no SQL-level DEFAULT
+     (Prisma's `@updatedAt` is normally set client-side by Prisma Client, a
+     raw SQL write bypasses that entirely) — every first insert into an
+     affected table failed NOT NULL. Fixed centrally in `db.py`.
+  5. `local_authorities` had no import path at all despite `schools` having a
+     foreign key to it; nothing had ever populated it. Fixed by deriving
+     distinct (code, name) pairs from the GIAS establishment extract itself
+     and upserting them before schools, in the same transaction.
+  6. `catchment_sources.id` and `catchment_areas.id` use Prisma's
+     `@default(uuid())`, also client-side-only, not a SQL DEFAULT — every
+     insert failed NOT NULL on `id`. Fixed by minting ids in the ingestor,
+     reusing an existing source's id on re-import so already-written
+     `catchment_areas` rows are never orphaned.
+  7. Separately, and worse: `import-catchments` built `CatchmentArea`
+     polygons in memory and reported a count, but never actually wrote them
+     to the database — only the `catchment_sources` summary row was
+     persisted. There was also no unique constraint backing either the
+     `catchment_sources` or `catchment_areas` upsert's `ON CONFLICT` clause,
+     so even after the id fix, both upserts failed with "no unique or
+     exclusion constraint matching". Fixed by adding two production
+     migrations (`(source_id, geometry_checksum)` unique index on
+     `catchment_areas`, `(local_authority_code, academic_year, source_type)`
+     unique index on `catchment_sources`), deployed through the existing
+     reviewed, manually-confirmed `migrate-production.yml` workflow, then
+     wiring the built areas into the same transaction as the source row.
+  8. GIAS also blocks requests from Azure datacenter IP ranges (which
+     includes GitHub Actions runners) independently of the User-Agent fix —
+     confirmed by direct testing from multiple network origins. This means
+     the scheduled/automated `ingest-gias.yml` workflow cannot reach GIAS
+     from GitHub Actions as currently designed. Explicitly deferred by
+     request; the pilot import above was run manually instead, from a
+     non-Azure network origin, using a rotated, narrowly-scoped
+     `school_ingestor` credential (`scripts/rotate-ingest-credential.sh`,
+     new this session, mirrors the existing bootstrap script's pattern).
+
+  `services/ingestor` test suite grew from 45 to 66 tests covering all of
+  the above (GIAS downloads-page parsing, ZIP/encoding handling, local
+  authority derivation, `upsert_batch`'s `updated_at`/`now()` SQL, and
+  catchment source id resolution/reuse), all passing alongside `ruff check
+  .` and `mypy src`.
+
+  **Known gap, not fixed this session:** `import-statistics` only resolves
+  the current DfE publication release, it does not fetch or write any
+  `SchoolMetric` rows (a pre-existing, explicitly documented TODO, not
+  something broken by the above). Worse, live investigation found the two
+  DfE publications that currently resolve at all
+  (`pupil-absence-in-schools-in-england`, `pupil-attendance-in-schools`)
+  only expose Local authority/Regional/National-level data via the EES API,
+  never per-school rows, so `SchoolMetric` (which requires a non-null
+  `school_urn`) cannot be populated from either as currently designed. The
+  other two configured publications (`school-capacity`,
+  `school-workforce-in-england`) don't exist in the EES API's public
+  catalogue at all right now. See `scripts/calibration-report.md`'s "What
+  actually ran" section for detail. No `SchoolMetric` rows exist in
+  production.
 
 - **Pushed to GitHub**: `https://github.com/ynot-tony1/schoolscope-england`
   (public). CI is green on `main`
@@ -185,35 +265,72 @@ false)` right before the foreign keys) still failed intermittently:
   `refresh-metrics`, `verify`, `cleanup`, `run`). The local test image was
   removed after verification; nothing was pushed anywhere.
 - **`services/ingestor`** full check suite still passes: `ruff check .`,
-  `mypy src` (13 files), `pytest -q` (45 tests).
+  `mypy src` (13 files), `pytest -q` (66 tests).
 
 ## Unfinished
 
-- **No data imported.** All 12 production tables exist and are empty.
-  `scripts/calibration-report.md` is still an unfilled template; do not
-  run a full national import before it is filled in from a real pilot
-  run.
+- **Metrics import is unimplemented, and the currently-configured sources
+  can't fill it as designed.** See "Known gap" above. Needs either a
+  school-level DfE metrics source or a schema change (e.g. a local-
+  authority-level metrics table) before this is worth revisiting.
+- **`SchoolCatchmentArea` (linking a catchment polygon to the school it
+  covers) is entirely unimplemented.** `import-catchments` writes
+  `catchment_sources` and `catchment_areas` correctly now, but nothing
+  matches a catchment area's `area_name` back to a real school and writes
+  the join row. Would need a real name-matching design (fuzzy match against
+  `schools.school_name`?), not a quick fix.
+- **`ingestion_runs` is never written to.** The `IngestionRun` model and
+  table exist, `/status` reads from it, but no CLI command actually inserts
+  a row on run start/finish. Found while writing the calibration report
+  (queried `ingestion_runs` after the pilot import; it was empty).
+- **`ingest-gias.yml`'s step order has a latent FK bug.** It runs "Import
+  GIAS establishments and trusts" before "Import trust relationships"; the
+  pilot import hit this for real (`schools_trust_id_fkey` violation) and
+  worked around it by running `import-trusts` first, manually. The workflow
+  file itself still has the wrong order.
+- **`ingest-gias.yml` cannot currently reach GIAS at all.** GIAS blocks
+  Azure datacenter IP ranges (which includes GitHub Actions runners),
+  confirmed by direct testing, independent of the User-Agent fix. Deferred
+  by request; the pilot import was run manually from a non-Azure origin
+  instead. The scheduled/automated path remains blocked until this is
+  revisited.
+- **`.github/workflows/diagnose-grants.yml` is a temporary diagnostic
+  workflow, not yet deleted.** Confirmed grants were never the actual
+  problem (it was a shell-env-precedence bug); safe to delete, matching the
+  pattern already used for `diagnose-production.yml`.
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
 - **`/map`'s catchment overlay is wired but unused**: `/api/map/catchments`
   works, but the map page does not yet render a toggle to show catchment
-  polygons on top of school points. Schools-only view is functional.
+  polygons on top of school points. Schools-only view is functional. Real
+  catchment data now exists in production (127 Sheffield areas) to test
+  this against.
 
 ## Known failing tests
 
 None. Every test suite that was run passed: `packages/shared` (39),
-`apps/web` (29), `services/ingestor` (45).
+`apps/web` (29), `services/ingestor` (66).
 
 ## Exact next steps, in order
 
-1. Run the bounded pilot import (10,000 schools, trusts, selected
-   metrics, Sheffield catchments), fill in `scripts/calibration-report.md`
-   with real before/after numbers, get explicit go-ahead before any
-   larger import.
-2. Re-check `/status`, `/schools`, and the map once real data exists, to
-   confirm search, pagination, and catchment overlays behave correctly
-   against non-empty tables, not just against an empty database.
-3. Optional polish: catchment overlay toggle on `/map`, Playwright e2e
-   coverage for the golden paths (search a school, check a postcode, view
-   the map).
+1. Re-check `/status`, `/schools`, and the map now that real data exists
+   (10,000 schools, 92 local authorities, 7,176 trusts, 127 Sheffield
+   catchment areas), to confirm search, pagination, and catchment overlays
+   behave correctly against non-empty tables, not just against an empty
+   database.
+2. Decide on a path for the metrics gap (school-level DfE source, or a
+   schema change) before spending more time on `import-statistics`.
+3. Delete `.github/workflows/diagnose-grants.yml`; fix `ingest-gias.yml`'s
+   step order (trusts before establishments).
+4. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
+   before any larger/national GIAS import. The report's own recommendation:
+   national schools/trusts/local-authorities data looks cheap; catchment
+   geometry is the dominant storage cost and should be rolled out one local
+   authority at a time with real console figures checked after each
+   addition, not assumed to scale linearly from the single Sheffield
+   sample.
+5. Optional polish: catchment overlay toggle on `/map` (real data now
+   available to test it against), `SchoolCatchmentArea` name-matching,
+   `ingestion_runs` write-through, Playwright e2e coverage for the golden
+   paths (search a school, check a postcode, view the map).
