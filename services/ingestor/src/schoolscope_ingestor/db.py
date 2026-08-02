@@ -102,12 +102,19 @@ def upsert_batch(
     conflict_list = ", ".join(conflict_columns)
     update_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_columns)
 
+    # Every table this is called against has a Prisma `@updatedAt` column
+    # (schema.prisma: schools, academy_trusts, school_metrics,
+    # admission_arrangements, catchment_sources), which Prisma Client
+    # normally sets on every write; a raw INSERT bypasses that entirely, so
+    # updated_at is set here instead. It has no SQL-level DEFAULT (unlike
+    # created_at), so omitting it fails NOT NULL on the very first insert.
     if update_clause:
+        update_clause += ", updated_at = now()"
         on_conflict = f"ON CONFLICT ({conflict_list}) DO UPDATE SET {update_clause}"
     else:
         on_conflict = f"ON CONFLICT ({conflict_list}) DO NOTHING"
 
-    sql = f"INSERT INTO {table} ({column_list}) VALUES ({placeholder_list}) {on_conflict}"
+    sql = f"INSERT INTO {table} ({column_list}, updated_at) VALUES ({placeholder_list}, now()) {on_conflict}"
 
     with conn.cursor() as cur:
         cur.executemany(sql, rows)
