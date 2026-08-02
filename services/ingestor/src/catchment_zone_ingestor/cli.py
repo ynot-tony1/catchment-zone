@@ -609,6 +609,8 @@ def import_catchments(
                 if source.get("format") == "wfs_geojson":
                     type_name = str(source["wfs_type_name"])
                     query_result = catchments_adapter.query_all_wfs_features(client, feature_url, type_name)
+                elif source.get("format") == "shapefile_zip":
+                    query_result = catchments_adapter.download_shapefile_zip_features(client, feature_url)
                 else:
                     query_result = catchments_adapter.query_all_features(client, feature_url)
             except Exception as exc:
@@ -652,6 +654,10 @@ def import_catchments(
                     "schoolname",
                     # Angus's WFS layers (XMap Cloud, not ArcGIS) use this.
                     "school_name",
+                    # Aberdeenshire's shapefile (10-char dbf field limit,
+                    # lowercase) uses this - distinct from Fife's uppercase
+                    # SCHOOL_NAM above, verified live.
+                    "school_nam",
                 ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),

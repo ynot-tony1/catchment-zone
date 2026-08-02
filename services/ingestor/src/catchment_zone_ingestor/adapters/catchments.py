@@ -20,11 +20,14 @@ the associated school.
 
 from __future__ import annotations
 
+import io
 import logging
+import zipfile
 from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
+import shapefile
 from pyproj import Transformer
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
@@ -121,7 +124,11 @@ def _query_wfs_page(client: httpx.Client, service_url: str, type_name: str, star
         "service": "WFS",
         "version": "2.0.0",
         "request": "GetFeature",
-        "typeName": type_name,
+        # "typenames" (lowercase, plural) is the strict WFS 2.0 spec name
+        # and the only form Clackmannanshire's Cadcorp server accepts
+        # ("typeName is mandatory" otherwise); verified live that Angus's
+        # XMap Cloud server accepts it too, so one param name works for both.
+        "typenames": type_name,
         "outputFormat": "application/json",
         "srsName": "EPSG:4326",
         "count": PAGE_SIZE,
@@ -164,6 +171,45 @@ def query_all_wfs_features(client: httpx.Client, service_url: str, type_name: st
         start_index += PAGE_SIZE
 
     return FeatureQueryResult(features=all_features, detected_wkid=detected_wkid)
+
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=15),
+    retry=retry_if_exception_type(httpx.TransportError),
+)
+def download_shapefile_zip_features(client: httpx.Client, zip_url: str) -> FeatureQueryResult:
+    """Download a zipped ESRI Shapefile and return its records as GeoJSON
+    features. Some councils (e.g. Aberdeenshire, Orkney, via Spatial Hub
+    Scotland) publish catchments this way instead of ArcGIS or WFS.
+
+    Coordinates are left in the shapefile's native CRS (declared per-source
+    as coordinate_reference_system in catchment-sources.yml, e.g.
+    EPSG:27700) - detected_wkid is always None here, so downstream
+    reproject_if_needed always falls back to that declared CRS rather than
+    trying to detect one from a response, unlike the ArcGIS/WFS adapters
+    above which usually get EPSG:4326 straight from the server.
+    """
+    response = client.get(zip_url)
+    response.raise_for_status()
+
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        shp_names = [name for name in archive.namelist() if name.lower().endswith(".shp")]
+        if len(shp_names) != 1:
+            raise CatchmentSourceError(f"expected exactly one .shp file in {zip_url}, found {shp_names!r}")
+        base_name = shp_names[0][: -len(".shp")]
+
+        def _member(extension: str) -> io.BytesIO:
+            return io.BytesIO(archive.read(base_name + extension))
+
+        reader = shapefile.Reader(shp=_member(".shp"), dbf=_member(".dbf"), shx=_member(".shx"))
+        features = [
+            {"type": "Feature", "properties": shape_record.record.as_dict(), "geometry": shape_record.shape.__geo_interface__}
+            for shape_record in reader.iterShapeRecords()
+        ]
+
+    return FeatureQueryResult(features=features, detected_wkid=None)
 
 
 def _extract_wkid(crs: dict[str, Any]) -> int | None:

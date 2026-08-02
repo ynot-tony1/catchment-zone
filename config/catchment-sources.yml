@@ -661,6 +661,134 @@ sources:
     enabled: true
     notes: "16 secondary catchment polygons. No separate RC secondary layer found for Angus."
 
+  # Clackmannanshire: another generic WFS server (Cadcorp, not ArcGIS or
+  # XMap Cloud) - required "typenames" (lowercase plural) rather than
+  # "typeName", which Angus's XMap Cloud server also accepts, so
+  # query_all_wfs_features was switched to send that param name
+  # universally. Real school_name field, verified live (e.g. "Fishcross
+  # Primary School").
+  - local_authority_code: "S12000005"
+    local_authority_name: "Clackmannanshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-cl"
+    download_url: "https://clacks.cloud.cadcorp.com/WFS91/wfs.exe"
+    wfs_type_name: "ns:Primary_School_Catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "16 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000005"
+    local_authority_name: "Clackmannanshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-cl"
+    download_url: "https://clacks.cloud.cadcorp.com/WFS91/wfs.exe"
+    wfs_type_name: "ns:Roman_Catholic_Primary_School_Catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "2 primary (Roman Catholic) catchment polygons."
+
+  - local_authority_code: "S12000005"
+    local_authority_name: "Clackmannanshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-cl"
+    download_url: "https://clacks.cloud.cadcorp.com/WFS91/wfs.exe"
+    wfs_type_name: "ns:Secondary_School_Catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "3 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000005"
+    local_authority_name: "Clackmannanshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-cl"
+    download_url: "https://clacks.cloud.cadcorp.com/WFS91/wfs.exe"
+    wfs_type_name: "ns:Roman_Catholic_Secondary_School_Catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "1 secondary (Roman Catholic) catchment polygon."
+
+  # Aberdeenshire: the first shapefile_zip source in this registry - a
+  # zipped ESRI Shapefile (.shp/.dbf/.shx), not ArcGIS or WFS, downloaded
+  # and parsed with pyshp (download_shapefile_zip_features). British
+  # National Grid coordinates (EPSG:27700, per the shapefile's own .prj),
+  # reprojected the same way Sheffield's ArcGIS source already is. Real
+  # school_nam field (lowercase, 10-char dbf limit), verified live (e.g.
+  # "Aberchirder Primary School"). No overlapping RC catchments found
+  # (roman_cath field is empty or "No" for every feature; every school
+  # name is unique), so plain primary/secondary types apply, unlike
+  # several other Scottish councils' denominational splits.
+  - local_authority_code: "S12000034"
+    local_authority_name: "Aberdeenshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-as"
+    download_url: "https://data.spatialhub.scot/dataset/bacf6765-c8a1-4bbf-86ce-78e3c89e826c/resource/2b7ef0c7-9ce9-4050-8512-181fde7a3f35/download/primary_school_catchments.zip"
+    format: "shapefile_zip"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_shapefile_zip"
+    enabled: true
+    notes: "155 primary catchment polygons."
+
+  - local_authority_code: "S12000034"
+    local_authority_name: "Aberdeenshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-as"
+    download_url: "https://data.spatialhub.scot/dataset/bacf6765-c8a1-4bbf-86ce-78e3c89e826c/resource/7d1b6ac2-c23e-4b47-b9c7-228860317d99/download/secondaryschoolcatchments.zip"
+    format: "shapefile_zip"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_shapefile_zip"
+    enabled: true
+    notes: "25 secondary catchment polygons."
+
+  # Orkney Islands: another shapefile_zip source, but its single file mixes
+  # phases per feature ("Primary" and "Primary/Secondary" Type values -
+  # some island schools serve both phases together) rather than
+  # publishing separate primary/secondary layers like every other source
+  # in this registry. Labelled all_through_catchment rather than
+  # primary_catchment/secondary_catchment so it displays on /map but is
+  # not reachable via the phase-specific /admissions checker under either
+  # phase, honestly reflecting that a single feature here is not
+  # necessarily only-primary or only-secondary. All non-denominational
+  # (Denominate field is "non-denominational" for every feature).
+  - local_authority_code: "S12000023"
+    local_authority_name: "Orkney Islands"
+    academic_year: "2025-2026"
+    source_type: "all_through_catchment"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-oi"
+    download_url: "https://data.spatialhub.scot/dataset/ec15f218-5896-46ac-bf39-59b987c155fe/resource/64d9458d-5785-43f8-9b8a-51ede62e9ff7/download/school-catchment-areas.zip"
+    format: "shapefile_zip"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_shapefile_zip"
+    enabled: true
+    notes: "19 catchment polygons (mix of primary-only and combined primary/secondary school catchments)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the

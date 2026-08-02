@@ -141,6 +141,34 @@ disk, not what is intended.
   coverage after this: **12 local authorities, 1,396 real catchment
   areas**, verified against production.
 
+- **Systematically exhausted the Spatial Hub Scotland catalog (all 13
+  individual-council entries checked) and added shapefile ingestion
+  support.** Clackmannanshire (22 areas, four layers) is hosted on a
+  Cadcorp WFS server that strictly requires the "typenames" (lowercase
+  plural) query param rather than "typeName" - `query_all_wfs_features`
+  was switched to send that name universally after confirming Angus's
+  XMap Cloud server accepts it too, so one change fixed both.
+  Aberdeenshire (180 areas, two layers - the largest single-council
+  addition so far) and Orkney Islands (19 areas, one layer) are both
+  zipped ESRI Shapefiles, not ArcGIS or WFS - the first shapefile_zip
+  sources in this registry, needing a new `download_shapefile_zip_features`
+  parser built on `pyshp` (a new, pure-Python, MIT-licensed dependency).
+  Orkney's single layer mixes primary-only and combined primary/secondary
+  school catchments per feature (some island schools serve both phases),
+  so it is labelled `all_through_catchment` rather than
+  `primary_catchment`/`secondary_catchment` - it displays on `/map` but
+  is deliberately not reachable via the phase-specific `/admissions`
+  checker, the same "don't imply more precision than the source has"
+  principle used for the ND/RC denominational splits elsewhere. Every
+  individual council in Spatial Hub Scotland's catalog (13 of 13) now has
+  real, licensed catchment data - a genuinely consistent pattern across
+  the whole catalog, not luck on a handful of councils. Total catchment
+  coverage after this: **15 local authorities, 1,617 real catchment
+  areas**, verified against production. The Spatial Hub national
+  aggregate WFS (see the entry above) remains the only known Scottish
+  catchment source that could not be reached from this session's
+  environment; everything else the catalog lists has now been imported.
+
 - **Renamed to catchment-zone; scope expanded from England-only to Great
   Britain.** GitHub repo, Vercel project/domain, npm workspace scope
   (`@catchment-zone/*`), and the Python package
@@ -482,20 +510,22 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 12 local authorities out of ~200+ across Great
+- **Catchment coverage is 15 local authorities out of ~200+ across Great
   Britain** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow
   City, Fife, North Lanarkshire, Highland, Dundee City, Perth and
-  Kinross, North Ayrshire, South Ayrshire, Angus/Scotland). Scotland
-  turned out to have real, licensed catchment data much more widely than
-  expected (every Scottish council checked so far has had one - 11 for
-  11, ArcGIS for all but Angus which is WFS); a genuine national
+  Kinross, North Ayrshire, South Ayrshire, Angus, Clackmannanshire,
+  Aberdeenshire, Orkney Islands/Scotland). Every individual council listed
+  in Spatial Hub Scotland's catalog (13 of 13) now has real, licensed
+  catchment data imported - that catalog is exhausted. A genuine national
   aggregate (Spatial Hub Scotland / Improvement Service, covering all of
   Scotland in one WFS with per-feature local-authority fields) was found
   but could not be reached from this session's environment (403, see the
   `catchment-sources.yml` candidate entry) - worth retrying from a
-  different network origin before checking the remaining ~21 council
-  areas individually. Wales has no viable source found yet beyond
-  Cardiff (ruled out); other Welsh councils have not been checked.
+  different network origin, though it would now mostly be a consolidation
+  rather than unlocking new coverage. Further Scottish coverage would mean
+  checking councils individually outside that catalog (not yet attempted).
+  Wales has no viable source found yet beyond Cardiff (ruled out); other
+  Welsh councils have not been checked.
 - **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife,
   North Lanarkshire, Dundee, Perth and Kinross) are map-overlay-only, not
   reachable via `/admissions`.** See "Completed and verified" above for
@@ -541,13 +571,14 @@ None. Every test suite that was run passed: `packages/shared` (42),
 
 ## Exact next steps, in order
 
-1. Try Spatial Hub Scotland's national catchment WFS aggregate again from
-   a different network origin (403 from this session's environment - see
-   "Completed and verified" above); if reachable, it likely obsoletes
-   most of the per-council entries already added. Otherwise keep
-   checking the remaining ~21 Scottish council areas individually,
-   matching the same verification rigor the first 11 got. Separately,
-   check more Welsh councils beyond Cardiff (ruled out).
+1. Spatial Hub Scotland's catalog is now exhausted (13 of 13 individual
+   councils imported); its national aggregate WFS is still worth trying
+   again from a different network origin (403 from this session's
+   environment - see "Completed and verified" above) mainly as a
+   consolidation/cross-check, not to unlock new coverage. Further Scottish
+   expansion means checking councils individually outside that catalog
+   (not yet attempted, no discovery mechanism established for it yet).
+   Separately, check more Welsh councils beyond Cardiff (ruled out).
 2. Decide on a path for the metrics gap (school-level DfE source for
    England, or entirely separate research for Scotland/Wales's own
    statistics bodies) before spending more time on `import-statistics`.
