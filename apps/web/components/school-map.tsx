@@ -166,7 +166,7 @@ export function SchoolMap({
           checked={showCatchments}
           onChange={(event) => handleShowCatchmentsChange(event.target.checked)}
         />
-        Show catchment areas (Sheffield, Aberdeen City pilots only)
+        Show catchment areas (where published)
       </label>
       <div
         ref={containerRef}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   parseTrustSearchParams,
+  trustFiltersToSearchParams,
   type RawSearchParams,
 } from "@catchment-zone/shared";
 import { z } from "zod";
@@ -121,6 +122,18 @@ export default async function TrustsPage({
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {result.ok && result.data.nextCursor && (
+        <div>
+          <Button asChild variant="outline">
+            <Link
+              href={`/trusts?${trustFiltersToSearchParams({ ...filters, cursor: result.data.nextCursor }).toString()}`}
+            >
+              Next page
+            </Link>
+          </Button>
+        </div>
       )}
     </div>
   );

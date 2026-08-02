@@ -4,6 +4,7 @@ import {
   NATION_VALUES,
   SCHOOL_STATUS_VALUES,
   parseSchoolSearchParams,
+  schoolFiltersToSearchParams,
   type RawSearchParams,
 } from "@catchment-zone/shared";
 import { z } from "zod";
@@ -229,6 +230,18 @@ export default async function SchoolsPage({
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {result.ok && result.data.nextCursor && (
+        <div>
+          <Button asChild variant="outline">
+            <Link
+              href={`/schools?${schoolFiltersToSearchParams({ ...filters, cursor: result.data.nextCursor }).toString()}`}
+            >
+              Next page
+            </Link>
+          </Button>
+        </div>
       )}
     </div>
   );

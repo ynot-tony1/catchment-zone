@@ -31,6 +31,26 @@ export function parseTrustSearchParams(
   });
 }
 
+/** Serialises filters back into a URLSearchParams instance, dropping
+ * defaults so the URL stays clean. Round-trips with parseTrustSearchParams. */
+export function trustFiltersToSearchParams(
+  filters: Partial<TrustSearchFilters>,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  const set = (key: string, value: unknown) => {
+    if (value === undefined || value === null || value === "") return;
+    params.set(key, String(value));
+  };
+
+  set("q", filters.q);
+  set("trustType", filters.trustType);
+  if (filters.sort && filters.sort !== "name_asc") set("sort", filters.sort);
+  set("cursor", filters.cursor);
+  if (filters.limit && filters.limit !== 20) set("limit", filters.limit);
+
+  return params;
+}
+
 export const LocalAuthoritySearchFiltersSchema = z.object({
   q: z.string().trim().min(1).max(200).optional(),
   nation: NationEnum.optional(),
@@ -56,4 +76,26 @@ export function parseLocalAuthoritySearchParams(
     cursor: firstValue(raw.cursor),
     limit: firstValue(raw.limit) ?? "50",
   });
+}
+
+/** Serialises filters back into a URLSearchParams instance, dropping
+ * defaults so the URL stays clean. Round-trips with
+ * parseLocalAuthoritySearchParams. */
+export function localAuthorityFiltersToSearchParams(
+  filters: Partial<LocalAuthoritySearchFilters>,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  const set = (key: string, value: unknown) => {
+    if (value === undefined || value === null || value === "") return;
+    params.set(key, String(value));
+  };
+
+  set("q", filters.q);
+  set("nation", filters.nation);
+  set("regionCode", filters.regionCode);
+  set("catchmentCoverageStatus", filters.catchmentCoverageStatus);
+  set("cursor", filters.cursor);
+  if (filters.limit && filters.limit !== 50) set("limit", filters.limit);
+
+  return params;
 }

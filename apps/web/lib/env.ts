@@ -37,11 +37,17 @@ export function getServerEnv(): z.infer<typeof ServerEnvSchema> {
 export function getPublicEnv() {
   return {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    // MapLibre's own demotiles.maplibre.org style is intentionally a bare
+    // demo (country-level shapes only, no real basemap detail) - it was
+    // the silent default here in production until this was noticed and
+    // fixed. OpenFreeMap requires no API key and no usage limits, unlike
+    // most other real basemap providers.
     mapStyleUrl:
       process.env.NEXT_PUBLIC_MAP_STYLE_URL ??
-      "https://demotiles.maplibre.org/style.json",
+      "https://tiles.openfreemap.org/styles/liberty",
     mapAttribution:
-      process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ?? "OpenStreetMap contributors",
+      process.env.NEXT_PUBLIC_MAP_ATTRIBUTION ??
+      "OpenFreeMap, OpenMapTiles, OpenStreetMap contributors",
   };
 }
 

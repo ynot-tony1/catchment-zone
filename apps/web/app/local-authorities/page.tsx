@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   NATION_VALUES,
+  localAuthorityFiltersToSearchParams,
   parseLocalAuthoritySearchParams,
   type RawSearchParams,
 } from "@catchment-zone/shared";
@@ -173,6 +174,18 @@ export default async function LocalAuthoritiesPage({
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {result.ok && result.data.nextCursor && (
+        <div>
+          <Button asChild variant="outline">
+            <Link
+              href={`/local-authorities?${localAuthorityFiltersToSearchParams({ ...filters, cursor: result.data.nextCursor }).toString()}`}
+            >
+              Next page
+            </Link>
+          </Button>
+        </div>
       )}
     </div>
   );
