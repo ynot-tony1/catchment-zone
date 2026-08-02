@@ -5,6 +5,47 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Catchment coverage now spans two nations; a real, longstanding bug
+  fixed along the way.** Aberdeen City Council's ArcGIS-hosted catchment
+  polygons (Scotland's first candidate, previously rejected in
+  `catchment-sources.yml` for being "outside GIAS/DfE scope") are live:
+  49 primary + 14 secondary areas, OGL v3.0, verified live and imported
+  with zero new adapter code (the existing generic ArcGIS FeatureServer
+  code, originally written for Sheffield, was never actually
+  England-specific). Also researched and ruled out, with real evidence
+  not guesses: Cardiff (Wales) only has an interactive address-lookup
+  tool, no downloadable dataset, excluded by this project's own
+  "what we deliberately do not use" rule; Northern Ireland's Department
+  of Education confirmed it holds no catchment-area data centrally at
+  all, each school sets its own enrolment criteria - a genuine dead end,
+  not a research gap.
+
+  Fixed a real bug found while verifying this: nothing anywhere had ever
+  set `local_authorities.catchment_coverage_status`, so Sheffield itself
+  showed "Catchment data not available" on `/local-authorities` despite
+  having 127 real catchment areas. `import-catchments` now sets it to
+  `PILOT` after a successful import (upgrading only from the
+  `NOT_AVAILABLE` default, never overwriting a status set some other
+  way); verified live - both Sheffield and Aberdeen City now correctly
+  show "Pilot catchment coverage".
+
+  `/map`'s catchment overlay toggle is wired up for the first time
+  (`/api/map/catchments` existed since the original build but nothing
+  ever rendered it): a checkbox loads catchment polygons for the current
+  viewport as a translucent fill + outline layer, verified live against
+  both Sheffield (119 areas in view) and Aberdeen City (63 areas in
+  view).
+
+  Investigating the admissions-checker's `servedSchools` field (empty
+  for every real match right now) confirmed `SchoolCatchmentArea`
+  linking genuinely cannot be done by simple name-matching, settling an
+  open question from earlier: Sheffield's real catchment features carry
+  no name field at all (`"Unnamed catchment area 41"`), and Aberdeen's
+  `NAME` field is a place/zone name ("Greenbrae", "Culter"), not a school
+  name - there is no textual relationship to a school name in either
+  real source. This is real per-source research work (which school
+  serves which named zone), not a matching-algorithm problem.
+
 - **Renamed to catchment-zone; scope expanded from England-only to the
   whole UK.** GitHub repo, Vercel project/domain, npm workspace scope
   (`@catchment-zone/*`), and the Python package
@@ -346,53 +387,49 @@ false)` right before the foreign keys) still failed intermittently:
 - **Metrics import is unimplemented, and the currently-configured sources
   can't fill it as designed.** See "Known gap" above. Needs either a
   school-level DfE metrics source or a schema change (e.g. a local-
-  authority-level metrics table) before this is worth revisiting.
+  authority-level metrics table) before this is worth revisiting. Not
+  nation-specific: Scotland/Wales/Northern Ireland each have their own,
+  entirely separate statistics bodies (National Records of Scotland,
+  StatsWales, NISRA) that have not been looked at at all.
 - **`SchoolCatchmentArea` (linking a catchment polygon to the school it
-  covers) is entirely unimplemented.** `import-catchments` writes
-  `catchment_sources` and `catchment_areas` correctly now, but nothing
-  matches a catchment area's `area_name` back to a real school and writes
-  the join row. Would need a real name-matching design (fuzzy match against
-  `schools.school_name`?), not a quick fix.
+  covers) is entirely unimplemented, and confirmed not solvable by name-
+  matching.** Both real sources currently in production were checked:
+  Sheffield's features carry no name at all, Aberdeen's `NAME` field is a
+  place/zone name with no textual relationship to any school name. Would
+  need real per-source research (which school actually serves each named
+  zone), likely one local authority at a time, not a generic algorithm.
+  Until this exists, a matched catchment on `/admissions` correctly shows
+  the area name but an empty served-schools list - degraded, not wrong.
 - **`ingestion_runs` is never written to.** The `IngestionRun` model and
   table exist, `/status` reads from it, but no CLI command actually inserts
   a row on run start/finish. Found while writing the calibration report
   (queried `ingestion_runs` after the pilot import; it was empty).
-- **Catchment coverage is still England-only (Sheffield pilot).** Nothing
-  wrong with this - Scotland/Wales/Northern Ireland catchment/admissions
-  boundary sources have not been researched at all yet, a separate
-  question from school register coverage.
-- **`SchoolCatchmentArea` (linking a catchment polygon to the school it
-  covers) is entirely unimplemented.** `import-catchments` writes
-  `catchment_sources` and `catchment_areas` correctly now, but nothing
-  matches a catchment area's `area_name` back to a real school and writes
-  the join row. Would need a real name-matching design (fuzzy match against
-  `schools.school_name`?), not a quick fix.
-- **`ingestion_runs` is never written to.** The `IngestionRun` model and
-  table exist, `/status` reads from it, but no CLI command actually inserts
-  a row on run start/finish. Found while writing the calibration report
-  (queried `ingestion_runs` after the pilot import; it was empty).
+- **Catchment coverage is two local authorities across two nations**
+  (Sheffield/England, Aberdeen City/Scotland) **out of ~200+ across the
+  UK.** Wales has no viable source found yet beyond Cardiff (ruled out);
+  other Welsh councils have not been checked. Northern Ireland is a
+  confirmed dead end (no catchment concept in its admissions system at
+  all). Scotland has 31 other council areas not yet checked - Aberdeen was
+  the one candidate already identified, not necessarily the easiest.
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
-- **`/map`'s catchment overlay is wired but unused**: `/api/map/catchments`
-  works, but the map page does not yet render a toggle to show catchment
-  polygons on top of school points. Schools-only view is functional. Real
-  catchment data now exists in production (127 Sheffield areas) to test
-  this against.
 
 ## Known failing tests
 
-None. Every test suite that was run passed: `packages/shared` (40),
+None. Every test suite that was run passed: `packages/shared` (41),
 `apps/web` (29), `services/ingestor` (81).
 
 ## Exact next steps, in order
 
-1. Research catchment/admissions boundary sources for Scotland, Wales and
-   Northern Ireland (school register coverage for all three is done; their
-   catchment-area data is a separate, unresearched question, same as
-   England's was before the Sheffield pilot).
-2. Decide on a path for the metrics gap (school-level DfE source, or a
-   schema change) before spending more time on `import-statistics`.
+1. Check other Scottish council areas and Welsh councils (beyond Cardiff)
+   for real, licensed, machine-readable catchment sources, matching the
+   same verification rigor Aberdeen City got - don't assume a council
+   publishes one just because its neighbour does.
+2. Decide on a path for the metrics gap (school-level DfE source for
+   England, or entirely separate research for Scotland/Wales/Northern
+   Ireland's own statistics bodies) before spending more time on
+   `import-statistics`.
 3. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
    before any larger/national GIAS import (that report predates the
    devolved-nations work and only covers England). The report's own
@@ -401,7 +438,7 @@ None. Every test suite that was run passed: `packages/shared` (40),
    rolled out one local authority at a time with real console figures
    checked after each addition, not assumed to scale linearly from the
    single Sheffield sample.
-4. Optional polish: catchment overlay toggle on `/map` (real data now
-   available to test it against), `SchoolCatchmentArea` name-matching,
-   `ingestion_runs` write-through, Playwright e2e coverage for the golden
-   paths (search a school, check a postcode, view the map).
+4. Optional polish: `SchoolCatchmentArea` per-source research (see
+   "Unfinished" above), `ingestion_runs` write-through, Playwright e2e
+   coverage for the golden paths (search a school, check a postcode, view
+   the map with the catchment overlay on).
