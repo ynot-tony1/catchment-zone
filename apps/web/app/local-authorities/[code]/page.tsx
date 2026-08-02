@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatNation } from "@/lib/format";
 import { getPrismaClient } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 
@@ -96,9 +97,10 @@ export default async function LocalAuthorityDetailPage({
           </Link>{" "}
           / {la.name}
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          {la.name}
-        </h1>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">{la.name}</h1>
+          <Badge variant="outline">{formatNation(la.nation)}</Badge>
+        </div>
       </div>
 
       <Card>

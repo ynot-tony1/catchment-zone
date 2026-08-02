@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  NATION_VALUES,
   parseLocalAuthoritySearchParams,
   type RawSearchParams,
 } from "@catchment-zone/shared";
@@ -17,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatNation } from "@/lib/format";
 import { searchLocalAuthorities } from "@/lib/queries/local-authorities";
 import { safeQuery } from "@/lib/safe-query";
 
@@ -90,16 +92,20 @@ export default async function LocalAuthoritiesPage({
           Local authorities
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Catchment coverage varies by local authority. Only authorities with a
-          verified, licensed boundary source show mapped priority areas; the
-          rest show as not available rather than a guess.
+          Covers England&apos;s local authorities, Scotland&apos;s and
+          Wales&apos;s council/principal areas. Northern Ireland has no
+          equivalent in its source data (schools are administered centrally by
+          the Education Authority, not by county councils), so it is not listed
+          here. Catchment coverage varies by area: only those with a verified,
+          licensed boundary source show mapped priority areas; the rest show as
+          not available rather than a guess.
         </p>
       </div>
 
       <form method="get" className="flex flex-wrap items-end gap-3">
         <div>
           <label htmlFor="q" className="text-sm font-medium">
-            Local authority name
+            Name
           </label>
           <Input
             id="q"
@@ -107,6 +113,24 @@ export default async function LocalAuthoritiesPage({
             defaultValue={filters.q ?? ""}
             placeholder="e.g. Sheffield"
           />
+        </div>
+        <div>
+          <label htmlFor="nation" className="text-sm font-medium">
+            Nation
+          </label>
+          <select
+            id="nation"
+            name="nation"
+            defaultValue={filters.nation ?? ""}
+            className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+          >
+            <option value="">All nations</option>
+            {NATION_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {formatNation(value)}
+              </option>
+            ))}
+          </select>
         </div>
         <Button type="submit">Search</Button>
       </form>
@@ -125,6 +149,7 @@ export default async function LocalAuthoritiesPage({
           <TableHeader>
             <TableRow>
               <TableHead>Local authority</TableHead>
+              <TableHead>Nation</TableHead>
               <TableHead>Catchment coverage</TableHead>
             </TableRow>
           </TableHeader>
@@ -139,6 +164,7 @@ export default async function LocalAuthoritiesPage({
                     {item.name}
                   </Link>
                 </TableCell>
+                <TableCell>{formatNation(item.nation)}</TableCell>
                 <TableCell>
                   <Badge
                     variant={coverageBadgeVariant(item.catchmentCoverageStatus)}

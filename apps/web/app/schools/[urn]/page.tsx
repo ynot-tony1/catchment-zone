@@ -16,6 +16,7 @@ import {
 import {
   formatDate,
   formatMetricValue,
+  formatNation,
   formatSchoolStatus,
 } from "@/lib/format";
 import { getPrismaClient } from "@/lib/prisma";
@@ -97,12 +98,25 @@ export default async function SchoolDetailPage({
           <Badge variant={school.status === "OPEN" ? "success" : "secondary"}>
             {formatSchoolStatus(school.status)}
           </Badge>
+          <Badge variant="outline">{formatNation(school.nation)}</Badge>
         </div>
         <p className="text-muted-foreground mt-1 text-sm">
           {school.establishmentTypeName} &middot; {school.phaseName} &middot;
           URN {school.urn}
         </p>
       </div>
+
+      {school.sourceExtractDate && (
+        <Alert variant="warning">
+          <AlertTitle>Data currency notice</AlertTitle>
+          <AlertDescription>
+            This school&apos;s record is from a source dated{" "}
+            {formatDate(school.sourceExtractDate)}, not a live register. Details
+            such as enrolment, address or open/closed status may have changed
+            since.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>

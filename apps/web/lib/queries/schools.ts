@@ -9,6 +9,7 @@ import { getPrismaClient } from "@/lib/prisma";
 
 export type SchoolSearchResultItem = {
   urn: string;
+  nation: string;
   schoolName: string;
   status: string;
   phaseName: string;
@@ -20,6 +21,7 @@ export type SchoolSearchResultItem = {
   latitude: number | null;
   longitude: number | null;
   distanceKm: number | null;
+  sourceExtractDate: string | null;
 };
 
 export type SchoolSearchResult = {
@@ -29,6 +31,7 @@ export type SchoolSearchResult = {
 
 const SEARCH_SELECT = {
   urn: true,
+  nation: true,
   schoolName: true,
   status: true,
   phaseName: true,
@@ -39,6 +42,7 @@ const SEARCH_SELECT = {
   longitude: true,
   normalisedName: true,
   openingDate: true,
+  sourceExtractDate: true,
   localAuthority: { select: { name: true } },
   trust: { select: { trustName: true } },
 } satisfies Prisma.SchoolSelect;
@@ -51,6 +55,7 @@ function toItem(
 ): SchoolSearchResultItem {
   return {
     urn: row.urn,
+    nation: row.nation,
     schoolName: row.schoolName,
     status: row.status,
     phaseName: row.phaseName,
@@ -65,6 +70,7 @@ function toItem(
       fromPoint && row.latitude !== null && row.longitude !== null
         ? distanceKm(fromPoint, { lat: row.latitude, lon: row.longitude })
         : null,
+    sourceExtractDate: row.sourceExtractDate?.toISOString() ?? null,
   };
 }
 
@@ -82,6 +88,7 @@ function buildWhere(filters: SchoolSearchFilters): Prisma.SchoolWhereInput {
   if (filters.postcode)
     where.postcode = { startsWith: filters.postcode.trim().toUpperCase() };
   if (filters.town) where.town = { equals: filters.town, mode: "insensitive" };
+  if (filters.nation) where.nation = filters.nation;
   if (filters.localAuthorityCode)
     where.localAuthorityCode = filters.localAuthorityCode;
   if (filters.regionCode) where.regionCode = filters.regionCode;

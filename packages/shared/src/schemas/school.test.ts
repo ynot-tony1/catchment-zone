@@ -46,8 +46,13 @@ describe("parseSchoolSearchParams", () => {
     ).toThrow();
   });
 
-  it("rejects a non-numeric URN", () => {
-    expect(() => parseSchoolSearchParams({ urn: "abc123" })).toThrow();
+  it("accepts alphanumeric URNs (Scotland's SchUID, Northern Ireland's Reference)", () => {
+    expect(parseSchoolSearchParams({ urn: "8212627P" }).urn).toBe("8212627P");
+    expect(parseSchoolSearchParams({ urn: "1AB0427" }).urn).toBe("1AB0427");
+  });
+
+  it("rejects a URN with invalid characters", () => {
+    expect(() => parseSchoolSearchParams({ urn: "abc 123!" })).toThrow();
   });
 });
 

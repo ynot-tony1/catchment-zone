@@ -71,6 +71,22 @@ export function formatSchoolStatus(status: string): string {
   }
 }
 
+/** Human-readable label for a Nation enum value. */
+export function formatNation(nation: string): string {
+  switch (nation) {
+    case "ENGLAND":
+      return "England";
+    case "SCOTLAND":
+      return "Scotland";
+    case "WALES":
+      return "Wales";
+    case "NORTHERN_IRELAND":
+      return "Northern Ireland";
+    default:
+      return nation;
+  }
+}
+
 /** Distance formatting for the school search "distance from a point" sort
  * and the admissions boundary-distance display. */
 export function formatDistanceMetres(metres: number): string {

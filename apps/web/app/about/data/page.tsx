@@ -23,7 +23,7 @@ export default function AboutDataPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>School and trust directory</CardTitle>
+          <CardTitle>England: school and trust directory</CardTitle>
         </CardHeader>
         <CardContent className="text-sm">
           <p>
@@ -36,11 +36,74 @@ export default function AboutDataPage() {
             </a>
             , the Department for Education&apos;s live register of schools,
             academies, colleges and trusts. School and trust records are
-            refreshed from GIAS&apos;s published data extracts. GIAS covers
-            England only; Scotland, Wales and Northern Ireland each have their
-            own official school register and are added here as separate sources,
-            nation by nation, not assumed to share GIAS&apos;s identifiers or
-            update schedule.
+            refreshed from GIAS&apos;s published data extracts.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Scotland: school register</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm">
+          <p>
+            The Scottish Government&apos;s ScottishSchoolRoll dataset, published
+            as a live map service at{" "}
+            <a
+              href="https://www.data.gov.scot/"
+              className="text-primary underline underline-offset-2"
+              rel="noreferrer"
+            >
+              maps.gov.scot
+            </a>
+            . Schools are identified by their SEED code / SchUID rather than a
+            GIAS-style URN. This source has no open/closed status field, so
+            every Scottish school here is treated as currently open.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Wales: school register</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm">
+          <p>
+            <a
+              href="https://datamap.gov.wales/layers/geonode:maintained_schools_wg"
+              className="text-primary underline underline-offset-2"
+              rel="noreferrer"
+            >
+              DataMapWales&apos;s maintained-schools register
+            </a>
+            , compiled by Welsh Government from OS AddressBase, My Local School
+            and its own published address list of schools. Like Scotland&apos;s
+            source, it has no open/closed status field, so every Welsh school
+            here is treated as currently open.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Northern Ireland: school register</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm">
+          <p>
+            <a
+              href="https://www.opendatani.gov.uk/dataset/locate-a-school"
+              className="text-primary underline underline-offset-2"
+              rel="noreferrer"
+            >
+              Open Data NI&apos;s &ldquo;School Locations&rdquo; dataset
+            </a>
+            , published by the Department of Education. This is the only
+            machine-readable register found for Northern Ireland, and its only
+            available extract is dated <strong>February 2016</strong> &mdash;
+            every Northern Ireland school shown here carries a data currency
+            notice on its page for that reason. It is included because the data
+            is real and useful, not because it is current; treat enrolment,
+            address and open/closed status as liable to have changed since 2016.
           </p>
         </CardContent>
       </Card>

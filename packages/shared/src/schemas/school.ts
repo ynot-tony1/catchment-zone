@@ -19,6 +19,20 @@ export const SCHOOL_STATUS_VALUES = [
 export const SchoolStatusEnum = z.enum(SCHOOL_STATUS_VALUES);
 export type SchoolStatus = z.infer<typeof SchoolStatusEnum>;
 
+// Mirrors the Prisma `Nation` enum. England is GIAS-sourced; Scotland,
+// Wales and Northern Ireland each have their own official register with
+// its own identifier scheme (see services/ingestor/src/catchment_zone_ingestor/adapters/
+// scotland.py, wales.py, northern_ireland.py for what's actually verified
+// live for each, including Northern Ireland's known 2016 data staleness).
+export const NATION_VALUES = [
+  "ENGLAND",
+  "SCOTLAND",
+  "WALES",
+  "NORTHERN_IRELAND",
+] as const;
+export const NationEnum = z.enum(NATION_VALUES);
+export type Nation = z.infer<typeof NationEnum>;
+
 export const ACADEMY_STATUS_VALUES = ["ACADEMY", "MAINTAINED"] as const;
 export const AcademyStatusEnum = z.enum(ACADEMY_STATUS_VALUES);
 
@@ -38,13 +52,18 @@ export type RawSearchParams = Record<string, string | string[] | undefined>;
 export const SchoolSearchFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(200).optional(),
+    // GIAS URNs are numeric, but Scotland's SchUID ("8212627P") and
+    // Northern Ireland's Reference ("1AB0427") are alphanumeric - a
+    // numeric-only pattern would silently reject every non-England school
+    // lookup by id.
     urn: z
       .string()
       .trim()
-      .regex(/^\d{1,10}$/, "URN must be numeric")
+      .regex(/^[A-Za-z0-9]{1,20}$/, "URN must be alphanumeric")
       .optional(),
     postcode: z.string().trim().min(1).max(16).optional(),
     town: z.string().trim().min(1).max(100).optional(),
+    nation: NationEnum.optional(),
     localAuthorityCode: z.string().trim().min(1).max(10).optional(),
     regionCode: z.string().trim().min(1).max(10).optional(),
     phaseCode: z.string().trim().min(1).max(20).optional(),
@@ -100,6 +119,7 @@ export function parseSchoolSearchParams(
     urn: firstValue(raw.urn),
     postcode: firstValue(raw.postcode),
     town: firstValue(raw.town),
+    nation: firstValue(raw.nation),
     localAuthorityCode: firstValue(raw.localAuthorityCode ?? raw.la),
     regionCode: firstValue(raw.regionCode ?? raw.region),
     phaseCode: firstValue(raw.phaseCode ?? raw.phase),
@@ -146,6 +166,7 @@ export function schoolFiltersToSearchParams(
   set("urn", filters.urn);
   set("postcode", filters.postcode);
   set("town", filters.town);
+  set("nation", filters.nation);
   set("localAuthorityCode", filters.localAuthorityCode);
   set("regionCode", filters.regionCode);
   set("phaseCode", filters.phaseCode);

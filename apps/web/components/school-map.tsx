@@ -9,17 +9,21 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Link from "next/link";
+import { formatNation } from "@/lib/format";
 
 type SchoolFeatureProperties = {
   urn: string;
+  nation: string;
   schoolName: string;
   phaseName: string;
   status: string;
+  sourceExtractDate: string | null;
 };
 
-const ENGLAND_BOUNDS: [number, number, number, number] = [
-  -6.5, 49.8, 2.1, 55.9,
-];
+// Covers all four UK nations (west coast of Northern Ireland to Shetland
+// in the north-east), not just England - schools from all four nations are
+// loaded here now.
+const UK_BOUNDS: [number, number, number, number] = [-8.7, 49.8, 1.9, 61.0];
 
 export function SchoolMap({
   styleUrl,
@@ -41,7 +45,7 @@ export function SchoolMap({
     const map = new MapLibreMap({
       container: containerRef.current,
       style: styleUrl,
-      bounds: ENGLAND_BOUNDS,
+      bounds: UK_BOUNDS,
       attributionControl: { customAttribution: attribution },
     });
     mapRef.current = map;
@@ -103,8 +107,19 @@ export function SchoolMap({
             {selected.schoolName}
           </Link>
           <p className="text-muted-foreground">
-            {selected.phaseName} &middot; {selected.status}
+            {selected.phaseName} &middot; {selected.status} &middot;{" "}
+            {formatNation(selected.nation)}
           </p>
+          {selected.sourceExtractDate && (
+            <p className="text-muted-foreground mt-1 text-xs">
+              Not live data: source dated{" "}
+              {new Date(selected.sourceExtractDate).toLocaleDateString(
+                "en-GB",
+                { day: "numeric", month: "long", year: "numeric" },
+              )}
+              .
+            </p>
+          )}
         </div>
       )}
     </div>

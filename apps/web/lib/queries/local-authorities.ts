@@ -8,6 +8,7 @@ import { getPrismaClient } from "@/lib/prisma";
 
 export type LocalAuthoritySearchResultItem = {
   code: string;
+  nation: string;
   name: string;
   regionCode: string | null;
   catchmentCoverageStatus: string;
@@ -23,6 +24,7 @@ function buildWhere(
 ): Prisma.LocalAuthorityWhereInput {
   const where: Prisma.LocalAuthorityWhereInput = {};
   if (filters.q) where.name = { contains: filters.q, mode: "insensitive" };
+  if (filters.nation) where.nation = filters.nation;
   if (filters.regionCode) where.regionCode = filters.regionCode;
   if (filters.catchmentCoverageStatus)
     where.catchmentCoverageStatus = filters.catchmentCoverageStatus;
@@ -56,6 +58,7 @@ export async function searchLocalAuthorities(
     where,
     select: {
       code: true,
+      nation: true,
       name: true,
       regionCode: true,
       catchmentCoverageStatus: true,

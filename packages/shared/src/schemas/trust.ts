@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { firstValue } from "./common";
-import type { RawSearchParams } from "./school";
+import { NationEnum, type RawSearchParams } from "./school";
 
 export const TRUST_SORT_VALUES = [
   "name_asc",
@@ -33,6 +33,7 @@ export function parseTrustSearchParams(
 
 export const LocalAuthoritySearchFiltersSchema = z.object({
   q: z.string().trim().min(1).max(200).optional(),
+  nation: NationEnum.optional(),
   regionCode: z.string().trim().min(1).max(10).optional(),
   catchmentCoverageStatus: z
     .enum(["NOT_AVAILABLE", "PILOT", "PARTIAL", "FULL"])
@@ -49,6 +50,7 @@ export function parseLocalAuthoritySearchParams(
 ): LocalAuthoritySearchFilters {
   return LocalAuthoritySearchFiltersSchema.parse({
     q: firstValue(raw.q),
+    nation: firstValue(raw.nation),
     regionCode: firstValue(raw.regionCode),
     catchmentCoverageStatus: firstValue(raw.catchmentCoverageStatus),
     cursor: firstValue(raw.cursor),

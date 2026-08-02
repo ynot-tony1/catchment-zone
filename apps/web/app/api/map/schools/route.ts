@@ -46,11 +46,13 @@ export async function GET(request: NextRequest) {
       },
       select: {
         urn: true,
+        nation: true,
         schoolName: true,
         phaseName: true,
         status: true,
         latitude: true,
         longitude: true,
+        sourceExtractDate: true,
       },
       take: query.limit,
     });
@@ -65,9 +67,11 @@ export async function GET(request: NextRequest) {
         },
         properties: {
           urn: school.urn,
+          nation: school.nation,
           schoolName: school.schoolName,
           phaseName: school.phaseName,
           status: school.status,
+          sourceExtractDate: school.sourceExtractDate?.toISOString() ?? null,
         },
       })),
     };

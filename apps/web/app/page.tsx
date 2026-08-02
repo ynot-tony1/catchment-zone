@@ -44,10 +44,12 @@ export default async function HomePage() {
         <p className="text-muted-foreground max-w-2xl">
           catchment-zone brings together official school records, academy trust
           structures, published performance statistics and admissions catchment
-          areas from government sources, in one place. Coverage currently starts
-          with England (GIAS); Scotland, Wales and Northern Ireland are being
-          added nation by nation, each from that nation&apos;s own official
-          register.
+          areas from government sources, in one place. All four UK nations are
+          covered, each from that nation&apos;s own official register: England
+          (GIAS), Scotland (the Scottish Government&apos;s school roll), Wales
+          (DataMapWales) and Northern Ireland (Open Data NI, whose only
+          available register is dated February 2016 - shown with a data currency
+          notice on every affected record, not presented as live).
         </p>
         <div className="flex flex-wrap gap-3">
           <Button asChild size="lg">

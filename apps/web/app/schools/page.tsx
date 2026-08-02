@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  NATION_VALUES,
   SCHOOL_STATUS_VALUES,
   parseSchoolSearchParams,
   type RawSearchParams,
@@ -18,7 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatSchoolStatus, formatDistanceMetres } from "@/lib/format";
+import {
+  formatSchoolStatus,
+  formatDistanceMetres,
+  formatNation,
+} from "@/lib/format";
 import { searchSchools } from "@/lib/queries/schools";
 import { safeQuery } from "@/lib/safe-query";
 
@@ -127,6 +132,24 @@ export default async function SchoolsPage({
             ))}
           </select>
         </div>
+        <div>
+          <label htmlFor="nation" className="text-sm font-medium">
+            Nation
+          </label>
+          <select
+            id="nation"
+            name="nation"
+            defaultValue={filters.nation ?? ""}
+            className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+          >
+            <option value="">All nations</option>
+            {NATION_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {formatNation(value)}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="sm:col-span-4">
           <Button type="submit">Search</Button>
         </div>
@@ -157,6 +180,7 @@ export default async function SchoolsPage({
           <TableHeader>
             <TableRow>
               <TableHead>School</TableHead>
+              <TableHead>Nation</TableHead>
               <TableHead>Phase</TableHead>
               <TableHead>Local authority</TableHead>
               <TableHead>Status</TableHead>
@@ -176,6 +200,14 @@ export default async function SchoolsPage({
                   <div className="text-muted-foreground text-xs">
                     {item.town ?? item.postcode ?? ""}
                   </div>
+                </TableCell>
+                <TableCell>
+                  {formatNation(item.nation)}
+                  {item.sourceExtractDate && (
+                    <Badge variant="outline" className="ml-2">
+                      Not live data
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell>{item.phaseName}</TableCell>
                 <TableCell>
