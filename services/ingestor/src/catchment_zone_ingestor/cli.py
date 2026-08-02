@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import sys
+import time
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, cast
@@ -18,7 +21,7 @@ import httpx
 import typer
 import yaml
 
-from catchment_zone_ingestor import db
+from catchment_zone_ingestor import db, pipeline
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
@@ -28,6 +31,7 @@ from catchment_zone_ingestor.adapters import statistics as statistics_adapter
 from catchment_zone_ingestor.adapters import wales as wales_adapter
 from catchment_zone_ingestor.config import Settings, get_settings
 from catchment_zone_ingestor.logging_setup import configure_logging, get_logger, set_run_context
+from catchment_zone_ingestor.models import IngestionStatus
 
 app = typer.Typer(
     name="ingestor",
@@ -74,6 +78,62 @@ def _connect_or_none(settings: Settings, *, dry_run: bool) -> db.ConnectionLike 
     except Exception as exc:
         logger.warning("could not connect to database, continuing without persistence", extra={"error": str(exc)})
         return None
+
+
+class _RunTracker:
+    """Mutable state a command fills in inside a `with _tracked_run(...)`
+    block: row counts for the ingestion_runs record, and optionally a
+    source checksum (GIAS extracts) so a future run's --force-less
+    checksum-skip check (get_last_successful_checksum) has something real
+    to compare against - previously impossible, since no run was ever
+    recorded for it to find."""
+
+    def __init__(self) -> None:
+        self.counts = pipeline.RunCounts()
+        self.checksum: str | None = None
+
+
+@contextmanager
+def _tracked_run(conn: db.ConnectionLike | None, source: str, dry_run: bool) -> Iterator[_RunTracker]:
+    """Records an ingestion_runs row around a command's real work, so
+    /status's "recent ingestion runs" reflects what actually happened.
+
+    pipeline.py already had a complete create_ingestion_run/
+    complete_ingestion_run implementation; nothing in cli.py ever called
+    it, so ingestion_runs was empty after every real import this project
+    has ever run (found while writing the pilot calibration report).
+    Deliberately a thin wrapper rather than a rewrite, since pipeline.py's
+    functions were already correct, just unused.
+
+    Yields a _RunTracker the caller fills in as it goes. On dry-run or
+    when no connection is available, tracking is skipped entirely (there
+    is nothing to record). Each write commits immediately and
+    independently of whatever transaction the caller's own work uses, so
+    a rollback in the caller's data-writing transaction never also
+    discards the run record explaining what happened.
+    """
+    tracker = _RunTracker()
+    if conn is None or dry_run:
+        yield tracker
+        return
+
+    run_id = pipeline.create_ingestion_run(conn, source)
+    conn.commit()
+    started_monotonic = time.monotonic()
+    try:
+        yield tracker
+    except Exception as exc:
+        pipeline.complete_ingestion_run(
+            conn, run_id, IngestionStatus.FAILED, tracker.counts, started_monotonic, error_summary=str(exc)[:1000]
+        )
+        conn.commit()
+        raise
+    else:
+        error_summary = f"checksum:{tracker.checksum}" if tracker.checksum else None
+        pipeline.complete_ingestion_run(
+            conn, run_id, IngestionStatus.SUCCEEDED, tracker.counts, started_monotonic, error_summary=error_summary
+        )
+        conn.commit()
 
 
 # ---------------------------------------------------------------------------
@@ -149,15 +209,23 @@ def import_gias(
             _fail("no database connection available and --dry-run was not set", source="gias_establishments")
             return
 
-        # local_authorities first: schools.local_authority_code is a foreign
-        # key to it, and this extract is the only source of local authority
-        # identity this service has, so a school row referencing a
-        # not-yet-seen LA code would otherwise fail that constraint.
-        la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
-        rows = [s.model_dump(mode="json") for s in result.schools]
-        with db.transaction(conn):
-            la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
-            inserted = db.upsert_many(conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size)
+        with _tracked_run(conn, "gias_establishments", dry_run) as tracker:
+            # local_authorities first: schools.local_authority_code is a
+            # foreign key to it, and this extract is the only source of
+            # local authority identity this service has, so a school row
+            # referencing a not-yet-seen LA code would otherwise fail that
+            # constraint.
+            la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
+            rows = [s.model_dump(mode="json") for s in result.schools]
+            with db.transaction(conn):
+                la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+                inserted = db.upsert_many(
+                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                )
+            tracker.counts.rows_processed = result.rows_processed
+            tracker.counts.rows_inserted = inserted
+            tracker.counts.rows_rejected = result.rows_rejected
+            tracker.checksum = checksum
 
         logger.info(
             "imported GIAS establishments", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
@@ -213,10 +281,15 @@ def import_trusts(
             return
 
         rows = [t.model_dump(mode="json") for t in result.trusts]
-        with db.transaction(conn):
-            inserted = db.upsert_many(
-                conn, "academy_trusts", iter(rows), conflict_columns=["trust_id"], batch_size=settings.batch_size
-            )
+        with _tracked_run(conn, "gias_trusts", dry_run) as tracker:
+            with db.transaction(conn):
+                inserted = db.upsert_many(
+                    conn, "academy_trusts", iter(rows), conflict_columns=["trust_id"], batch_size=settings.batch_size
+                )
+            tracker.counts.rows_processed = result.rows_processed
+            tracker.counts.rows_inserted = inserted
+            tracker.counts.rows_rejected = result.rows_rejected
+            tracker.checksum = checksum
         typer.echo(f"imported {inserted} trusts ({result.rows_rejected} rows rejected)")
     except typer.Exit:
         raise
@@ -269,9 +342,15 @@ def import_scotland(
 
         la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
         rows = [s.model_dump(mode="json") for s in result.schools]
-        with db.transaction(conn):
-            la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
-            inserted = db.upsert_many(conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size)
+        with _tracked_run(conn, "scotland_schools", dry_run) as tracker:
+            with db.transaction(conn):
+                la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+                inserted = db.upsert_many(
+                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                )
+            tracker.counts.rows_processed = result.rows_processed
+            tracker.counts.rows_inserted = inserted
+            tracker.counts.rows_rejected = result.rows_rejected
 
         logger.info(
             "imported Scotland schools", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
@@ -330,8 +409,14 @@ def import_northern_ireland(
             return
 
         rows = [s.model_dump(mode="json") for s in result.schools]
-        with db.transaction(conn):
-            inserted = db.upsert_many(conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size)
+        with _tracked_run(conn, "northern_ireland_schools", dry_run) as tracker:
+            with db.transaction(conn):
+                inserted = db.upsert_many(
+                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                )
+            tracker.counts.rows_processed = result.rows_processed
+            tracker.counts.rows_inserted = inserted
+            tracker.counts.rows_rejected = result.rows_rejected
 
         logger.info("imported Northern Ireland schools", extra={"rows_upserted": inserted})
         typer.echo(f"imported {inserted} schools ({result.rows_rejected} rows rejected)")
@@ -386,9 +471,15 @@ def import_wales(
 
         la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
         rows = [s.model_dump(mode="json") for s in result.schools]
-        with db.transaction(conn):
-            la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
-            inserted = db.upsert_many(conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size)
+        with _tracked_run(conn, "wales_schools", dry_run) as tracker:
+            with db.transaction(conn):
+                la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+                inserted = db.upsert_many(
+                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                )
+            tracker.counts.rows_processed = result.rows_processed
+            tracker.counts.rows_inserted = inserted
+            tracker.counts.rows_rejected = result.rows_rejected
 
         logger.info(
             "imported Wales schools", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
@@ -634,39 +725,46 @@ def import_catchments(
                 "status": "VALID" if build_result.areas else "FAILED",
             }
             area_rows = [area.model_dump(mode="json") for area in build_result.areas]
-            with db.transaction(conn):
-                db.upsert_many(
-                    conn,
-                    "catchment_sources",
-                    iter([source_row]),
-                    conflict_columns=["local_authority_code", "academic_year", "source_type"],
-                    update_columns=[
-                        c for c in source_row if c not in ("id", "local_authority_code", "academic_year", "source_type")
-                    ],
-                    batch_size=settings.batch_size,
-                )
-                db.upsert_many(
-                    conn,
-                    "catchment_areas",
-                    iter(area_rows),
-                    conflict_columns=["source_id", "geometry_checksum"],
-                    update_columns=_CATCHMENT_AREA_UPDATE_COLUMNS,
-                    batch_size=settings.batch_size,
-                )
-                # Real, verified catchment data now exists for this local
-                # authority; reflect that so /local-authorities doesn't keep
-                # showing "not available" for one that actually has coverage
-                # (found live: this had never been set anywhere, so Sheffield
-                # itself showed as NOT_AVAILABLE despite having 127 areas).
-                # Only upgrades from the NOT_AVAILABLE default, never
-                # downgrades a status set some other way (e.g. by hand).
-                if build_result.areas:
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "UPDATE local_authorities SET catchment_coverage_status = 'PILOT', "
-                            "updated_at = now() WHERE code = %(code)s AND catchment_coverage_status = 'NOT_AVAILABLE'",
-                            {"code": source["local_authority_code"]},
-                        )
+            run_source = f"catchments:{source['local_authority_code']}:{source['source_type']}"
+            with _tracked_run(conn, run_source, dry_run) as tracker:
+                with db.transaction(conn):
+                    db.upsert_many(
+                        conn,
+                        "catchment_sources",
+                        iter([source_row]),
+                        conflict_columns=["local_authority_code", "academic_year", "source_type"],
+                        update_columns=[
+                            c
+                            for c in source_row
+                            if c not in ("id", "local_authority_code", "academic_year", "source_type")
+                        ],
+                        batch_size=settings.batch_size,
+                    )
+                    db.upsert_many(
+                        conn,
+                        "catchment_areas",
+                        iter(area_rows),
+                        conflict_columns=["source_id", "geometry_checksum"],
+                        update_columns=_CATCHMENT_AREA_UPDATE_COLUMNS,
+                        batch_size=settings.batch_size,
+                    )
+                    # Real, verified catchment data now exists for this local
+                    # authority; reflect that so /local-authorities doesn't keep
+                    # showing "not available" for one that actually has coverage
+                    # (found live: this had never been set anywhere, so Sheffield
+                    # itself showed as NOT_AVAILABLE despite having 127 areas).
+                    # Only upgrades from the NOT_AVAILABLE default, never
+                    # downgrades a status set some other way (e.g. by hand).
+                    if build_result.areas:
+                        with conn.cursor() as cur:
+                            cur.execute(
+                                "UPDATE local_authorities SET catchment_coverage_status = 'PILOT', "
+                                "updated_at = now() WHERE code = %(code)s AND catchment_coverage_status = 'NOT_AVAILABLE'",
+                                {"code": source["local_authority_code"]},
+                            )
+                tracker.counts.rows_processed = len(query_result.features)
+                tracker.counts.geometry_records = len(build_result.areas)
+                tracker.counts.rows_rejected = build_result.rejected_count
 
     typer.echo(f"built {total_areas} catchment areas ({total_rejected} rejected)")
 
