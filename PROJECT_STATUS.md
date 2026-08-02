@@ -5,6 +5,21 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **`ingestion_runs` is written to for the first time in this project's
+  history.** `pipeline.py` already had a complete, correct
+  `create_ingestion_run`/`complete_ingestion_run` implementation - nothing
+  in `cli.py` ever called it, so `/status`'s "recent ingestion runs" card
+  had shown "No ingestion runs recorded yet" through every real import
+  this project has ever run, including everything earlier in this
+  session. Wired into `import-gias`, `import-trusts`, `import-scotland`,
+  `import-wales`, `import-northern-ireland`, `import-catchments` (one row
+  per local-authority/source-type combination). Verified against
+  production: a real `import-scotland` run produced the first
+  `ingestion_runs` row ever written, and it appeared on the live
+  `/status` page immediately. Incidentally also fixes GIAS's
+  checksum-skip logic, which could never find a prior run to compare
+  against before now and was silently a no-op.
+
 - **Catchment coverage now spans two nations; a real, longstanding bug
   fixed along the way.** Aberdeen City Council's ArcGIS-hosted catchment
   polygons (Scotland's first candidate, previously rejected in
@@ -400,10 +415,6 @@ false)` right before the foreign keys) still failed intermittently:
   zone), likely one local authority at a time, not a generic algorithm.
   Until this exists, a matched catchment on `/admissions` correctly shows
   the area name but an empty served-schools list - degraded, not wrong.
-- **`ingestion_runs` is never written to.** The `IngestionRun` model and
-  table exist, `/status` reads from it, but no CLI command actually inserts
-  a row on run start/finish. Found while writing the calibration report
-  (queried `ingestion_runs` after the pilot import; it was empty).
 - **Catchment coverage is two local authorities across two nations**
   (Sheffield/England, Aberdeen City/Scotland) **out of ~200+ across the
   UK.** Wales has no viable source found yet beyond Cardiff (ruled out);
