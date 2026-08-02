@@ -84,6 +84,80 @@ sources:
       be confused with England's academy-trust governance model) catchment
       polygons. Same source item family as the primary layer above.
 
+  # City of Edinburgh's non-denominational (ND) and Roman Catholic (RC)
+  # catchments geographically overlap (a household can sit inside both an
+  # ND and an RC catchment at once - denominational school choice is
+  # separate from geographic catchment in Scotland). source_type here is
+  # deliberately NOT "primary_catchment"/"secondary_catchment": those exact
+  # strings are what apps/web's /admissions checker looks up
+  # (PHASE_TO_SOURCE_TYPE in lib/queries/catchments.ts), and feeding it an
+  # ND/RC pair under the same source_type would let it silently return
+  # whichever polygon happens to match first for a household actually in
+  # both, which is not a real answer. These four layers are map-overlay-only
+  # for now (real, verified, licensed data - just not wired into the
+  # admissions point-in-polygon check, which would need to ask "which
+  # denomination" first before this can extend there.)
+  - local_authority_code: "S12000036"
+    local_authority_name: "City of Edinburgh"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://city-of-edinburgh-council-open-spatial-data-cityofedinburgh.hub.arcgis.com/datasets/cityofedinburgh::primary-school-catchments-non-denominational-"
+    download_url: "https://edinburghcouncilmaps.info/arcgis/rest/services/AdminBoundaries/MiscBoundaries/MapServer/4"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      84 primary (non-denominational) catchment polygons. Carries the real
+      school name in EST_NAME, unlike Sheffield/Aberdeen - verified live
+      ("Abbeyhill Primary School" etc.), matching real Scotland school
+      register names closely enough to be a real future SchoolCatchmentArea
+      candidate, though not attempted here (see PROJECT_STATUS.md).
+
+  - local_authority_code: "S12000036"
+    local_authority_name: "City of Edinburgh"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://city-of-edinburgh-council-open-spatial-data-cityofedinburgh.hub.arcgis.com/datasets/cityofedinburgh::primary-school-catchments-roman-catholic-1"
+    download_url: "https://edinburghcouncilmaps.info/arcgis/rest/services/AdminBoundaries/MiscBoundaries/MapServer/5"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "16 primary (Roman Catholic) catchment polygons."
+
+  - local_authority_code: "S12000036"
+    local_authority_name: "City of Edinburgh"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://city-of-edinburgh-council-open-spatial-data-cityofedinburgh.hub.arcgis.com/datasets/cityofedinburgh::secondary-school-catchments-non-denominational"
+    download_url: "https://edinburghcouncilmaps.info/arcgis/rest/services/AdminBoundaries/MiscBoundaries/MapServer/6"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "22 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000036"
+    local_authority_name: "City of Edinburgh"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://city-of-edinburgh-council-open-spatial-data-cityofedinburgh.hub.arcgis.com/datasets/cityofedinburgh::secondary-school-catchments-roman-catholic-1/about"
+    download_url: "https://edinburghcouncilmaps.info/arcgis/rest/services/AdminBoundaries/MiscBoundaries/MapServer/7"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "4 secondary (Roman Catholic) catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the

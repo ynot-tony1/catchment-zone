@@ -684,7 +684,19 @@ def import_catchments(
                 source_id=source_id,
                 area_type=str(source["source_type"]),
                 academic_year=str(source["academic_year"]),
-                name_field_candidates=["SCHOOL_NAME", "NAME", "name", "SchoolName"],
+                name_field_candidates=[
+                    "SCHOOL_NAME",
+                    "NAME",
+                    "name",
+                    "SchoolName",
+                    # Edinburgh's four catchment layers (primary/secondary x
+                    # non-denominational/Roman Catholic) use EST_NAME
+                    # consistently, unlike SCHOOL_NAM/SCHOOL/SCH_NAME which
+                    # vary per layer; carrying the school's actual name
+                    # (verified live: "Abbeyhill Primary School" etc.)
+                    # unlike Sheffield/Aberdeen's zone-name-only sources.
+                    "EST_NAME",
+                ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),
                 valid_from_iso=datetime.now(UTC).isoformat(),
