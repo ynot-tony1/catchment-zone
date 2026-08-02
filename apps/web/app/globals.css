@@ -36,6 +36,10 @@
   --chart-6: oklch(0.5 0.1 320);
 }
 
+/* There is no manual theme toggle in this app, so dark mode is driven
+ * entirely by the OS/browser preference via the media query below. The
+ * .dark class rule is kept too so these tokens would also work unchanged
+ * if a manual toggle is ever added later. */
 .dark {
   --background: oklch(0.16 0.015 260);
   --foreground: oklch(0.96 0 0);
@@ -66,6 +70,40 @@
   --chart-4: oklch(0.78 0.16 75);
   --chart-5: oklch(0.68 0.2 27);
   --chart-6: oklch(0.62 0.1 320);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.16 0.015 260);
+    --foreground: oklch(0.96 0 0);
+    --card: oklch(0.2 0.015 260);
+    --card-foreground: oklch(0.96 0 0);
+    --popover: oklch(0.2 0.015 260);
+    --popover-foreground: oklch(0.96 0 0);
+    --primary: oklch(0.72 0.12 264);
+    --primary-foreground: oklch(0.16 0.02 264);
+    --secondary: oklch(0.28 0.015 260);
+    --secondary-foreground: oklch(0.96 0 0);
+    --muted: oklch(0.28 0.015 260);
+    --muted-foreground: oklch(0.7 0.02 260);
+    --accent: oklch(0.3 0.04 200);
+    --accent-foreground: oklch(0.96 0 0);
+    --destructive: oklch(0.65 0.2 27);
+    --destructive-foreground: oklch(0.16 0.02 264);
+    --success: oklch(0.65 0.15 155);
+    --success-foreground: oklch(0.16 0.02 264);
+    --warning: oklch(0.75 0.16 75);
+    --warning-foreground: oklch(0.16 0.02 264);
+    --border: oklch(0.32 0.015 260);
+    --input: oklch(0.32 0.015 260);
+    --ring: oklch(0.6 0.1 264);
+    --chart-1: oklch(0.65 0.18 264);
+    --chart-2: oklch(0.7 0.14 200);
+    --chart-3: oklch(0.72 0.15 150);
+    --chart-4: oklch(0.78 0.16 75);
+    --chart-5: oklch(0.68 0.2 27);
+    --chart-6: oklch(0.62 0.1 320);
+  }
 }
 
 @theme inline {
