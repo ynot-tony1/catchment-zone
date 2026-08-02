@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import sys
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, cast
@@ -307,6 +308,51 @@ def _load_catchment_sources(settings: Settings) -> list[dict[str, object]]:
     return [s for s in sources if s.get("enabled")]
 
 
+#: catchment_areas.id has no SQL-level DEFAULT (see models.CatchmentArea's
+#: docstring); id must never be part of the ON CONFLICT update clause below,
+#: since (source_id, geometry_checksum) is the real dedup key and an existing
+#: area's id must survive a re-import untouched.
+_CATCHMENT_AREA_UPDATE_COLUMNS = [
+    "area_name",
+    "area_type",
+    "academic_year",
+    "geometry_geojson",
+    "simplified_geometry_geojson",
+    "minimum_latitude",
+    "maximum_latitude",
+    "minimum_longitude",
+    "maximum_longitude",
+    "valid_from",
+    "valid_to",
+]
+
+
+def _resolve_catchment_source_id(conn: db.ConnectionLike | None, source: dict[str, object]) -> str:
+    """Look up the existing catchment_sources.id for this (local authority,
+    academic year, source type) triple, so a re-import reuses the same id
+    instead of orphaning any catchment_areas rows already written against it.
+
+    catchment_sources.id has no SQL-level DEFAULT (Prisma's @default(uuid())
+    is generated client-side by Prisma Client, not the database), so a fresh
+    id is only minted here when no matching row exists yet.
+    """
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM catchment_sources WHERE local_authority_code = %(local_authority_code)s "
+                "AND academic_year = %(academic_year)s AND source_type = %(source_type)s",
+                {
+                    "local_authority_code": source["local_authority_code"],
+                    "academic_year": source["academic_year"],
+                    "source_type": source["source_type"],
+                },
+            )
+            row = cur.fetchone()
+            if row is not None:
+                return str(row["id"])
+    return str(uuid.uuid4())
+
+
 @app.command("import-catchments")
 def import_catchments(
     local_authority: Annotated[
@@ -361,9 +407,11 @@ def import_catchments(
                 total_rejected += 1
                 continue
 
+            source_id = _resolve_catchment_source_id(conn, source)
+
             build_result = catchments_adapter.build_catchment_areas(
                 query_result.features,
-                source_id=str(source.get("local_authority_code", "")) + ":" + str(source["source_type"]),
+                source_id=source_id,
                 area_type=str(source["source_type"]),
                 academic_year=str(source["academic_year"]),
                 name_field_candidates=["SCHOOL_NAME", "NAME", "name", "SchoolName"],
@@ -394,6 +442,7 @@ def import_catchments(
                 "|".join(sorted(a.geometry_checksum for a in build_result.areas)).encode("utf-8")
             ).hexdigest()
             source_row = {
+                "id": source_id,
                 "local_authority_code": source["local_authority_code"],
                 "academic_year": source["academic_year"],
                 "source_url": source["source_url"],
@@ -405,12 +454,24 @@ def import_catchments(
                 "retrieved_at": datetime.now(UTC),
                 "status": "VALID" if build_result.areas else "FAILED",
             }
+            area_rows = [area.model_dump(mode="json") for area in build_result.areas]
             with db.transaction(conn):
                 db.upsert_many(
                     conn,
                     "catchment_sources",
                     iter([source_row]),
                     conflict_columns=["local_authority_code", "academic_year", "source_type"],
+                    update_columns=[
+                        c for c in source_row if c not in ("id", "local_authority_code", "academic_year", "source_type")
+                    ],
+                    batch_size=settings.batch_size,
+                )
+                db.upsert_many(
+                    conn,
+                    "catchment_areas",
+                    iter(area_rows),
+                    conflict_columns=["source_id", "geometry_checksum"],
+                    update_columns=_CATCHMENT_AREA_UPDATE_COLUMNS,
                     batch_size=settings.batch_size,
                 )
 

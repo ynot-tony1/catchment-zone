@@ -255,6 +255,7 @@ model CatchmentArea {
 
   schools                      SchoolCatchmentArea[]
 
+  @@unique([sourceId, geometryChecksum])
   @@index([sourceId])
   @@index([academicYear])
   @@index([minimumLatitude, maximumLatitude, minimumLongitude, maximumLongitude])

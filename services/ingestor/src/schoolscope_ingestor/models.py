@@ -16,6 +16,7 @@ that data does not exist on this side of the system.
 from __future__ import annotations
 
 import enum
+import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -158,6 +159,13 @@ class SchoolMetric(_Row):
 
 
 class CatchmentSource(_Row):
+    """id has no SQL-level DEFAULT (mirrors Prisma's @default(uuid()), which
+    is generated client-side by Prisma Client, not the database), so callers
+    that write via raw SQL must always supply one; the default_factory below
+    only covers ad-hoc/test construction, not the real import path, which
+    passes an explicit id so re-imports can reuse an existing row's id."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     local_authority_code: str
     academic_year: str
     source_url: str
@@ -173,6 +181,12 @@ class CatchmentSource(_Row):
 
 
 class CatchmentArea(_Row):
+    """id has no SQL-level DEFAULT, same reasoning as CatchmentSource.id
+    above; a fresh id here is fine even on repeated imports since
+    (source_id, geometry_checksum) is the real dedup key at the database
+    level, not id."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     source_id: str
     area_name: str
     area_type: str
