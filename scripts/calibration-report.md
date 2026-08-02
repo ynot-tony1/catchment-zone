@@ -73,14 +73,14 @@ rough estimate of actual on-disk consumption. Whoever next has console
 access should paste in the real before/after console figures to replace this
 section outright.
 
-| Table               | Rows imported | Logical bytes (`pg_column_size` sum) | Bytes/row (avg) |
-| -------------------- | -------------: | -------------------------------------: | ----------------: |
-| schools              | 10,000         | 2,614,272                               | 261.4              |
-| local_authorities    | 92              | 4,453                                   | 48.4               |
-| academy_trusts       | 7,176           | 654,817                                 | 91.3               |
-| catchment_sources    | 2               | 1,013                                   | 506.5              |
-| catchment_areas      | 127             | 2,879,873                               | 22,676.2           |
-| **Total**            | **17,397**      | **6,154,428 (5.87 MiB)**                 |                    |
+| Table             | Rows imported | Logical bytes (`pg_column_size` sum) | Bytes/row (avg) |
+| ----------------- | ------------: | -----------------------------------: | --------------: |
+| schools           |        10,000 |                            2,614,272 |           261.4 |
+| local_authorities |            92 |                                4,453 |            48.4 |
+| academy_trusts    |         7,176 |                              654,817 |            91.3 |
+| catchment_sources |             2 |                                1,013 |           506.5 |
+| catchment_areas   |           127 |                            2,879,873 |        22,676.2 |
+| **Total**         |    **17,397** |             **6,154,428 (5.87 MiB)** |                 |
 
 **Rows imported:** 10,000 schools, 92 local authorities, 7,176 academy
 trusts (this is already the full national trust register — `import-trusts`

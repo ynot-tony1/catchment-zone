@@ -68,7 +68,7 @@ disk, not what is intended.
   the above (GIAS downloads-page parsing, ZIP/encoding handling, local
   authority derivation, `upsert_batch`'s `updated_at`/`now()` SQL, and
   catchment source id resolution/reuse), all passing alongside `ruff check
-  .` and `mypy src`.
+.` and `mypy src`.
 
   **Known gap, not fixed this session:** `import-statistics` only resolves
   the current DfE publication release, it does not fetch or write any

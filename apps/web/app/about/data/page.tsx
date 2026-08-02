@@ -37,10 +37,10 @@ export default function AboutDataPage() {
             , the Department for Education&apos;s live register of schools,
             academies, colleges and trusts. School and trust records are
             refreshed from GIAS&apos;s published data extracts. GIAS covers
-            England only; Scotland, Wales and Northern Ireland each have
-            their own official school register and are added here as
-            separate sources, nation by nation, not assumed to share GIAS&apos;s
-            identifiers or update schedule.
+            England only; Scotland, Wales and Northern Ireland each have their
+            own official school register and are added here as separate sources,
+            nation by nation, not assumed to share GIAS&apos;s identifiers or
+            update schedule.
           </p>
         </CardContent>
       </Card>
