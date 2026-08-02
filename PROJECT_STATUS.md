@@ -20,34 +20,63 @@ disk, not what is intended.
   schools and 92 local authorities correctly backfilled to `ENGLAND`
   (verified by query, not assumed).
 
-  Actual UK-nation data coverage is still England-only; live-verified
-  research (not guesses) into the other three nations' data landscape
-  found each is a structurally distinct problem, not "GIAS again":
-  - **Scotland**: real, live, national-scale ArcGIS MapServer
-    (`maps.gov.scot`, layer `ScottishSchoolRoll`, 2,483 schools), using
-    7-digit SEED codes / SchUID identifiers and its own local-authority
-    code scheme (`S12000...`, no collision risk with England's numeric LA
-    codes). Structurally similar to the Sheffield ArcGIS FeatureServer
-    code this project already has in `adapters/catchments.py`, so probably
-    the most tractable next nation to actually build.
-  - **Northern Ireland**: Open Data NI's "School Locations" dataset
-    (CKAN API, `admin.opendatani.gov.uk`) is real and has a documented API,
-    but its only resource is a CSV dated **February 2016** — over a decade
-    stale despite metadata claiming quarterly updates. Deliberately not
-    wired in: importing decade-stale data as if current would violate this
-    project's own "never present outdated info as current" principle and
-    could genuinely mislead a parent. Revisit only if a newer NI source
-    surfaces.
-  - **Wales**: no confirmed machine-readable API found yet (`My Local
-School` at `mylocalschool.gov.wales` appears to be a static site);
-    likely CSV-only from gov.wales stats pages. Needs more research before
-    any adapter work starts.
+- **All four UK nations are live in production, not just England.** Real
+  adapters (`adapters/scotland.py`, `adapters/wales.py`,
+  `adapters/northern_ireland.py`), each live-verified against its actual
+  source before being wired in, each a structurally distinct problem, not
+  "GIAS again":
+  - **Scotland** (`import-scotland`): the Scottish Government's
+    ScottishSchoolRoll ArcGIS MapServer (`maps.gov.scot`). 2,483 schools,
+    32 local authorities imported. Schools keyed by SchUID (not the bare
+    SEED code, which two co-located schools can share), local authority
+    codes are Scotland's own `S12000...` scheme (no collision risk with
+    England's numeric codes). No open/closed status field in the source;
+    every row is treated as OPEN, a stated limitation.
+  - **Wales** (`import-wales`): DataMapWales's `maintained_schools_wg` WFS
+    layer (`datamap.gov.wales`, GeoServer/OGC WFS 2.0). 1,440 schools, 22
+    local authorities imported. Wales's own `la_code` values are small
+    numbers in the same format as England's GIAS codes; this could not be
+    definitively checked against a live GIAS extract at the time (GIAS was
+    returning 500s/timeouts), so Wales's local authority codes are
+    prefixed `W-` as a deliberate collision-safety measure. Same
+    no-status-field limitation as Scotland.
+  - **Northern Ireland** (`import-northern-ireland`): Open Data NI's
+    "School Locations" CKAN dataset. 1,555 schools imported. This source
+    is genuinely stale - its only resource is dated **February 2016** -
+    and rather than omit it, every row carries `source_extract_date =
+2016-02-01` explicitly, surfaced everywhere a Northern Ireland school
+    appears (a "Not live data" badge in search results and on the map, a
+    full data-currency notice on the school's own page). No
+    local-authority equivalent exists in this source (NI schools are run
+    centrally by the Education Authority); the traditional six counties
+    are recorded in `School.county` instead.
 
-  Both GIAS's WAF (browser User-Agent required) and Open Data NI's WAF (same
-  requirement) were hit during this research, suggesting it's worth
-  building the User-Agent handling as a shared helper if a second/third
-  real adapter gets built, rather than copy-pasting GIAS's `_GIAS_HEADERS`
-  pattern per nation.
+  Total: **15,478 schools** across all four nations (10,000 England +
+  2,483 Scotland + 1,440 Wales + 1,555 Northern Ireland), verified by
+  direct query against production, not just a CLI exit code.
+
+  A `Nation` filter and column now runs through the whole web app, not
+  just the database: `packages/shared`'s `SchoolSearchFiltersSchema` /
+  `LocalAuthoritySearchFiltersSchema` gained a `nation` field, every page
+  that lists or shows a school or local authority displays which nation
+  it's from, and the map's default viewport was widened from an
+  England-only bounding box to cover all four nations. This work also
+  caught a real bug: the URN search filter's regex only accepted digits,
+  which would have silently rejected every Scotland (`8212627P`) and
+  Northern Ireland (`1AB0427`) school lookup by id - fixed to accept
+  alphanumeric.
+
+  Scheduled GitHub Actions workflows exist for all three
+  (`ingest-scotland.yml`, `ingest-wales.yml`,
+  `ingest-northern-ireland.yml`, mirroring `ingest-gias.yml`'s shape), and
+  each was test-triggered for real via `workflow_dispatch` before being
+  trusted: Wales and Northern Ireland both succeeded from GitHub Actions'
+  own IP ranges and are enabled on schedule
+  (`DEVOLVED_NATIONS_INGESTION_ENABLED=true`, weekly and monthly
+  respectively). Scotland's `maps.gov.scot` returned a 403 from GitHub
+  Actions - the same Azure-datacenter-IP block GIAS hits - confirmed live,
+  not assumed; it has its own gate (`SCOTLAND_INGESTION_ENABLED=false`) so
+  that one nation's WAF doesn't hold back the two that genuinely work.
 
 - **Pilot data import ran for real against production** (task from the
   previous "Exact next steps"). `scripts/calibration-report.md` is filled in
@@ -305,11 +334,12 @@ false)` right before the foreign keys) still failed intermittently:
 - **`services/ingestor/Dockerfile` verified end-to-end**: `docker build`
   succeeds, and `docker run schoolscope-ingestor:local --help` shows the
   expected CLI (`discover-gias`, `import-gias`, `import-trusts`,
+  `import-scotland`, `import-wales`, `import-northern-ireland`,
   `import-statistics`, `import-catchments`, `import-admissions`,
   `refresh-metrics`, `verify`, `cleanup`, `run`). The local test image was
   removed after verification; nothing was pushed anywhere.
 - **`services/ingestor`** full check suite still passes: `ruff check .`,
-  `mypy src` (13 files), `pytest -q` (66 tests).
+  `mypy src` (16 files), `pytest -q` (81 tests).
 
 ## Unfinished
 
@@ -327,21 +357,20 @@ false)` right before the foreign keys) still failed intermittently:
   table exist, `/status` reads from it, but no CLI command actually inserts
   a row on run start/finish. Found while writing the calibration report
   (queried `ingestion_runs` after the pilot import; it was empty).
-- **`ingest-gias.yml`'s step order has a latent FK bug.** It runs "Import
-  GIAS establishments and trusts" before "Import trust relationships"; the
-  pilot import hit this for real (`schools_trust_id_fkey` violation) and
-  worked around it by running `import-trusts` first, manually. The workflow
-  file itself still has the wrong order.
-- **`ingest-gias.yml` cannot currently reach GIAS at all.** GIAS blocks
-  Azure datacenter IP ranges (which includes GitHub Actions runners),
-  confirmed by direct testing, independent of the User-Agent fix. Deferred
-  by request; the pilot import was run manually from a non-Azure origin
-  instead. The scheduled/automated path remains blocked until this is
-  revisited.
-- **`.github/workflows/diagnose-grants.yml` is a temporary diagnostic
-  workflow, not yet deleted.** Confirmed grants were never the actual
-  problem (it was a shell-env-precedence bug); safe to delete, matching the
-  pattern already used for `diagnose-production.yml`.
+- **Catchment coverage is still England-only (Sheffield pilot).** Nothing
+  wrong with this - Scotland/Wales/Northern Ireland catchment/admissions
+  boundary sources have not been researched at all yet, a separate
+  question from school register coverage.
+- **`SchoolCatchmentArea` (linking a catchment polygon to the school it
+  covers) is entirely unimplemented.** `import-catchments` writes
+  `catchment_sources` and `catchment_areas` correctly now, but nothing
+  matches a catchment area's `area_name` back to a real school and writes
+  the join row. Would need a real name-matching design (fuzzy match against
+  `schools.school_name`?), not a quick fix.
+- **`ingestion_runs` is never written to.** The `IngestionRun` model and
+  table exist, `/status` reads from it, but no CLI command actually inserts
+  a row on run start/finish. Found while writing the calibration report
+  (queried `ingestion_runs` after the pilot import; it was empty).
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
@@ -353,35 +382,26 @@ false)` right before the foreign keys) still failed intermittently:
 
 ## Known failing tests
 
-None. Every test suite that was run passed: `packages/shared` (39),
-`apps/web` (29), `services/ingestor` (66).
+None. Every test suite that was run passed: `packages/shared` (40),
+`apps/web` (29), `services/ingestor` (81).
 
 ## Exact next steps, in order
 
-1. Build the Scotland adapter for real: `maps.gov.scot`'s ScottishSchoolRoll
-   ArcGIS MapServer (verified live, 2,483 schools, SEED/SchUID identifiers).
-   Same rigor as GIAS got: live-verify field mappings and pagination against
-   the real service, write tests against a fixture, dry-run against
-   production before a real write, update
-   `config/catchment-sources.yml`-style source registry and CLI wiring for
-   a `nation`-aware import command.
-2. Research Wales's actual data access options (no confirmed API found
-   yet) before attempting any Wales adapter work.
-3. Re-check `/status`, `/schools`, and the map now that real data exists
-   (10,000 schools, 92 local authorities, 7,176 trusts, 127 Sheffield
-   catchment areas), to confirm search, pagination, and catchment overlays
-   behave correctly against non-empty tables, not just against an empty
-   database.
-4. Decide on a path for the metrics gap (school-level DfE source, or a
+1. Research catchment/admissions boundary sources for Scotland, Wales and
+   Northern Ireland (school register coverage for all three is done; their
+   catchment-area data is a separate, unresearched question, same as
+   England's was before the Sheffield pilot).
+2. Decide on a path for the metrics gap (school-level DfE source, or a
    schema change) before spending more time on `import-statistics`.
-5. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
-   before any larger/national GIAS import. The report's own recommendation:
-   national schools/trusts/local-authorities data looks cheap; catchment
-   geometry is the dominant storage cost and should be rolled out one local
-   authority at a time with real console figures checked after each
-   addition, not assumed to scale linearly from the single Sheffield
-   sample.
-6. Optional polish: catchment overlay toggle on `/map` (real data now
+3. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
+   before any larger/national GIAS import (that report predates the
+   devolved-nations work and only covers England). The report's own
+   recommendation: national schools/trusts/local-authorities data looks
+   cheap; catchment geometry is the dominant storage cost and should be
+   rolled out one local authority at a time with real console figures
+   checked after each addition, not assumed to scale linearly from the
+   single Sheffield sample.
+4. Optional polish: catchment overlay toggle on `/map` (real data now
    available to test it against), `SchoolCatchmentArea` name-matching,
    `ingestion_runs` write-through, Playwright e2e coverage for the golden
    paths (search a school, check a postcode, view the map).
