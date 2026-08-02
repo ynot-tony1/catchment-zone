@@ -3,7 +3,7 @@ import Link from "next/link";
 import {
   parseTrustSearchParams,
   type RawSearchParams,
-} from "@schoolscope/shared";
+} from "@catchment-zone/shared";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

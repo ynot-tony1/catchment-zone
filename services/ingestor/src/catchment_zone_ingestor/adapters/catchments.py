@@ -30,7 +30,7 @@ from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from schoolscope_ingestor.geometry import (
+from catchment_zone_ingestor.geometry import (
     InvalidGeometryError,
     compute_bbox,
     compute_geometry_checksum,
@@ -38,7 +38,7 @@ from schoolscope_ingestor.geometry import (
     simplify_geometry,
     validate_and_repair,
 )
-from schoolscope_ingestor.models import CatchmentArea
+from catchment_zone_ingestor.models import CatchmentArea
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ def build_catchment_areas(
     council's dataset does not block importing the rest of that council's
     catchment areas.
     """
-    from schoolscope_ingestor.geometry import DEFAULT_SIMPLIFY_TOLERANCE_DEGREES
+    from catchment_zone_ingestor.geometry import DEFAULT_SIMPLIFY_TOLERANCE_DEGREES
 
     tolerance = simplify_tolerance if simplify_tolerance is not None else DEFAULT_SIMPLIFY_TOLERANCE_DEGREES
     result = CatchmentBuildResult(areas=[])

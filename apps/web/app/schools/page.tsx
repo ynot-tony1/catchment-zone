@@ -4,7 +4,7 @@ import {
   SCHOOL_STATUS_VALUES,
   parseSchoolSearchParams,
   type RawSearchParams,
-} from "@schoolscope/shared";
+} from "@catchment-zone/shared";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";

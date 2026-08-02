@@ -1,9 +1,9 @@
-import type { Prisma } from "@schoolscope/database";
+import type { Prisma } from "@catchment-zone/database";
 import {
   decodeCursor,
   encodeCursor,
   type SchoolSearchFilters,
-} from "@schoolscope/shared";
+} from "@catchment-zone/shared";
 import { boundingBoxAroundPoint, distanceKm } from "@/lib/geo";
 import { getPrismaClient } from "@/lib/prisma";
 

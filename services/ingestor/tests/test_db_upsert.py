@@ -7,7 +7,7 @@ ConnectionLike Protocol).
 
 from __future__ import annotations
 
-from schoolscope_ingestor.db import upsert_batch
+from catchment_zone_ingestor.db import upsert_batch
 
 
 class _FakeCursor:

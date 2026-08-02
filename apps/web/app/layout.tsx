@@ -5,11 +5,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "SchoolScope England",
-    template: "%s | SchoolScope England",
+    default: "catchment-zone",
+    template: "%s | catchment-zone",
   },
   description:
-    "Search and compare English schools, academy trusts, local authorities and published admissions catchment areas, using official government data.",
+    "Search and compare UK schools, academy trusts, local authorities and published admissions catchment areas, using official government data.",
 };
 
 export default function RootLayout({

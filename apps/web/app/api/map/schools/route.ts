@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { parseMapSchoolsQuery } from "@schoolscope/shared";
+import { parseMapSchoolsQuery } from "@catchment-zone/shared";
 import { z } from "zod";
 import {
   errorResponse,

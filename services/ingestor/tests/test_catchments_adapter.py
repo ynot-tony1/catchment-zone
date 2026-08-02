@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from schoolscope_ingestor.adapters.catchments import build_catchment_areas
+from catchment_zone_ingestor.adapters.catchments import build_catchment_areas
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "sheffield_catchment_sample.geojson"
 

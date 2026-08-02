@@ -11,7 +11,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from schoolscope_ingestor.pipeline import get_last_successful_checksum
+from catchment_zone_ingestor.pipeline import get_last_successful_checksum
 
 
 class _FakeCursor:

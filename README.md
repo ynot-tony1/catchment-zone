@@ -1,14 +1,18 @@
-# SchoolScope England
+# catchment-zone
 
 Search, compare, and explore schools, academy trusts, local authorities,
 official school statistics, and official school catchment or priority
-admission areas in England.
+admission areas across the UK. Coverage currently starts with England
+(via GIAS); Scotland, Wales and Northern Ireland are added nation by
+nation, each from that nation's own official register, not assumed to
+share GIAS's identifiers, schema or update schedule.
 
-**Live URL:** _pending first production deployment, see docs/deployment.md_
+**Live URL:** https://schoolscope-england.vercel.app (Vercel project
+rename pending; see docs/deployment.md)
 
 ## Purpose
 
-SchoolScope England is a portfolio project demonstrating a production-shaped
+catchment-zone is a portfolio project demonstrating a production-shaped
 full-stack, data-engineering, and GIS build: a scheduled ingestion pipeline
 pulling from official UK government sources, a spatial catchment-checking
 feature built without a dedicated spatial database extension, and a

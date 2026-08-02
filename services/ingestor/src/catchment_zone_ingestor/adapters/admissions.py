@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 import yaml
 from pydantic import ValidationError
 
-from schoolscope_ingestor.models import AdmissionArrangement
+from catchment_zone_ingestor.models import AdmissionArrangement
 
 logger = logging.getLogger(__name__)
 

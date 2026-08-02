@@ -1,6 +1,6 @@
 # Education statistics source registry.
 #
-# SchoolScope England pulls from the Explore Education Statistics (EES) API,
+# catchment-zone pulls from the Explore Education Statistics (EES) API,
 # a real DfE public API (documented at https://api.education.gov.uk/statistics/docs/,
 # base URL https://api.education.gov.uk/statistics/v1). Dataset identifiers
 # inside a publication are stable UUIDs assigned by DfE; this file records the

@@ -1,6 +1,6 @@
 # Architecture
 
-SchoolScope England is a monorepo with three deployable pieces and one shared
+catchment-zone is a monorepo with three deployable pieces and one shared
 schema. Nothing about serving the application depends on any machine staying
 switched on after deployment: ingestion runs on GitHub Actions, the database
 runs on CockroachDB Cloud, and the application runs on Vercel.

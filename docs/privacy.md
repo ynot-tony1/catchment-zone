@@ -2,7 +2,7 @@
 
 ## What this application stores
 
-SchoolScope England stores aggregate, institution-level public data only:
+catchment-zone stores aggregate, institution-level public data only:
 schools, trusts, local authorities, published statistics, and officially
 published catchment/admissions boundaries. It does not store pupil-level
 data of any kind.

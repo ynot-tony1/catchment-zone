@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
   // packages/shared ships TypeScript source directly (no build step), so
   // Next needs to transpile it as part of the app bundle rather than
   // treating it as pre-built library code.
-  transpilePackages: ["@schoolscope/shared"],
+  transpilePackages: ["@catchment-zone/shared"],
 
   // In a monorepo, Next's default file-tracing root detection (walking up
   // to the nearest lockfile) can disagree with Vercel's own root

@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in SchoolScope England is broken or incorrect
+about: Something in catchment-zone is broken or incorrect
 title: "[Bug] "
 labels: bug
 ---

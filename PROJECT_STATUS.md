@@ -209,7 +209,7 @@ false)` right before the foreign keys) still failed intermittently:
 
 - **Monorepo baseline is green.** `pnpm install`, `pnpm -r typecheck`,
   `pnpm -r lint`, `pnpm -r test`, and a real
-  `pnpm --filter @schoolscope/web build` (Next.js production build, fake
+  `pnpm --filter @catchment-zone/web build` (Next.js production build, fake
   local `DATABASE_URL` so Prisma can generate its client) all pass. Test
   counts: `packages/shared` 39, `apps/web` 29, `services/ingestor` 45.
 - **Every app route from the original spec now exists and is wired to the

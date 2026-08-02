@@ -1,9 +1,9 @@
-import type { Prisma } from "@schoolscope/database";
+import type { Prisma } from "@catchment-zone/database";
 import {
   decodeCursor,
   encodeCursor,
   type TrustSearchFilters,
-} from "@schoolscope/shared";
+} from "@catchment-zone/shared";
 import { getPrismaClient } from "@/lib/prisma";
 
 export type TrustSearchResultItem = {

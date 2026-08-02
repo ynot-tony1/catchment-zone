@@ -5,7 +5,7 @@ zero must never be dropped as if it were missing."""
 
 from __future__ import annotations
 
-from schoolscope_ingestor.adapters.statistics import (
+from catchment_zone_ingestor.adapters.statistics import (
     ResolvedRelease,
     _classify_cell,
     map_rows_to_metrics,

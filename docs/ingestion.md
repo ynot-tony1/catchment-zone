@@ -25,7 +25,7 @@ ingestor run                Run the full pipeline in order
 ## Design rules
 
 - **Stream, don't load.** GIAS and EES files are processed in batches (see
-  `services/ingestor/src/schoolscope_ingestor/db.py`), never read fully into
+  `services/ingestor/src/catchment_zone_ingestor/db.py`), never read fully into
   memory before the first row is written.
 - **Batch writes.** Upserts use batched `executemany`/multi-row statements,
   never one `INSERT` per row.

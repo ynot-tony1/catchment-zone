@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an improvement to SchoolScope England
+about: Suggest an improvement to catchment-zone
 title: "[Feature] "
 labels: enhancement
 ---

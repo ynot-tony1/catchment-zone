@@ -1,6 +1,6 @@
 # Data sources
 
-Every figure in SchoolScope England traces back to an official, publicly
+Every figure in catchment-zone traces back to an official, publicly
 documented source. This page lists them. If a source is not listed here, it
 is not used.
 

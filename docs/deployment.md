@@ -12,7 +12,7 @@ requires a developer's machine to stay on after the initial setup below.
 
 ```bash
 gh auth status               # confirm you're logged in
-gh repo create <owner>/schoolscope-england --private --source=. --remote=origin
+gh repo create <owner>/catchment-zone --private --source=. --remote=origin
 git push -u origin main
 ```
 
@@ -42,7 +42,7 @@ unsets the bootstrap variable.
 
 ```bash
 vercel login
-vercel link                  # link this directory to the schoolscope-england project
+vercel link                  # link this directory to the catchment-zone project
 ```
 
 In the Vercel project settings (or via `vercel env add`):

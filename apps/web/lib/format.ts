@@ -1,4 +1,4 @@
-import type { MetricDefinition } from "@schoolscope/shared";
+import type { MetricDefinition } from "@catchment-zone/shared";
 
 /** Formats a metric's numeric value according to its configured unit.
  * Centralised so every place a metric is shown (school detail, charts,

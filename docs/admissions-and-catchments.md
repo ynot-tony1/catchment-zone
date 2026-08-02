@@ -1,8 +1,8 @@
 # Admissions and catchments
 
-This is the most sensitive part of SchoolScope England and the part most
+This is the most sensitive part of catchment-zone and the part most
 likely to mislead a parent if it is built carelessly. Read this before
-touching any code under `/admissions`, `services/ingestor/src/schoolscope_ingestor/adapters/catchments.py`,
+touching any code under `/admissions`, `services/ingestor/src/catchment_zone_ingestor/adapters/catchments.py`,
 or `AdmissionArrangement` / `CatchmentArea` handling.
 
 ## What this feature is not
@@ -67,7 +67,7 @@ Every result, regardless of status, renders this disclaimer:
 
 ## Coverage
 
-SchoolScope England does not claim, and has never claimed, nationwide
+catchment-zone does not claim, and has never claimed, nationwide
 catchment coverage. See `config/catchment-sources.yml` for the current
 source list. As of this writing that list has one pilot local authority:
 

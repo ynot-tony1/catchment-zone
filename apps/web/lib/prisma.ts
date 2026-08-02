@@ -1,4 +1,4 @@
-import { PrismaClient } from "@schoolscope/database";
+import { PrismaClient } from "@catchment-zone/database";
 import { getServerEnv } from "@/lib/env";
 
 // Lazy singleton: the client is constructed on first use inside a request,

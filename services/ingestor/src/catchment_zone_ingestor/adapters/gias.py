@@ -48,7 +48,7 @@ import httpx
 from pydantic import ValidationError
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from schoolscope_ingestor.models import (
+from catchment_zone_ingestor.models import (
     AcademyTrust,
     LocalAuthority,
     RawGiasRow,

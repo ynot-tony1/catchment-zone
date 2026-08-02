@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import uuid
 
-from schoolscope_ingestor.cli import _resolve_catchment_source_id
+from catchment_zone_ingestor.cli import _resolve_catchment_source_id
 
 _SOURCE = {"local_authority_code": "373", "academic_year": "2025-2026", "source_type": "primary_catchment"}
 

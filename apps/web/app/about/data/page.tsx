@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { listMetricDefinitions } from "@schoolscope/shared";
+import { listMetricDefinitions } from "@catchment-zone/shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
@@ -36,7 +36,11 @@ export default function AboutDataPage() {
             </a>
             , the Department for Education&apos;s live register of schools,
             academies, colleges and trusts. School and trust records are
-            refreshed from GIAS&apos;s published data extracts.
+            refreshed from GIAS&apos;s published data extracts. GIAS covers
+            England only; Scotland, Wales and Northern Ireland each have
+            their own official school register and are added here as
+            separate sources, nation by nation, not assumed to share GIAS&apos;s
+            identifiers or update schedule.
           </p>
         </CardContent>
       </Card>

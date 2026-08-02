@@ -1,4 +1,4 @@
-"""Typer CLI entrypoint for the SchoolScope England ingestion service.
+"""Typer CLI entrypoint for the catchment-zone ingestion service.
 
 Each command wraps one pipeline step (or, for `run`, the whole sequence) and
 exits non-zero on failure so a scheduled CI job can detect a failed run. All
@@ -18,17 +18,17 @@ import httpx
 import typer
 import yaml
 
-from schoolscope_ingestor import db
-from schoolscope_ingestor.adapters import admissions as admissions_adapter
-from schoolscope_ingestor.adapters import catchments as catchments_adapter
-from schoolscope_ingestor.adapters import gias as gias_adapter
-from schoolscope_ingestor.adapters import statistics as statistics_adapter
-from schoolscope_ingestor.config import Settings, get_settings
-from schoolscope_ingestor.logging_setup import configure_logging, get_logger, set_run_context
+from catchment_zone_ingestor import db
+from catchment_zone_ingestor.adapters import admissions as admissions_adapter
+from catchment_zone_ingestor.adapters import catchments as catchments_adapter
+from catchment_zone_ingestor.adapters import gias as gias_adapter
+from catchment_zone_ingestor.adapters import statistics as statistics_adapter
+from catchment_zone_ingestor.config import Settings, get_settings
+from catchment_zone_ingestor.logging_setup import configure_logging, get_logger, set_run_context
 
 app = typer.Typer(
     name="ingestor",
-    help="SchoolScope England data ingestion service: GIAS, DfE statistics and local authority catchment imports.",
+    help="catchment-zone data ingestion service: GIAS, DfE statistics and local authority catchment imports.",
     no_args_is_help=True,
 )
 
@@ -119,7 +119,7 @@ def import_gias(
             content, checksum = gias_adapter.download_extract(client, url)
 
         if not force and conn is not None:
-            from schoolscope_ingestor.pipeline import get_last_successful_checksum
+            from catchment_zone_ingestor.pipeline import get_last_successful_checksum
 
             last_checksum = get_last_successful_checksum(conn, "gias_establishments")
             if last_checksum == checksum:
@@ -187,7 +187,7 @@ def import_trusts(
             content, checksum = gias_adapter.download_extract(client, url)
 
         if not force and conn is not None:
-            from schoolscope_ingestor.pipeline import get_last_successful_checksum
+            from catchment_zone_ingestor.pipeline import get_last_successful_checksum
 
             last_checksum = get_last_successful_checksum(conn, "gias_trusts")
             if last_checksum == checksum:

@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from schoolscope_ingestor.adapters.gias import parse_establishment_csv
-from schoolscope_ingestor.models import SchoolStatus
+from catchment_zone_ingestor.adapters.gias import parse_establishment_csv
+from catchment_zone_ingestor.models import SchoolStatus
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "gias_sample.csv"
 

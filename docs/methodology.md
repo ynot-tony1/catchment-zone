@@ -8,7 +8,7 @@ policy described here, update both.
 Attainment, absence, workforce, and demographic measures answer different
 questions and apply to different cohorts. Collapsing them into one number
 requires choosing weights that hide a value judgement behind an apparent
-fact. SchoolScope England shows each measure separately, with its own
+fact. catchment-zone shows each measure separately, with its own
 definition, academic year, cohort/denominator, and suppression status, so a
 reader can weigh what matters to them rather than inherit someone else's
 weighting.

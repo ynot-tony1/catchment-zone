@@ -1,5 +1,5 @@
 {
-  "name": "schoolscope-england",
+  "name": "catchment-zone",
   "private": true,
   "version": "0.1.0",
   "engines": {
@@ -7,17 +7,17 @@
   },
   "packageManager": "pnpm@11.18.0",
   "scripts": {
-    "dev": "pnpm --filter @schoolscope/web dev",
-    "build": "pnpm --filter @schoolscope/web build",
+    "dev": "pnpm --filter @catchment-zone/web dev",
+    "build": "pnpm --filter @catchment-zone/web build",
     "lint": "pnpm -r lint",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "test:e2e": "pnpm --filter @schoolscope/web test:e2e",
-    "db:generate": "pnpm --filter @schoolscope/database generate",
-    "db:migrate": "pnpm --filter @schoolscope/database migrate:deploy",
-    "db:studio": "pnpm --filter @schoolscope/database studio"
+    "test:e2e": "pnpm --filter @catchment-zone/web test:e2e",
+    "db:generate": "pnpm --filter @catchment-zone/database generate",
+    "db:migrate": "pnpm --filter @catchment-zone/database migrate:deploy",
+    "db:studio": "pnpm --filter @catchment-zone/database studio"
   },
   "devDependencies": {
     "prettier": "^3.4.2"

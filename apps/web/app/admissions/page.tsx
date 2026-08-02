@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPilotLocalAuthorityCodes } from "@schoolscope/shared";
+import { getPilotLocalAuthorityCodes } from "@catchment-zone/shared";
 import { AdmissionsCheckForm } from "@/components/admissions-check-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

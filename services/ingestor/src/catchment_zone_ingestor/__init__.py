@@ -1,4 +1,4 @@
-"""SchoolScope England data ingestion service.
+"""catchment-zone data ingestion service.
 
 This package only ever reads and writes officially published, public data
 (GIAS establishment extracts, DfE Explore Education Statistics releases, and

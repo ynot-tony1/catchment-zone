@@ -35,7 +35,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm --filter @schoolscope/database generate
+        run: pnpm --filter @catchment-zone/database generate
         env:
           DATABASE_URL: "postgresql://ci:ci@localhost:26257/ci?sslmode=disable"
 
@@ -87,7 +87,7 @@ jobs:
         run: pytest
 
       - name: Docker build
-        run: docker build -t schoolscope-ingestor:ci .
+        run: docker build -t catchment-zone-ingestor:ci .
 
   secret-scan:
     name: Secret scan

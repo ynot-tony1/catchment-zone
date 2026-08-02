@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UNKNOWN_GIT_SHA } from "@schoolscope/shared";
+import { UNKNOWN_GIT_SHA } from "@catchment-zone/shared";
 
 // Server-only environment variables. This module must never be imported
 // from a Client Component; it is read at request time inside route

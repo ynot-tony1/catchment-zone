@@ -1,6 +1,6 @@
-# SchoolScope England: ingestion service
+# catchment-zone: ingestion service
 
-Data ingestion service for SchoolScope England. Pulls officially published,
+Data ingestion service for catchment-zone. Pulls officially published,
 public data (GIAS establishment and trust extracts, DfE Explore Education
 Statistics releases, and local authority catchment boundary datasets) into
 the shared database, on a schedule.

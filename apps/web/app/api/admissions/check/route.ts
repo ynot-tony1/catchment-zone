@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { CatchmentCheckRequestSchema } from "@schoolscope/shared";
+import { CatchmentCheckRequestSchema } from "@catchment-zone/shared";
 import { z } from "zod";
 import {
   errorResponse,

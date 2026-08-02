@@ -18,8 +18,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from schoolscope_ingestor.db import ConnectionLike, upsert_many
-from schoolscope_ingestor.models import IngestionStatus
+from catchment_zone_ingestor.db import ConnectionLike, upsert_many
+from catchment_zone_ingestor.models import IngestionStatus
 
 logger = logging.getLogger(__name__)
 

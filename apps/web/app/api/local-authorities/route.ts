@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { parseLocalAuthoritySearchParams } from "@schoolscope/shared";
+import { parseLocalAuthoritySearchParams } from "@catchment-zone/shared";
 import { z } from "zod";
 import {
   errorResponse,

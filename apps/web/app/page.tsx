@@ -39,12 +39,15 @@ export default async function HomePage() {
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-4">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Search and compare schools across England
+          Search and compare schools across the UK
         </h1>
         <p className="text-muted-foreground max-w-2xl">
-          SchoolScope England brings together official school records, academy
+          catchment-zone brings together official school records, academy
           trust structures, published performance statistics and admissions
-          catchment areas from government sources, in one place.
+          catchment areas from government sources, in one place. Coverage
+          currently starts with England (GIAS); Scotland, Wales and Northern
+          Ireland are being added nation by nation, each from that
+          nation&apos;s own official register.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button asChild size="lg">

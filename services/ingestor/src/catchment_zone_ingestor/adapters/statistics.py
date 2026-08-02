@@ -42,7 +42,7 @@ from typing import Any
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from schoolscope_ingestor.models import SchoolMetric
+from catchment_zone_ingestor.models import SchoolMetric
 
 logger = logging.getLogger(__name__)
 

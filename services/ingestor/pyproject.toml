@@ -3,13 +3,13 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "schoolscope-ingestor"
+name = "catchment-zone-ingestor"
 version = "0.1.0"
-description = "Data ingestion service for SchoolScope England. Pulls official GIAS, DfE statistics, and local authority catchment data into the shared database."
+description = "Data ingestion service for catchment-zone. Pulls official GIAS, DfE statistics, devolved-nation school registers, and local authority catchment data into the shared database."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "UNLICENSED" }
-authors = [{ name = "SchoolScope England" }]
+authors = [{ name = "catchment-zone" }]
 
 dependencies = [
   "httpx>=0.28,<0.29",
@@ -34,10 +34,10 @@ dev = [
 ]
 
 [project.scripts]
-ingestor = "schoolscope_ingestor.cli:app"
+ingestor = "catchment_zone_ingestor.cli:app"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/schoolscope_ingestor"]
+packages = ["src/catchment_zone_ingestor"]
 
 [tool.ruff]
 line-length = 100
@@ -59,7 +59,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["schoolscope_ingestor"]
+known-first-party = ["catchment_zone_ingestor"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -82,4 +82,4 @@ testpaths = ["tests"]
 addopts = "-ra"
 
 [tool.coverage.run]
-source = ["src/schoolscope_ingestor"]
+source = ["src/catchment_zone_ingestor"]

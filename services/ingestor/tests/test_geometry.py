@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from shapely.geometry import LineString, MultiPolygon, Polygon
 
-from schoolscope_ingestor.geometry import (
+from catchment_zone_ingestor.geometry import (
     InvalidGeometryError,
     compute_bbox,
     compute_geometry_checksum,

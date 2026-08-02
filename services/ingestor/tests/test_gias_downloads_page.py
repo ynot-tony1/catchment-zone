@@ -12,7 +12,7 @@ import zipfile
 
 import pytest
 
-from schoolscope_ingestor.adapters.gias import (
+from catchment_zone_ingestor.adapters.gias import (
     GiasDiscoveryError,
     _detect_text_encoding,
     _is_url,

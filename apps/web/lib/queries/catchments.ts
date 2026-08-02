@@ -6,7 +6,7 @@ import {
   type CatchmentCheckRequest,
   type CatchmentCheckResult,
   type CatchmentCheckStatus,
-} from "@schoolscope/shared";
+} from "@catchment-zone/shared";
 import { geocodePostcode } from "@/lib/geocoder";
 import { getServerEnv } from "@/lib/env";
 import {

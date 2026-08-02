@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Repo root, resolved relative to this file: services/ingestor/src/schoolscope_ingestor/
+# Repo root, resolved relative to this file: services/ingestor/src/catchment_zone_ingestor/
 # -> up 4 levels reaches the monorepo root where config/ lives.
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 _DEFAULT_CONFIG_DIR = _REPO_ROOT / "config"

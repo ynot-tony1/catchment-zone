@@ -1,4 +1,4 @@
-// SchoolScope England: production schema
+// catchment-zone: production schema
 // Provider: CockroachDB Cloud (cluster: aqua-roach, database: school_intelligence)
 
 // No custom `output` path: a monorepo-sibling generated directory

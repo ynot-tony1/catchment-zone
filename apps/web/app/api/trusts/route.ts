@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { parseTrustSearchParams } from "@schoolscope/shared";
+import { parseTrustSearchParams } from "@catchment-zone/shared";
 import { z } from "zod";
 import {
   errorResponse,

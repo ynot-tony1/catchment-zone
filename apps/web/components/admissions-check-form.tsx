@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CatchmentCheckResult } from "@schoolscope/shared";
+import type { CatchmentCheckResult } from "@catchment-zone/shared";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";

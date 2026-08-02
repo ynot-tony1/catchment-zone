@@ -53,7 +53,7 @@ USER ingestor
 # metric-definitions.yml) live at the monorepo root, outside this image's
 # build context (services/ingestor), so they are not baked into the image.
 # Provide them at container run time with a bind mount, for example:
-#   docker run -v "$(pwd)/config:/app/config:ro" ... schoolscope-ingestor import-gias
+#   docker run -v "$(pwd)/config:/app/config:ro" ... catchment-zone-ingestor import-gias
 # or set CONFIG_DIR (see config.py) to wherever the registries are mounted
 # if not at the default ./config relative to the working directory.
 

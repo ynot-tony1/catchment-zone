@@ -14,7 +14,7 @@ export function SiteHeader() {
     <header className="border-border bg-background/95 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
         <Link href="/" className="font-semibold tracking-tight">
-          SchoolScope England
+          catchment-zone
         </Link>
         <nav
           aria-label="Primary"

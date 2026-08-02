@@ -21,8 +21,9 @@ export function SiteFooter() {
           for source details and update frequency.
         </p>
         <p className="mt-2">
-          SchoolScope England is an independent project, not affiliated with the
-          Department for Education or any local authority.
+          catchment-zone is an independent project, not affiliated with the
+          Department for Education, the devolved education departments of
+          Scotland, Wales or Northern Ireland, or any local authority.
         </p>
       </div>
     </footer>
