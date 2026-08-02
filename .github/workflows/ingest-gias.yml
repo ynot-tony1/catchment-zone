@@ -47,7 +47,20 @@ jobs:
       - name: Discover current GIAS extract
         run: ingestor discover-gias
 
-      - name: Import GIAS establishments and trusts
+      # Must run before "Import GIAS establishments": schools.trust_id has a
+      # foreign key into academy_trusts, so importing establishments first
+      # fails with schools_trust_id_fkey whenever a school references a
+      # trust not yet in the table (confirmed for real during the pilot
+      # import, see PROJECT_STATUS.md).
+      - name: Import trust relationships
+        if: github.event.inputs.dry_run != 'true'
+        run: ingestor import-trusts
+        env:
+          INGEST_DATABASE_URL: ${{ secrets.INGEST_DATABASE_URL }}
+          GIT_SHA: ${{ github.sha }}
+          WORKFLOW_RUN_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Import GIAS establishments
         run: >
           ingestor import-gias
           ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
@@ -56,14 +69,6 @@ jobs:
         env:
           INGEST_DATABASE_URL: ${{ secrets.INGEST_DATABASE_URL }}
           LOG_LEVEL: "info"
-          GIT_SHA: ${{ github.sha }}
-          WORKFLOW_RUN_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Import trust relationships
-        if: github.event.inputs.dry_run != 'true'
-        run: ingestor import-trusts
-        env:
-          INGEST_DATABASE_URL: ${{ secrets.INGEST_DATABASE_URL }}
           GIT_SHA: ${{ github.sha }}
           WORKFLOW_RUN_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
