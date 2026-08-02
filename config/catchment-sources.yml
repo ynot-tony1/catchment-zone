@@ -11,7 +11,12 @@
 # refuse to import a source whose licence field is missing or incompatible.
 #
 # format: one of geojson | shapefile_zip | geopackage | kml | csv_wkt |
-#         arcgis_feature_service | json_endpoint
+#         arcgis_feature_service | json_endpoint | wfs_geojson
+#
+# wfs_geojson entries (a generic OGC WFS 2.0 GetFeature source, not an
+# ArcGIS FeatureServer - e.g. Angus's XMap Cloud WFS) must also set
+# wfs_type_name to the WFS typeName parameter (e.g.
+# "angus_public:primary_school_catchment").
 
 sources:
   - local_authority_code: "373"
@@ -607,6 +612,54 @@ sources:
     parser_name: "sheffield_arcgis_feature_service"
     enabled: true
     notes: "2 secondary (denominational) catchment polygons."
+
+  # Angus: a generic OGC WFS 2.0 server (XMap Cloud), not ArcGIS - the
+  # first wfs_geojson source in this registry. Real school_name field
+  # (e.g. "Maisondieu Primary"), verified live.
+  - local_authority_code: "S12000041"
+    local_authority_name: "Angus"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-an"
+    download_url: "https://angus.maps.xmap.cloud/angus_public/primary_school_catchment/wfs"
+    wfs_type_name: "angus_public:primary_school_catchment"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "49 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000041"
+    local_authority_name: "Angus"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-an"
+    download_url: "https://angus.maps.xmap.cloud/angus_public/denominational_primary_school_catchment/wfs"
+    wfs_type_name: "angus_public:denominational_primary_school_catchment"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "2 primary (denominational) catchment polygons."
+
+  - local_authority_code: "S12000041"
+    local_authority_name: "Angus"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-an"
+    download_url: "https://angus.maps.xmap.cloud/angus_public/secondary_school_catchment/wfs"
+    wfs_type_name: "angus_public:secondary_school_catchment"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "16 secondary catchment polygons. No separate RC secondary layer found for Angus."
 
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence

@@ -606,7 +606,11 @@ def import_catchments(
 
             feature_url = str(source["download_url"])
             try:
-                query_result = catchments_adapter.query_all_features(client, feature_url)
+                if source.get("format") == "wfs_geojson":
+                    type_name = str(source["wfs_type_name"])
+                    query_result = catchments_adapter.query_all_wfs_features(client, feature_url, type_name)
+                else:
+                    query_result = catchments_adapter.query_all_features(client, feature_url)
             except Exception as exc:
                 logger.error("could not query FeatureServer", extra={"url": feature_url, "error": str(exc)})
                 total_rejected += 1
@@ -646,6 +650,8 @@ def import_catchments(
                     "rcprimary",
                     "ndsecondar",
                     "schoolname",
+                    # Angus's WFS layers (XMap Cloud, not ArcGIS) use this.
+                    "school_name",
                 ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),

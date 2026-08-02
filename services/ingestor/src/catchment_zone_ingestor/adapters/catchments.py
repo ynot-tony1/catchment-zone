@@ -110,6 +110,62 @@ def query_all_features(client: httpx.Client, feature_server_url: str) -> Feature
     return FeatureQueryResult(features=all_features, detected_wkid=detected_wkid)
 
 
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=15),
+    retry=retry_if_exception_type(httpx.TransportError),
+)
+def _query_wfs_page(client: httpx.Client, service_url: str, type_name: str, start_index: int) -> dict[str, Any]:
+    params: dict[str, str | int] = {
+        "service": "WFS",
+        "version": "2.0.0",
+        "request": "GetFeature",
+        "typeName": type_name,
+        "outputFormat": "application/json",
+        "srsName": "EPSG:4326",
+        "count": PAGE_SIZE,
+        "startIndex": start_index,
+    }
+    response = client.get(service_url, params=params)
+    response.raise_for_status()
+    payload: dict[str, Any] = response.json()
+    if payload.get("type") != "FeatureCollection":
+        raise CatchmentSourceError(f"unexpected WFS response shape for {service_url}: {payload!r}"[:500])
+    return payload
+
+
+def query_all_wfs_features(client: httpx.Client, service_url: str, type_name: str) -> FeatureQueryResult:
+    """Page through a generic OGC WFS 2.0 GetFeature endpoint and return all
+    features as GeoJSON, requesting srsName=EPSG:4326 directly from the
+    server so no client-side reprojection is normally needed.
+
+    Not ArcGIS-specific (unlike query_all_features above): several
+    Scottish councils publish catchments through a plain WFS server
+    (XMap Cloud, Cadcorp) rather than ArcGIS. Verified live against
+    Angus's XMap Cloud WFS, which needs exactly this GetFeature +
+    startIndex/count pagination shape.
+    """
+    all_features: list[dict[str, Any]] = []
+    start_index = 0
+    detected_wkid: int | None = None
+
+    while True:
+        payload = _query_wfs_page(client, service_url, type_name, start_index)
+        features = payload.get("features", [])
+        crs = payload.get("crs") or {}
+        wkid = _extract_wkid(crs)
+        if wkid is not None:
+            detected_wkid = wkid
+
+        all_features.extend(features)
+        if len(features) < PAGE_SIZE:
+            break
+        start_index += PAGE_SIZE
+
+    return FeatureQueryResult(features=all_features, detected_wkid=detected_wkid)
+
+
 def _extract_wkid(crs: dict[str, Any]) -> int | None:
     properties = crs.get("properties", {})
     name = properties.get("name", "")
