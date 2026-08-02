@@ -288,6 +288,209 @@ sources:
     enabled: true
     notes: "2 secondary (denominational) catchment polygons."
 
+  # North Lanarkshire: same ND/denominational geographic-overlap reasoning
+  # as Edinburgh/Glasgow/Fife above.
+  - local_authority_code: "S12000050"
+    local_authority_name: "North Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=859489b1c3ac465bbf75753c40a16ea5"
+    download_url: "https://services-eu1.arcgis.com/9edRUxcMgH07BEka/arcgis/rest/services/Non_Denominational_Primary_Catchments_View/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right 2025) - inferred from sibling layers in the same service family; this specific item's own licenceInfo field was empty when checked"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "75 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000050"
+    local_authority_name: "North Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=b8ae5004cb744ff59834d9b07f79b22a"
+    download_url: "https://services-eu1.arcgis.com/9edRUxcMgH07BEka/arcgis/rest/services/Denominational_Primary_Catchments_View/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right 2025)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "50 primary (denominational) catchment polygons."
+
+  - local_authority_code: "S12000050"
+    local_authority_name: "North Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=711c6d08a12e4bd4a0efd3b639dc4410"
+    download_url: "https://services-eu1.arcgis.com/9edRUxcMgH07BEka/arcgis/rest/services/Non_Denominational_Secondary_Catchments_View/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right 2025)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "17 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000050"
+    local_authority_name: "North Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=1d2a9c90e84e4f6589e93f007695f504"
+    download_url: "https://services-eu1.arcgis.com/9edRUxcMgH07BEka/arcgis/rest/services/Denominational_Secondary_Catchments_View/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right 2025)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "10 secondary (denominational) catchment polygons."
+
+  # Highland: no separate RC layer found, only Gaelic Medium (not imported;
+  # a much smaller, distinct category not covered by this project's
+  # primary/secondary model).
+  - local_authority_code: "S12000017"
+    local_authority_name: "Highland"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=0813f626236b45b59b26d25feb054eaa"
+    download_url: "https://services-eu1.arcgis.com/tc4hh050NPZgWq0B/arcgis/rest/services/Primary_School_Catchments_-_open_data/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "167 primary catchment polygons, each carrying the school's own SEED_CODE, verified live."
+
+  - local_authority_code: "S12000017"
+    local_authority_name: "Highland"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=a779ed6d71a24ee1bbf8beec059c5302"
+    download_url: "https://services-eu1.arcgis.com/tc4hh050NPZgWq0B/arcgis/rest/services/Secondary_School_Catchments_-_open_data/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "29 secondary catchment polygons."
+
+  # Dundee City: single service, four layers by denomination/phase.
+  - local_authority_code: "S12000042"
+    local_authority_name: "Dundee City"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=ae3e2864981c4e268bfe37b641321e6c"
+    download_url: "https://services.arcgis.com/GlZ1P6ksdiXNYhvC/arcgis/rest/services/SchoolsAndCatchments/FeatureServer/3"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "23 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000042"
+    local_authority_name: "Dundee City"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=ae3e2864981c4e268bfe37b641321e6c"
+    download_url: "https://services.arcgis.com/GlZ1P6ksdiXNYhvC/arcgis/rest/services/SchoolsAndCatchments/FeatureServer/2"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "10 primary (denominational) catchment polygons."
+
+  - local_authority_code: "S12000042"
+    local_authority_name: "Dundee City"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=ae3e2864981c4e268bfe37b641321e6c"
+    download_url: "https://services.arcgis.com/GlZ1P6ksdiXNYhvC/arcgis/rest/services/SchoolsAndCatchments/FeatureServer/1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "5 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000042"
+    local_authority_name: "Dundee City"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=ae3e2864981c4e268bfe37b641321e6c"
+    download_url: "https://services.arcgis.com/GlZ1P6ksdiXNYhvC/arcgis/rest/services/SchoolsAndCatchments/FeatureServer/4"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "2 secondary (denominational) catchment polygons."
+
+  # Perth and Kinross: four layers, primary/secondary x ND/RC.
+  - local_authority_code: "S12000048"
+    local_authority_name: "Perth and Kinross"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=b876c6373cc54eb4af6c5b7072ff2fb1"
+    download_url: "https://services-eu1.arcgis.com/WD0cvOmDKf7CA0Xy/arcgis/rest/services/Primary_School_Catchments/FeatureServer/28"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Ordnance Survey derived Open Data)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "64 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000048"
+    local_authority_name: "Perth and Kinross"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://www.arcgis.com/home/item.html?id=ecc419ba3bd14db9b0aac0a362f80a3d"
+    download_url: "https://services-eu1.arcgis.com/WD0cvOmDKf7CA0Xy/arcgis/rest/services/Roman_Catholic_Primary_School_Catchments/FeatureServer/6"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Ordnance Survey Open Data)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "4 primary (Roman Catholic) catchment polygons."
+
+  - local_authority_code: "S12000048"
+    local_authority_name: "Perth and Kinross"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=2a0dd8ba0e5b4a0e9accd4995f69a233"
+    download_url: "https://services-eu1.arcgis.com/WD0cvOmDKf7CA0Xy/arcgis/rest/services/Secondary_School_Catchments/FeatureServer/27"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Ordnance Survey derived Open Data)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "17 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000048"
+    local_authority_name: "Perth and Kinross"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://www.arcgis.com/home/item.html?id=79d614fddacd4877809cec3e265957cf"
+    download_url: "https://services-eu1.arcgis.com/WD0cvOmDKf7CA0Xy/arcgis/rest/services/Roman_Catholic_Secondary_School_Catchments/FeatureServer/27"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Ordnance Survey derived Open Data)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "1 secondary (Roman Catholic) catchment polygon."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -297,6 +500,21 @@ sources:
 candidates:
   - local_authority_name: "Buckinghamshire"
     reason_not_enabled: "Identified an ArcGIS MapServer (Schools_and_Gates) but licence and exact catchment vs. walking-zone semantics not yet verified."
+  - local_authority_name: "School Catchments - Scotland (national aggregate, Improvement Service)"
+    reason_not_enabled: >
+      Real, live, OGL-licensed national WFS aggregate found at
+      https://data.spatialhub.scot/dataset/school_catchments-is (organization:
+      Improvement Service), covering all of Scotland in 4 layers with
+      per-feature local_authority/la_s_code fields - would likely obsolete
+      most of the individual per-council entries above if it can be reached.
+      The underlying geo.spatialhub.scot WFS endpoint returned a 403 "Access
+      Denied" (Tomcat-level, not a GeoServer auth prompt) from this session's
+      environment even with a browser User-Agent and a Referer header set;
+      the GeoServer admin UI at the same host loads fine, so this looks like
+      a deliberate restriction on the data workspace specifically, not a
+      general network block. Worth trying again from a different network
+      origin (e.g. the user's own machine, matching the GIAS/Azure-block
+      workaround pattern) before spending more effort on individual councils.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
   - local_authority_name: "Northern Ireland (all)"

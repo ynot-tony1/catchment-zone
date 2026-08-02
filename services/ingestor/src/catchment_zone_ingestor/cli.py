@@ -700,6 +700,10 @@ def import_catchments(
                     # (10-char, shapefile-derived) field name - not the
                     # same as "SCHOOL_NAME" above, verified live.
                     "SCHOOL_NAM",
+                    # Highland's secondary layer and Dundee's four layers
+                    # use these field names respectively, verified live.
+                    "SECONDARY",
+                    "School",
                 ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),
