@@ -52,10 +52,20 @@ export const MAX_PAGE_SIZE = 100;
 export const MAX_MAP_FEATURES = 500;
 
 /** Maximum bounding-box area (in square degrees) accepted by map endpoints,
- * to stop a single request from requesting the whole of England at a zoom
- * level that would return an unbounded number of features. Roughly
- * generous enough to cover a large metropolitan county at once. */
-export const MAX_BBOX_AREA_DEGREES = 4;
+ * to stop a single request from requesting an absurdly wide area. Result
+ * size is already separately capped by MAX_MAP_FEATURES (via take:), and
+ * School has a [latitude, longitude] index, so a wide-but-bounded scan is
+ * still cheap at this dataset's size (~14k schools) - this limit exists to
+ * catch pathological requests, not to force zooming in.
+ *
+ * Must stay comfortably above the initial /map view's own bounding box:
+ * the map opens fit to all of Great Britain (see GB_BOUNDS in
+ * school-map.tsx), and MapLibre's bounds-fit pads that out further to
+ * match the browser window's aspect ratio - verified live, a typical
+ * 1280x900 window produces a ~400 square degree initial viewport. A
+ * limit of 4 (the original value) meant every single visitor's first
+ * view of the map silently failed to load any schools. */
+export const MAX_BBOX_AREA_DEGREES = 600;
 
 export const DEFAULT_CATCHMENT_BOUNDARY_WARNING_METRES = 75;
 

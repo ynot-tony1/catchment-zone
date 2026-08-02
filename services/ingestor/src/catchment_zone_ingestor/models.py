@@ -312,6 +312,11 @@ class RawGiasRow(BaseModel):
     number_of_pupils: str | None = Field(default=None, alias="NumberOfPupils")
     telephone_num: str | None = Field(default=None, alias="TelephoneNum")
     school_website: str | None = Field(default=None, alias="SchoolWebsite")
+    # British National Grid (EPSG:27700) coordinates, verified live in the
+    # real extract - GIAS does not publish WGS84 latitude/longitude
+    # directly, so these are converted downstream in gias.py.
+    easting: str | None = Field(default=None, alias="Easting")
+    northing: str | None = Field(default=None, alias="Northing")
 
 
 class RawGiasTrustRow(BaseModel):

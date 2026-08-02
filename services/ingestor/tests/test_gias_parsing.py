@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from catchment_zone_ingestor.adapters.gias import parse_establishment_csv
 from catchment_zone_ingestor.models import SchoolStatus
 
@@ -96,6 +98,27 @@ def test_header_mapping_maps_key_fields() -> None:
     assert ashfield.postcode == "S10 1AB"
     assert ashfield.postcode_prefix == "S10"
     assert ashfield.local_authority_code == "373"
+
+
+def test_easting_northing_converted_to_wgs84_latitude_longitude() -> None:
+    """GIAS publishes British National Grid Easting/Northing, not WGS84
+    directly (verified live). Ashfield's fixture coordinates
+    (435000, 387000) are a real Sheffield-area BNG point; the expected
+    lat/lon below was computed independently via pyproj, not copied from
+    the implementation under test."""
+    result = parse_establishment_csv(_load_fixture_bytes())
+    ashfield = next(s for s in result.schools if s.urn == "900001")
+    assert ashfield.latitude is not None
+    assert ashfield.longitude is not None
+    assert ashfield.latitude == pytest.approx(53.3787, abs=1e-3)
+    assert ashfield.longitude == pytest.approx(-1.4753, abs=1e-3)
+
+
+def test_blank_easting_northing_leaves_coordinates_none() -> None:
+    result = parse_establishment_csv(_load_fixture_bytes())
+    birchwood = next(s for s in result.schools if s.urn == "900002")
+    assert birchwood.latitude is None
+    assert birchwood.longitude is None
 
 
 def test_closed_school_status_mapped() -> None:

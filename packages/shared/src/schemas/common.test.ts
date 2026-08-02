@@ -51,7 +51,14 @@ describe("BboxQuerySchema", () => {
   });
 
   it("rejects a bbox larger than the maximum area", () => {
-    expect(() => BboxQuerySchema.parse("-10,45,10,65")).toThrow();
+    expect(() => BboxQuerySchema.parse("-90,-45,90,45")).toThrow();
+  });
+
+  it("accepts a bbox as wide as Great Britain's initial /map view", () => {
+    // A typical browser window's aspect ratio pads GB_BOUNDS out to
+    // roughly this size when MapLibre fits it on load (verified live);
+    // the very first view of /map must not exceed the limit.
+    expect(() => BboxQuerySchema.parse("-21.1,49.8,14.3,61.0")).not.toThrow();
   });
 
   it("rejects out-of-range coordinates", () => {

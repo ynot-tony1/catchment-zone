@@ -46,6 +46,7 @@ from typing import Any
 
 import httpx
 from pydantic import ValidationError
+from pyproj import Transformer
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from catchment_zone_ingestor.models import (
@@ -61,6 +62,13 @@ logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://get-information-schools.service.gov.uk"
 DOWNLOADS_PAGE_URL = f"{_BASE_URL}/Downloads"
+
+# GIAS publishes school locations as British National Grid (EPSG:27700)
+# Easting/Northing, not WGS84 latitude/longitude directly (verified live
+# against a real extract). Built once at module load and reused across
+# every row rather than per-row, since constructing a Transformer has
+# real setup cost repeated tens of thousands of times otherwise.
+_BNG_TO_WGS84 = Transformer.from_crs("EPSG:27700", "EPSG:4326", always_xy=True)
 
 # get-information-schools.service.gov.uk's WAF returns 403 for this
 # project's own identifying User-Agent (confirmed directly: the same
@@ -356,6 +364,34 @@ def _parse_optional_date(raw: str | None) -> str | None:
     return None
 
 
+def _parse_optional_float(raw: str | None) -> float | None:
+    if raw is None or raw.strip() == "":
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def _easting_northing_to_latlon(
+    easting_raw: str | None, northing_raw: str | None
+) -> tuple[float | None, float | None]:
+    """Converts GIAS's British National Grid Easting/Northing to WGS84
+    (longitude, latitude). Returns (None, None) if either value is
+    missing or exactly 0 - GIAS uses 0 (as well as blank) as its own
+    "unknown location" placeholder for establishments with no confirmed
+    site (verified live: a real minority of extract rows use each
+    convention), and (0, 0) is not itself a valid British National Grid
+    coordinate for any real school site.
+    """
+    easting = _parse_optional_float(easting_raw)
+    northing = _parse_optional_float(northing_raw)
+    if not easting or not northing:
+        return None, None
+    longitude, latitude = _BNG_TO_WGS84.transform(easting, northing)
+    return latitude, longitude
+
+
 def _normalise_name(name: str) -> str:
     return " ".join(name.strip().split()).lower()
 
@@ -488,6 +524,7 @@ def _row_to_school(raw: dict[str, Any]) -> School:
     parsed = RawGiasRow.model_validate(raw)
     urn = _validate_urn(parsed.urn)
     name = _validate_name(parsed.establishment_name)
+    latitude, longitude = _easting_northing_to_latlon(parsed.easting, parsed.northing)
 
     return School(
         urn=urn,
@@ -508,6 +545,8 @@ def _row_to_school(raw: dict[str, Any]) -> School:
         county=parsed.county_name or None,
         postcode=(parsed.postcode or None),
         postcode_prefix=_postcode_prefix(parsed.postcode),
+        latitude=latitude,
+        longitude=longitude,
         local_authority_code=parsed.la_code or None,
         opening_date=_parse_optional_date(parsed.open_date),
         closing_date=_parse_optional_date(parsed.close_date),
