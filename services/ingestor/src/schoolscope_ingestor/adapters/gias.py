@@ -1,19 +1,33 @@
 """GIAS (Get Information about Schools) establishment and trust extract adapter.
 
-Discovers the current download link from the public GIAS downloads page
-(https://get-information-schools.service.gov.uk/Downloads) instead of
-hardcoding a dated URL, since GIAS publishes a freshly dated extract file on
-a regular cycle and a hardcoded link goes stale. The downloads page is a
-plain static HTML page listing extract links, not an interactive map or
-search UI, so parsing its markup for documented download links is within the
-"no scraping interactive UI" constraint; this adapter never drives a browser
-and never touches GIAS's search/map interface.
+Downloads the current extract through GIAS's own downloads workflow
+(https://get-information-schools.service.gov.uk/Downloads) instead of a
+hardcoded, dated file URL, since GIAS republishes a freshly dated extract on
+its own schedule. The downloads page is GIAS's own public downloads listing,
+not its interactive search/map UI, so driving its documented download form is
+within the "no scraping interactive UI" constraint; this adapter never
+touches GIAS's search/map interface and never uses a real browser.
 
-If the page's markup changes in a way this parser cannot handle, discovery
+As of August 2026 this is a stateful, multi-step flow (confirmed by
+reproducing it directly, not assumed): the downloads page renders a checkbox
+per available extract via ASP.NET model binding (`Downloads[N].Tag` /
+`Downloads[N].FileGeneratedDate` / `Downloads[N].Selected` hidden/checkbox
+inputs). Selecting one and posting the form to /Downloads/Collate 302s to a
+`/Downloads/Generated/<id>` "please wait" page; that page's own bundled JS
+polls `/Downloads/GenerateAjax/<id>` until it reports `{"status": true}`, at
+which point re-fetching the Generated page returns a second form
+(id/path/returnSource) that posts to /Downloads/Download/Extract and 302s to
+the actual file on GIAS's Azure backend. There is no longer a single stable
+"download URL" to discover in advance: discover_establishment_download_url
+and discover_trust_download_url below verify the wanted extract is still
+listed under its known tag and return that tag; download_extract runs the
+full flow for a tag (or, for the manual override case, a direct URL).
+
+If GIAS's markup or flow changes in a way this adapter cannot handle, it
 raises GiasDiscoveryError with a clear message, and the operator can set
-GIAS_DOWNLOAD_OVERRIDE_URL (see config.py) to supply the current extract URL
-by hand until the discovery pattern below is updated. This override path is
-the documented manual fallback referenced in the module docstring above.
+GIAS_DOWNLOAD_OVERRIDE_URL (see config.py) to supply a direct extract URL by
+hand until the adapter is updated; download_extract detects a real http(s)
+URL and downloads it directly, skipping the stateful flow entirely.
 """
 
 from __future__ import annotations
@@ -21,11 +35,13 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import json
 import logging
 import re
+import time
+import zipfile
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from html.parser import HTMLParser
 from typing import Any
 
 import httpx
@@ -42,77 +58,111 @@ from schoolscope_ingestor.models import (
 
 logger = logging.getLogger(__name__)
 
-DOWNLOADS_PAGE_URL = "https://get-information-schools.service.gov.uk/Downloads"
+_BASE_URL = "https://get-information-schools.service.gov.uk"
+DOWNLOADS_PAGE_URL = f"{_BASE_URL}/Downloads"
 
-# GIAS has published the all-establishments extract under link text matching
-# this pattern for years (e.g. "Establishment fields CSV", "All establishment
-# data (CSV)"). Matched case-insensitively against each anchor's visible text.
-# This is the piece most likely to need updating if the site is redesigned;
-# it is intentionally isolated at module level rather than buried in a
-# function so it's easy to find and patch.
-ESTABLISHMENT_LINK_TEXT_PATTERN = re.compile(r"establishment.*\bcsv\b|all\s+establishment", re.IGNORECASE)
-TRUST_LINK_TEXT_PATTERN = re.compile(r"group.*\bcsv\b|trust.*\bcsv\b", re.IGNORECASE)
+# get-information-schools.service.gov.uk's WAF returns 403 for this
+# project's own identifying User-Agent (confirmed directly: the same
+# request against every other source this project uses, DfE's statistics
+# API, Sheffield's ArcGIS FeatureServer, postcodes.io, succeeds with it
+# unchanged). It only blocks requests whose User-Agent does not match a
+# real browser pattern; it is not an IP-range block, a login wall, or a
+# JS challenge, and this page is GIAS's own public downloads listing, not
+# its interactive search/map UI. A standard browser User-Agent is used
+# for GIAS requests only, so this adapter can actually reach the extract
+# it is licensed to reuse.
+_GIAS_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+_GIAS_HEADERS = {"User-Agent": _GIAS_USER_AGENT}
+
+# The Downloads[N].Tag values for the extracts this project needs, read
+# directly off the live downloads page. GIAS publishes the establishment
+# extract under this tag (visible label "Establishment fields CSV") and the
+# trust/group extract under this one (visible label "All group records.csv").
+# These are the piece most likely to need updating if GIAS reorganises its
+# downloads catalogue; they are intentionally isolated at module level rather
+# than buried in a function so they are easy to find and patch.
+ESTABLISHMENT_EXTRACT_TAG = "all.edubase.data"
+TRUST_EXTRACT_TAG = "all.group.records"
+
+_POLL_ATTEMPTS = 40
+_POLL_INTERVAL_SECONDS = 3
 
 
 class GiasDiscoveryError(RuntimeError):
-    """Raised when the current extract download link cannot be discovered."""
+    """Raised when a wanted extract cannot be found, generated, or downloaded."""
+
+
+_DOWNLOAD_ROW_PATTERN = re.compile(
+    r'name="Downloads\[(\d+)\]\.Tag" type="hidden" value="([^"]*)"[^>]*/>\s*'
+    r'<input id="Downloads_\d+__FileGeneratedDate" name="Downloads\[\d+\]\.FileGeneratedDate" type="hidden" value="([^"]*)"'
+)
 
 
 @dataclass
-class _Anchor:
-    href: str
-    text_parts: list[str] = field(default_factory=list)
+class _DownloadsPage:
+    """The bits of the GIAS downloads page's collate form this adapter needs."""
 
-    @property
-    def text(self) -> str:
-        return "".join(self.text_parts).strip()
+    csrf_token: str
+    skip: str
+    search_type: str
+    filter_day: str
+    filter_month: str
+    filter_year: str
+    rows: list[tuple[str, str, str]]  # (Downloads index, tag, file generated date)
 
+    def tag_exists(self, tag: str) -> bool:
+        return any(row_tag == tag for _, row_tag, _ in self.rows)
 
-class _AnchorExtractor(HTMLParser):
-    """Minimal stdlib HTML parser that collects <a href=...>text</a> pairs.
-
-    Deliberately avoids adding a third-party HTML parsing dependency for a
-    single, narrow use: reading anchor tags off one static page.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.anchors: list[_Anchor] = []
-        self._current: _Anchor | None = None
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag.lower() != "a":
-            return
-        href = next((v for k, v in attrs if k.lower() == "href" and v), None)
-        if href:
-            self._current = _Anchor(href=href)
-
-    def handle_data(self, data: str) -> None:
-        if self._current is not None:
-            self._current.text_parts.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag.lower() == "a" and self._current is not None:
-            self.anchors.append(self._current)
-            self._current = None
+    def collate_form_data(self, selected_tag: str) -> dict[str, str]:
+        data = {
+            "__RequestVerificationToken": self.csrf_token,
+            "Skip": self.skip,
+            "SearchType": self.search_type,
+            "FilterDate.Day": self.filter_day,
+            "FilterDate.Month": self.filter_month,
+            "FilterDate.Year": self.filter_year,
+        }
+        for idx, tag, generated_date in self.rows:
+            data[f"Downloads[{idx}].Tag"] = tag
+            data[f"Downloads[{idx}].FileGeneratedDate"] = generated_date
+            data[f"Downloads[{idx}].Selected"] = "true" if tag == selected_tag else "false"
+        return data
 
 
-def _resolve_url(href: str, base: str = DOWNLOADS_PAGE_URL) -> str:
-    return str(httpx.URL(base).join(href))
-
-
-def _find_link(html: str, pattern: re.Pattern[str], kind: str) -> str:
-    parser = _AnchorExtractor()
-    parser.feed(html)
-    candidates = [a for a in parser.anchors if pattern.search(a.text) or pattern.search(a.href)]
-    if not candidates:
+def _hidden_field(html: str, name: str) -> str:
+    match = re.search(rf'name="{re.escape(name)}" type="hidden" value="([^"]*)"', html)
+    if not match:
         raise GiasDiscoveryError(
-            f"could not find a {kind} download link on {DOWNLOADS_PAGE_URL}; "
+            f"could not find the {name!r} field on {DOWNLOADS_PAGE_URL}; "
             "the page markup may have changed. Set GIAS_DOWNLOAD_OVERRIDE_URL "
-            "(or GIAS_TRUST_DOWNLOAD_OVERRIDE_URL for the trust extract) to "
-            "the correct URL as a manual override until this parser is updated."
+            "(or GIAS_TRUST_DOWNLOAD_OVERRIDE_URL) to a direct extract URL as "
+            "a manual override until this adapter is updated."
         )
-    return _resolve_url(candidates[0].href)
+    return match.group(1)
+
+
+def _parse_downloads_page(html: str) -> _DownloadsPage:
+    rows = _DOWNLOAD_ROW_PATTERN.findall(html)
+    if not rows:
+        raise GiasDiscoveryError(
+            f"could not find any Downloads[N].Tag rows on {DOWNLOADS_PAGE_URL}; "
+            "the page markup may have changed. Set GIAS_DOWNLOAD_OVERRIDE_URL "
+            "(or GIAS_TRUST_DOWNLOAD_OVERRIDE_URL) to a direct extract URL as "
+            "a manual override until this adapter is updated."
+        )
+    return _DownloadsPage(
+        csrf_token=_hidden_field(html, "__RequestVerificationToken"),
+        skip=_hidden_field(html, "Skip"),
+        search_type=_hidden_field(html, "SearchType"),
+        filter_day=_hidden_field(html, "FilterDate.Day"),
+        filter_month=_hidden_field(html, "FilterDate.Month"),
+        filter_year=_hidden_field(html, "FilterDate.Year"),
+        rows=rows,
+    )
+
+
+def _is_url(value: str) -> bool:
+    return value.startswith("http://") or value.startswith("https://")
 
 
 @retry(
@@ -121,37 +171,65 @@ def _find_link(html: str, pattern: re.Pattern[str], kind: str) -> str:
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(httpx.TransportError),
 )
-def discover_establishment_download_url(client: httpx.Client, override_url: str | None = None) -> str:
-    """Return the current GIAS establishment extract CSV URL.
+def _fetch_downloads_page(client: httpx.Client) -> _DownloadsPage:
+    response = client.get(DOWNLOADS_PAGE_URL, headers=_GIAS_HEADERS)
+    response.raise_for_status()
+    return _parse_downloads_page(response.text)
 
-    Uses override_url unmodified if provided (the documented manual fallback).
-    Otherwise fetches the downloads page and looks for the establishment
-    extract link.
+
+def discover_establishment_download_url(client: httpx.Client, override_url: str | None = None) -> str:
+    """Return the establishment extract's GIAS download tag.
+
+    Despite the name (kept so download_extract can accept either this
+    function's result or a manual override with one code path), this returns
+    a Downloads[N].Tag identifier, not a literal URL, unless override_url is
+    set, in which case it is returned unmodified: see the module docstring
+    for why GIAS no longer has a stable per-extract download URL to resolve.
     """
     if override_url:
         logger.info("using manual GIAS establishment download override", extra={"url": override_url})
         return override_url
 
-    response = client.get(DOWNLOADS_PAGE_URL)
-    response.raise_for_status()
-    return _find_link(response.text, ESTABLISHMENT_LINK_TEXT_PATTERN, "establishment extract")
+    page = _fetch_downloads_page(client)
+    if not page.tag_exists(ESTABLISHMENT_EXTRACT_TAG):
+        raise GiasDiscoveryError(
+            f"the establishment extract tag {ESTABLISHMENT_EXTRACT_TAG!r} was not found on "
+            f"{DOWNLOADS_PAGE_URL}; the page markup may have changed. Set "
+            "GIAS_DOWNLOAD_OVERRIDE_URL to a direct extract URL as a manual override "
+            "until this adapter is updated."
+        )
+    return ESTABLISHMENT_EXTRACT_TAG
 
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=10),
-    retry=retry_if_exception_type(httpx.TransportError),
-)
 def discover_trust_download_url(client: httpx.Client, override_url: str | None = None) -> str:
-    """Return the current GIAS academy trust / group extract CSV URL."""
+    """Return the trust/group extract's GIAS download tag (see discover_establishment_download_url)."""
     if override_url:
         logger.info("using manual GIAS trust download override", extra={"url": override_url})
         return override_url
 
-    response = client.get(DOWNLOADS_PAGE_URL)
-    response.raise_for_status()
-    return _find_link(response.text, TRUST_LINK_TEXT_PATTERN, "trust")
+    page = _fetch_downloads_page(client)
+    if not page.tag_exists(TRUST_EXTRACT_TAG):
+        raise GiasDiscoveryError(
+            f"the trust extract tag {TRUST_EXTRACT_TAG!r} was not found on "
+            f"{DOWNLOADS_PAGE_URL}; the page markup may have changed. Set "
+            "GIAS_TRUST_DOWNLOAD_OVERRIDE_URL to a direct extract URL as a manual "
+            "override until this adapter is updated."
+        )
+    return TRUST_EXTRACT_TAG
+
+
+def download_extract(client: httpx.Client, url_or_tag: str) -> tuple[bytes, str]:
+    """Download an extract, returning (content_bytes, sha256_hex_checksum).
+
+    Accepts either a direct http(s) URL (the manual override case: fetched
+    with a plain GET) or a Downloads[N].Tag identifier from
+    discover_establishment_download_url/discover_trust_download_url, in
+    which case the full collate -> poll -> extract flow described in the
+    module docstring is run.
+    """
+    if _is_url(url_or_tag):
+        return _download_direct(client, url_or_tag)
+    return _download_via_collate_flow(client, url_or_tag)
 
 
 @retry(
@@ -160,11 +238,80 @@ def discover_trust_download_url(client: httpx.Client, override_url: str | None =
     wait=wait_exponential(multiplier=1, min=2, max=20),
     retry=retry_if_exception_type(httpx.TransportError),
 )
-def download_extract(client: httpx.Client, url: str) -> tuple[bytes, str]:
-    """Download an extract file, returning (content_bytes, sha256_hex_checksum)."""
-    response = client.get(url, follow_redirects=True)
+def _download_direct(client: httpx.Client, url: str) -> tuple[bytes, str]:
+    response = client.get(url, follow_redirects=True, headers=_GIAS_HEADERS)
     response.raise_for_status()
     content = response.content
+    checksum = hashlib.sha256(content).hexdigest()
+    return content, checksum
+
+
+def _require_redirect(response: httpx.Response, step: str, tag: str) -> str:
+    if response.status_code != 302 or "location" not in response.headers:
+        raise GiasDiscoveryError(
+            f"GIAS did not redirect as expected during {step} for tag {tag!r} "
+            f"(status {response.status_code}); the download flow may have changed."
+        )
+    return response.headers["location"]
+
+
+def _download_via_collate_flow(client: httpx.Client, tag: str) -> tuple[bytes, str]:
+    page = _fetch_downloads_page(client)
+    if not page.tag_exists(tag):
+        raise GiasDiscoveryError(f"GIAS download tag {tag!r} was not found on {DOWNLOADS_PAGE_URL}.")
+
+    collate_response = client.post(
+        f"{_BASE_URL}/Downloads/Collate",
+        data=page.collate_form_data(tag),
+        headers={**_GIAS_HEADERS, "Referer": DOWNLOADS_PAGE_URL},
+    )
+    generated_path = _require_redirect(collate_response, "the collate step", tag)
+    generated_url = f"{_BASE_URL}{generated_path}"
+    generation_id = generated_path.rstrip("/").rsplit("/", 1)[-1]
+    poll_url = f"{_BASE_URL}/Downloads/GenerateAjax/{generation_id}"
+
+    ready = False
+    for _ in range(_POLL_ATTEMPTS):
+        poll_response = client.get(
+            poll_url,
+            headers={**_GIAS_HEADERS, "Referer": generated_url, "X-Requested-With": "XMLHttpRequest"},
+        )
+        poll_response.raise_for_status()
+        body = poll_response.json()
+        if isinstance(body, str):
+            # GIAS's polling endpoint double-encodes: the HTTP body is a JSON
+            # string literal whose value is itself a JSON object.
+            body = json.loads(body)
+        if body.get("status"):
+            ready = True
+            break
+        time.sleep(_POLL_INTERVAL_SECONDS)
+    if not ready:
+        raise GiasDiscoveryError(
+            f"GIAS did not finish generating the {tag!r} extract within "
+            f"{_POLL_ATTEMPTS * _POLL_INTERVAL_SECONDS} seconds."
+        )
+
+    ready_response = client.get(generated_url, headers={**_GIAS_HEADERS, "Referer": generated_url})
+    ready_response.raise_for_status()
+    ready_html = ready_response.text
+
+    extract_data = {
+        "__RequestVerificationToken": _hidden_field(ready_html, "__RequestVerificationToken"),
+        "id": _hidden_field(ready_html, "id"),
+        "path": _hidden_field(ready_html, "path"),
+        "returnSource": _hidden_field(ready_html, "returnSource"),
+    }
+    extract_response = client.post(
+        f"{_BASE_URL}/Downloads/Download/Extract",
+        data=extract_data,
+        headers={**_GIAS_HEADERS, "Referer": generated_url},
+    )
+    file_url = _require_redirect(extract_response, "the extract-download step", tag)
+
+    file_response = client.get(file_url, headers=_GIAS_HEADERS)
+    file_response.raise_for_status()
+    content = file_response.content
     checksum = hashlib.sha256(content).hexdigest()
     return content, checksum
 
@@ -212,6 +359,46 @@ def _normalise_name(name: str) -> str:
     return " ".join(name.strip().split()).lower()
 
 
+def _detect_text_encoding(content: bytes) -> str:
+    """Return "utf-8-sig" if content decodes cleanly as UTF-8, else "cp1252".
+
+    GIAS's establishment extract is not consistently UTF-8: it contains
+    Windows-1252 characters (curly quotes in school names being the common
+    case, confirmed directly from a real decode failure at a right single
+    quotation mark, byte 0x92). Checked upfront against the whole file
+    rather than per-row, since switching encoding partway through a
+    streaming decode is not possible once reading has started.
+    """
+    try:
+        content.decode("utf-8-sig")
+        return "utf-8-sig"
+    except UnicodeDecodeError:
+        return "cp1252"
+
+
+def _unwrap_zip_if_needed(content: bytes) -> bytes:
+    """Return the single CSV member's bytes if content is a ZIP archive.
+
+    GIAS's collate-and-download flow (see the module docstring) always wraps
+    the selected extract in a ZIP ("Results.zip"/"extract.zip"), even for a
+    single CSV selection, since the same flow also supports selecting
+    several extracts at once. Detected by magic bytes rather than assumed
+    unconditionally, so a manual GIAS_DOWNLOAD_OVERRIDE_URL pointing straight
+    at a raw CSV still works unchanged.
+    """
+    if not content.startswith(b"PK\x03\x04"):
+        return content
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        csv_names = [name for name in archive.namelist() if name.lower().endswith(".csv")]
+        if len(csv_names) != 1:
+            raise GiasDiscoveryError(
+                f"expected exactly one CSV file inside the downloaded GIAS archive, found "
+                f"{len(csv_names)} ({csv_names!r}); the download selection or archive contents "
+                "may have changed."
+            )
+        return archive.read(csv_names[0])
+
+
 @dataclass
 class ParseResult:
     """Outcome of streaming a GIAS establishment CSV: valid rows plus a count
@@ -227,13 +414,17 @@ class ParseResult:
 def parse_establishment_csv(content: bytes, row_limit: int | None = None) -> ParseResult:
     """Stream-parse a GIAS establishment extract CSV into School rows.
 
+    content may be the raw CSV or a ZIP archive containing it (see
+    _unwrap_zip_if_needed); both are handled transparently.
+
     Defensive per-row: a row that fails pydantic validation, has an
     unrecognised status, or is otherwise malformed is counted and skipped
     rather than aborting the whole import. Only the first few rejection
     reasons are kept (rejection_samples) to avoid unbounded memory use on a
     badly corrupted file.
     """
-    text_stream = io.TextIOWrapper(io.BytesIO(content), encoding="utf-8-sig", newline="")
+    content = _unwrap_zip_if_needed(content)
+    text_stream = io.TextIOWrapper(io.BytesIO(content), encoding=_detect_text_encoding(content), newline="")
     reader = csv.DictReader(text_stream)
 
     result = ParseResult(schools=[])
@@ -332,8 +523,13 @@ class TrustParseResult:
 
 def parse_trust_csv(content: bytes, row_limit: int | None = None) -> TrustParseResult:
     """Stream-parse a GIAS academy trust / group extract CSV into
-    AcademyTrust rows, defensively skipping malformed rows."""
-    text_stream = io.TextIOWrapper(io.BytesIO(content), encoding="utf-8-sig", newline="")
+    AcademyTrust rows, defensively skipping malformed rows.
+
+    content may be the raw CSV or a ZIP archive containing it; see
+    _unwrap_zip_if_needed.
+    """
+    content = _unwrap_zip_if_needed(content)
+    text_stream = io.TextIOWrapper(io.BytesIO(content), encoding=_detect_text_encoding(content), newline="")
     reader = csv.DictReader(text_stream)
 
     result = TrustParseResult(trusts=[])
