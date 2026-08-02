@@ -40,6 +40,42 @@ def test_rejects_unrecognised_status() -> None:
     assert "900006" not in {s.urn for s in result.schools}
 
 
+def test_derives_no_local_authorities_without_an_la_name_column() -> None:
+    """The shared fixture has LA (code) but no LA (name) column (it predates
+    local authority derivation); this must not crash or invent a name."""
+    result = parse_establishment_csv(_load_fixture_bytes())
+    assert result.local_authorities == []
+
+
+def test_derives_distinct_local_authorities_from_la_code_and_name() -> None:
+    csv_bytes = (
+        b"URN,EstablishmentName,TypeOfEstablishment (name),EstablishmentStatus (name),"
+        b"PhaseOfEducation (name),LA (code),LA (name)\r\n"
+        b"900001,Test School One,Community school,Open,Primary,373,Sheffield\r\n"
+        b"900002,Test School Two,Community school,Open,Primary,373,Sheffield\r\n"
+        b"900003,Test School Three,Community school,Open,Primary,201,Barnsley\r\n"
+    )
+    result = parse_establishment_csv(csv_bytes)
+    assert {(la.code, la.name) for la in result.local_authorities} == {
+        ("373", "Sheffield"),
+        ("201", "Barnsley"),
+    }
+
+
+def test_local_authority_derivation_never_rejects_a_row() -> None:
+    """A blank LA (name) for one row must not affect that row's school or
+    any other row's derived local authority."""
+    csv_bytes = (
+        b"URN,EstablishmentName,TypeOfEstablishment (name),EstablishmentStatus (name),"
+        b"PhaseOfEducation (name),LA (code),LA (name)\r\n"
+        b"900001,Test School,Community school,Open,Primary,373,\r\n"
+    )
+    result = parse_establishment_csv(csv_bytes)
+    assert result.rows_rejected == 0
+    assert len(result.schools) == 1
+    assert result.local_authorities == []
+
+
 def test_row_counts_and_rejection_samples() -> None:
     result = parse_establishment_csv(_load_fixture_bytes())
     assert result.rows_processed == 8

@@ -2,8 +2,9 @@
 
 These deliberately shadow packages/database/prisma/schema.prisma (read-only
 reference for this service) field-for-field for the tables the ingestor
-populates: School, AcademyTrust, SchoolMetric, CatchmentSource, CatchmentArea,
-SchoolCatchmentArea, AdmissionArrangement and IngestionRun. Field names use
+populates: School, AcademyTrust, LocalAuthority, SchoolMetric,
+CatchmentSource, CatchmentArea, SchoolCatchmentArea, AdmissionArrangement and
+IngestionRun. Field names use
 snake_case here (matching the database column names) rather than the Prisma
 client's camelCase, since this service talks to the database directly over
 psycopg rather than through the generated Prisma client.
@@ -119,6 +120,20 @@ class AcademyTrust(_Row):
     postcode: str | None = None
     open_school_count: int = 0
     source_updated_at: datetime | None = None
+
+
+class LocalAuthority(_Row):
+    """Derived from the GIAS establishment extract's own LA (code)/LA (name)
+    columns, since GIAS is the only source this service currently ingests
+    that carries local authority identity at all. Only code and name are
+    populated this way; region_code, admissions_website,
+    official_catchment_checker_url and catchment_coverage_status have no
+    GIAS equivalent and are left at their database defaults (NULL / the
+    catchment coverage enum's own default), to be filled in by hand or a
+    future dedicated source as real catchment coverage is added."""
+
+    code: str
+    name: str
 
 
 class SchoolRelationship(_Row):
@@ -256,6 +271,7 @@ class RawGiasRow(BaseModel):
     county_name: str | None = Field(default=None, alias="County (name)")
     postcode: str | None = Field(default=None, alias="Postcode")
     la_code: str | None = Field(default=None, alias="LA (code)")
+    la_name: str | None = Field(default=None, alias="LA (name)")
     trust_school_flag_code: str | None = Field(default=None, alias="TrustSchoolFlag (code)")
     trusts_code: str | None = Field(default=None, alias="Trusts (code)")
     trusts_name: str | None = Field(default=None, alias="Trusts (name)")

@@ -135,19 +135,30 @@ def import_gias(
             logger.warning("sample rejected GIAS rows", extra={"samples": result.rejection_samples})
 
         if dry_run:
-            typer.echo(f"dry-run: {len(result.schools)} valid schools, {result.rows_rejected} rejected rows")
+            typer.echo(
+                f"dry-run: {len(result.schools)} valid schools, "
+                f"{len(result.local_authorities)} local authorities, {result.rows_rejected} rejected rows"
+            )
             return
 
         if conn is None:
             _fail("no database connection available and --dry-run was not set", source="gias_establishments")
             return
 
+        # local_authorities first: schools.local_authority_code is a foreign
+        # key to it, and this extract is the only source of local authority
+        # identity this service has, so a school row referencing a
+        # not-yet-seen LA code would otherwise fail that constraint.
+        la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
         rows = [s.model_dump(mode="json") for s in result.schools]
         with db.transaction(conn):
+            la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
             inserted = db.upsert_many(conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size)
 
-        logger.info("imported GIAS establishments", extra={"rows_upserted": inserted})
-        typer.echo(f"imported {inserted} schools ({result.rows_rejected} rows rejected)")
+        logger.info(
+            "imported GIAS establishments", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
+        )
+        typer.echo(f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)")
     except typer.Exit:
         raise
     except Exception as exc:

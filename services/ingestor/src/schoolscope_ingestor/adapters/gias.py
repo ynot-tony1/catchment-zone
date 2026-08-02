@@ -50,6 +50,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from schoolscope_ingestor.models import (
     AcademyTrust,
+    LocalAuthority,
     RawGiasRow,
     RawGiasTrustRow,
     School,
@@ -406,13 +407,33 @@ class ParseResult:
     still be imported for its good rows while surfacing what was dropped."""
 
     schools: list[School]
+    local_authorities: list[LocalAuthority] = field(default_factory=list)
     rows_processed: int = 0
     rows_rejected: int = 0
     rejection_samples: list[str] = field(default_factory=list)
 
 
+def _collect_local_authority(raw: dict[str, Any], seen: dict[str, str]) -> None:
+    """Record a (code -> name) pair from a raw CSV row into seen, in place.
+
+    Best-effort and defensive: a missing or blank code/name simply means
+    this row contributes nothing, never a reason to reject the row's school.
+    """
+    code = (raw.get("LA (code)") or "").strip()
+    name = (raw.get("LA (name)") or "").strip()
+    if code and name and code not in seen:
+        seen[code] = name
+
+
 def parse_establishment_csv(content: bytes, row_limit: int | None = None) -> ParseResult:
-    """Stream-parse a GIAS establishment extract CSV into School rows.
+    """Stream-parse a GIAS establishment extract CSV into School rows, plus
+    the distinct local authorities referenced by any row in the file.
+
+    GIAS is the only source this service currently ingests that carries
+    local authority identity, and schools.local_authority_code is a foreign
+    key to local_authorities, so importing schools without also deriving
+    their referenced local authorities first would fail that constraint on
+    the very first previously-unseen LA code.
 
     content may be the raw CSV or a ZIP archive containing it (see
     _unwrap_zip_if_needed); both are handled transparently.
@@ -421,17 +442,19 @@ def parse_establishment_csv(content: bytes, row_limit: int | None = None) -> Par
     unrecognised status, or is otherwise malformed is counted and skipped
     rather than aborting the whole import. Only the first few rejection
     reasons are kept (rejection_samples) to avoid unbounded memory use on a
-    badly corrupted file.
+    badly corrupted file. Local authority extraction never rejects a row.
     """
     content = _unwrap_zip_if_needed(content)
     text_stream = io.TextIOWrapper(io.BytesIO(content), encoding=_detect_text_encoding(content), newline="")
     reader = csv.DictReader(text_stream)
 
     result = ParseResult(schools=[])
+    local_authorities_by_code: dict[str, str] = {}
     for raw in reader:
         if row_limit is not None and result.rows_processed >= row_limit:
             break
         result.rows_processed += 1
+        _collect_local_authority(raw, local_authorities_by_code)
         try:
             school = _row_to_school(raw)
             result.schools.append(school)
@@ -440,6 +463,10 @@ def parse_establishment_csv(content: bytes, row_limit: int | None = None) -> Par
             if len(result.rejection_samples) < 20:
                 urn = raw.get("URN", "?")
                 result.rejection_samples.append(f"URN={urn}: {exc}")
+
+    result.local_authorities = [
+        LocalAuthority(code=code, name=name) for code, name in local_authorities_by_code.items()
+    ]
     return result
 
 
