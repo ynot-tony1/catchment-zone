@@ -2,10 +2,12 @@
 
 Search, compare, and explore schools, academy trusts, local authorities,
 official school statistics, and official school catchment or priority
-admission areas across the UK. Coverage currently starts with England
-(via GIAS); Scotland, Wales and Northern Ireland are added nation by
-nation, each from that nation's own official register, not assumed to
-share GIAS's identifiers, schema or update schedule.
+admission areas across Great Britain. England (GIAS), Scotland (the
+Scottish Government's school roll) and Wales (DataMapWales) are covered,
+each from that nation's own official register, not assumed to share
+GIAS's identifiers, schema or update schedule. Northern Ireland is
+deliberately not covered: the only machine-readable register found for
+it has been stale since February 2016, with no current source available.
 
 **Live URL:** https://catchment-zone.vercel.app
 

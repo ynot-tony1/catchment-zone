@@ -23,7 +23,7 @@ export function SiteFooter() {
         <p className="mt-2">
           catchment-zone is an independent project, not affiliated with the
           Department for Education, the devolved education departments of
-          Scotland, Wales or Northern Ireland, or any local authority.
+          Scotland or Wales, or any local authority.
         </p>
       </div>
     </footer>

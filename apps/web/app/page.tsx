@@ -39,17 +39,17 @@ export default async function HomePage() {
     <div className="flex flex-col gap-10">
       <section className="flex flex-col gap-4">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Search and compare schools across the UK
+          Search and compare schools across Great Britain
         </h1>
         <p className="text-muted-foreground max-w-2xl">
           catchment-zone brings together official school records, academy trust
           structures, published performance statistics and admissions catchment
-          areas from government sources, in one place. All four UK nations are
-          covered, each from that nation&apos;s own official register: England
-          (GIAS), Scotland (the Scottish Government&apos;s school roll), Wales
-          (DataMapWales) and Northern Ireland (Open Data NI, whose only
-          available register is dated February 2016 - shown with a data currency
-          notice on every affected record, not presented as live).
+          areas from government sources, in one place. England, Scotland and
+          Wales are covered, each from that nation&apos;s own official register:
+          England (GIAS), Scotland (the Scottish Government&apos;s school roll)
+          and Wales (DataMapWales). Northern Ireland is not covered: the only
+          register found for it has been stale since February 2016, with no
+          current source available.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button asChild size="lg">

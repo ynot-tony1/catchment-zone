@@ -32,21 +32,21 @@ enum SchoolStatus {
   CLOSED
 }
 
-// England is GIAS-sourced; the other three each have their own official
+// England is GIAS-sourced; Scotland and Wales each have their own official
 // register with its own identifier scheme (Scotland: 7-digit SEED code /
-// SchUID via the ScottishSchoolRoll ArcGIS service; Northern Ireland: an
-// alphanumeric "Reference" via the Department of Education's Schools+
-// extract, currently only available as a stale 2016 CSV on Open Data NI,
-// not live-verified as current - see PROJECT_STATUS.md; Wales: no
-// confirmed machine-readable API found yet, only address-list CSVs). `urn`
-// stores whatever identifier that nation's own register uses; nation
-// disambiguates its meaning rather than the ingestor inventing a shared
-// cross-nation numbering scheme.
+// SchUID via the ScottishSchoolRoll ArcGIS service; Wales: DataMapWales's
+// maintained-schools WFS layer). `urn` stores whatever identifier that
+// nation's own register uses; nation disambiguates its meaning rather
+// than the ingestor inventing a shared cross-nation numbering scheme.
+//
+// Northern Ireland is deliberately excluded: the only machine-readable
+// register found for it (Open Data NI's "School Locations" dataset) has
+// been stale since February 2016 with no newer extract available - see
+// PROJECT_STATUS.md. Revisit only if a current NI source surfaces.
 enum Nation {
   ENGLAND
   SCOTLAND
   WALES
-  NORTHERN_IRELAND
 }
 
 model School {

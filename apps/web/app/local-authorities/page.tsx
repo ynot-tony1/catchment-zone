@@ -92,13 +92,10 @@ export default async function LocalAuthoritiesPage({
           Local authorities
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Covers England&apos;s local authorities, Scotland&apos;s and
-          Wales&apos;s council/principal areas. Northern Ireland has no
-          equivalent in its source data (schools are administered centrally by
-          the Education Authority, not by county councils), so it is not listed
-          here. Catchment coverage varies by area: only those with a verified,
-          licensed boundary source show mapped priority areas; the rest show as
-          not available rather than a guess.
+          Covers England&apos;s local authorities and Scotland&apos;s and
+          Wales&apos;s council/principal areas. Catchment coverage varies by
+          area: only those with a verified, licensed boundary source show mapped
+          priority areas; the rest show as not available rather than a guess.
         </p>
       </div>
 

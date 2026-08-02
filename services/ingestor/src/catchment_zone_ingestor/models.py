@@ -60,14 +60,17 @@ class IngestionStatus(str, enum.Enum):
 
 class Nation(str, enum.Enum):
     """Which UK nation's own official register a School/LocalAuthority row
-    came from. England is GIAS; the other three each have a structurally
-    different source (see adapters/__init__.py and PROJECT_STATUS.md for
-    what is and is not live-verified yet for each)."""
+    came from. England is GIAS; Scotland and Wales each have a
+    structurally different source (see adapters/__init__.py and
+    PROJECT_STATUS.md for what is and is not live-verified yet for each).
+
+    Northern Ireland is deliberately excluded: the only machine-readable
+    register found for it has been stale since February 2016 with no
+    newer extract available - see PROJECT_STATUS.md."""
 
     ENGLAND = "ENGLAND"
     SCOTLAND = "SCOTLAND"
     WALES = "WALES"
-    NORTHERN_IRELAND = "NORTHERN_IRELAND"
 
 
 class _Row(BaseModel):

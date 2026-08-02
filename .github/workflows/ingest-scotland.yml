@@ -25,11 +25,10 @@ jobs:
   ingest:
     # Confirmed live (2026-08-02): maps.gov.scot blocks GitHub Actions
     # runners with a 403, the same Azure-datacenter-IP pattern GIAS hits
-    # (see PROJECT_STATUS.md) - unlike Wales and Northern Ireland's
-    # sources, which both work fine from GitHub Actions. Scotland gets its
-    # own gate, separate from DEVOLVED_NATIONS_INGESTION_ENABLED, so
-    # enabling Wales/Northern Ireland doesn't also turn on a scheduled run
-    # that's known to fail every time.
+    # (see PROJECT_STATUS.md) - unlike Wales's source, which works fine
+    # from GitHub Actions. Scotland gets its own gate, separate from
+    # DEVOLVED_NATIONS_INGESTION_ENABLED, so enabling Wales doesn't also
+    # turn on a scheduled run that's known to fail every time.
     if: vars.SCOTLAND_INGESTION_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30

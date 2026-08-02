@@ -25,7 +25,6 @@ from catchment_zone_ingestor import db, pipeline
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
-from catchment_zone_ingestor.adapters import northern_ireland as northern_ireland_adapter
 from catchment_zone_ingestor.adapters import scotland as scotland_adapter
 from catchment_zone_ingestor.adapters import statistics as statistics_adapter
 from catchment_zone_ingestor.adapters import wales as wales_adapter
@@ -360,70 +359,6 @@ def import_scotland(
         raise
     except Exception as exc:
         _fail(f"Scotland import failed: {exc}", source="scotland_schools")
-
-
-# ---------------------------------------------------------------------------
-# import-northern-ireland
-# ---------------------------------------------------------------------------
-
-
-@app.command("import-northern-ireland")
-def import_northern_ireland(
-    row_limit: Annotated[int | None, typer.Option(help="Only process the first N rows (testing/debugging).")] = None,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Parse and validate only; do not write to the database.")] = False,
-) -> None:
-    """Import Northern Ireland's school register from Open Data NI's "School Locations" dataset.
-
-    This source is genuinely stale (its only resource is dated February
-    2016 - see adapters/northern_ireland.py's module docstring); every
-    imported row carries that as source_extract_date rather than being
-    silently presented as current.
-    """
-    settings = get_settings()
-    set_run_context(source="northern_ireland_schools")
-    conn = _connect_or_none(settings, dry_run=dry_run)
-
-    try:
-        with _http_client(settings) as client:
-            url = northern_ireland_adapter.discover_csv_url(client)
-            content = northern_ireland_adapter.download_csv(client, url)
-
-        result = northern_ireland_adapter.parse_school_locations_csv(content, row_limit=row_limit)
-        logger.info(
-            "parsed Northern Ireland school register",
-            extra={
-                "rows_processed": result.rows_processed,
-                "rows_rejected": result.rows_rejected,
-                "source_extract_date": str(northern_ireland_adapter.NORTHERN_IRELAND_SOURCE_EXTRACT_DATE.date()),
-            },
-        )
-        if result.rejection_samples:
-            logger.warning("sample rejected Northern Ireland rows", extra={"samples": result.rejection_samples})
-
-        if dry_run:
-            typer.echo(f"dry-run: {len(result.schools)} valid schools, {result.rows_rejected} rejected rows")
-            return
-
-        if conn is None:
-            _fail("no database connection available and --dry-run was not set", source="northern_ireland_schools")
-            return
-
-        rows = [s.model_dump(mode="json") for s in result.schools]
-        with _tracked_run(conn, "northern_ireland_schools", dry_run) as tracker:
-            with db.transaction(conn):
-                inserted = db.upsert_many(
-                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
-                )
-            tracker.counts.rows_processed = result.rows_processed
-            tracker.counts.rows_inserted = inserted
-            tracker.counts.rows_rejected = result.rows_rejected
-
-        logger.info("imported Northern Ireland schools", extra={"rows_upserted": inserted})
-        typer.echo(f"imported {inserted} schools ({result.rows_rejected} rows rejected)")
-    except typer.Exit:
-        raise
-    except Exception as exc:
-        _fail(f"Northern Ireland import failed: {exc}", source="northern_ireland_schools")
 
 
 # ---------------------------------------------------------------------------

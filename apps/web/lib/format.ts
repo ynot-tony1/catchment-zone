@@ -80,8 +80,6 @@ export function formatNation(nation: string): string {
       return "Scotland";
     case "WALES":
       return "Wales";
-    case "NORTHERN_IRELAND":
-      return "Northern Ireland";
     default:
       return nation;
   }

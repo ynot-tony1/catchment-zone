@@ -19,17 +19,15 @@ export const SCHOOL_STATUS_VALUES = [
 export const SchoolStatusEnum = z.enum(SCHOOL_STATUS_VALUES);
 export type SchoolStatus = z.infer<typeof SchoolStatusEnum>;
 
-// Mirrors the Prisma `Nation` enum. England is GIAS-sourced; Scotland,
-// Wales and Northern Ireland each have their own official register with
-// its own identifier scheme (see services/ingestor/src/catchment_zone_ingestor/adapters/
-// scotland.py, wales.py, northern_ireland.py for what's actually verified
-// live for each, including Northern Ireland's known 2016 data staleness).
-export const NATION_VALUES = [
-  "ENGLAND",
-  "SCOTLAND",
-  "WALES",
-  "NORTHERN_IRELAND",
-] as const;
+// Mirrors the Prisma `Nation` enum. England is GIAS-sourced; Scotland and
+// Wales each have their own official register with its own identifier
+// scheme (see services/ingestor/src/catchment_zone_ingestor/adapters/
+// scotland.py, wales.py for what's actually verified live for each).
+//
+// Northern Ireland is deliberately excluded: the only machine-readable
+// register found for it has been stale since February 2016 with no newer
+// extract available - see PROJECT_STATUS.md.
+export const NATION_VALUES = ["ENGLAND", "SCOTLAND", "WALES"] as const;
 export const NationEnum = z.enum(NATION_VALUES);
 export type Nation = z.infer<typeof NationEnum>;
 
@@ -52,10 +50,9 @@ export type RawSearchParams = Record<string, string | string[] | undefined>;
 export const SchoolSearchFiltersSchema = z
   .object({
     q: z.string().trim().min(1).max(200).optional(),
-    // GIAS URNs are numeric, but Scotland's SchUID ("8212627P") and
-    // Northern Ireland's Reference ("1AB0427") are alphanumeric - a
-    // numeric-only pattern would silently reject every non-England school
-    // lookup by id.
+    // GIAS URNs are numeric, but Scotland's SchUID ("8212627P") is
+    // alphanumeric - a numeric-only pattern would silently reject every
+    // Scottish school lookup by id.
     urn: z
       .string()
       .trim()

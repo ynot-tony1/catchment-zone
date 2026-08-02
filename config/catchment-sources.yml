@@ -517,5 +517,3 @@ candidates:
       workaround pattern) before spending more effort on individual councils.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
-  - local_authority_name: "Northern Ireland (all)"
-    reason_not_enabled: "Confirmed (live research, 2026-08-02): the Department of Education does not hold catchment-area data centrally at all - each school sets its own admissions/enrolment criteria, and NI's 'school planning areas' are a demographic planning concept, not a catchment boundary. There is nothing to source here, not a research gap."

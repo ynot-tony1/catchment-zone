@@ -5,6 +5,29 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Northern Ireland removed from the project entirely, by explicit
+  request.** It had been built and live (adapter, CLI command, scheduled
+  workflow, 1,555 schools in production, `source_extract_date` staleness
+  labelling throughout the UI) - see the git history around this entry
+  for exactly what that looked like. Removed because its only source
+  (Open Data NI's "School Locations" dataset) has been stale since
+  February 2016 with no current extract available, and showing schools
+  that may no longer be accurate isn't worth it just to say all four
+  nations are covered. Concretely: all 1,555 `NORTHERN_IRELAND` school
+  rows deleted from production (verified: 0 remaining, and verified no
+  other table - `school_metrics`, `admission_arrangements`,
+  `school_catchment_areas`, `school_relationships` - referenced any of
+  them before deleting); `NORTHERN_IRELAND` dropped from the `Nation`
+  enum via `ALTER TYPE "Nation" DROP VALUE` (only possible because no row
+  referenced it anymore); `adapters/northern_ireland.py`,
+  `import-northern-ireland`, its tests/fixture, and
+  `ingest-northern-ireland.yml` all deleted; every "four nations" claim
+  in the UI, README and this file updated to say three (England,
+  Scotland, Wales) - the project's practical scope is now Great Britain,
+  not the whole UK. `SCOTLAND_INGESTION_ENABLED` and
+  `DEVOLVED_NATIONS_INGESTION_ENABLED` (which now only gates Wales) are
+  untouched by this - neither was NI-specific.
+
 - **`ingestion_runs` is written to for the first time in this project's
   history.** `pipeline.py` already had a complete, correct
   `create_ingestion_run`/`complete_ingestion_run` implementation - nothing
@@ -82,8 +105,29 @@ disk, not what is intended.
   real source. This is real per-source research work (which school
   serves which named zone), not a matching-algorithm problem.
 
-- **Renamed to catchment-zone; scope expanded from England-only to the
-  whole UK.** GitHub repo, Vercel project/domain, npm workspace scope
+- **Catchment coverage extended to 4 more Scottish councils**: North
+  Lanarkshire (152 areas, four ND/denom layers), Highland (196, two
+  layers - no separate RC layer found for this one, only a smaller,
+  distinct Gaelic Medium category not imported), Dundee City (40, single
+  service four layers), Perth and Kinross (86, four ND/RC layers). Every
+  Scottish council checked so far (8 of 8) has had real, licensed
+  catchment data - a genuinely consistent pattern, not luck on the first
+  few. Total catchment coverage after this: **9 local authorities, 1,192
+  real catchment areas**, verified against production.
+
+  Also found, but could not verify live: Spatial Hub Scotland (run by the
+  Improvement Service), a single national WFS aggregate covering all of
+  Scotland's catchments in 4 layers with per-feature local-authority
+  fields - would likely make most of the individual council entries
+  redundant if reachable. Its `geo.spatialhub.scot` endpoint returned a
+  403 "Access Denied" from this session's environment even with a browser
+  User-Agent and Referer set, while the GeoServer admin UI on the same
+  host loaded fine - a targeted restriction on the data workspace, not a
+  general network block. Recorded in `catchment-sources.yml`'s candidates
+  as worth retrying from a different network origin.
+
+- **Renamed to catchment-zone; scope expanded from England-only to Great
+  Britain.** GitHub repo, Vercel project/domain, npm workspace scope
   (`@catchment-zone/*`), and the Python package
   (`catchment_zone_ingestor`) are all renamed and live. Current, correct
   URLs: repo `https://github.com/ynot-tony1/catchment-zone`, production
@@ -91,17 +135,16 @@ disk, not what is intended.
   200 on the new domain post-rename; the old
   `schoolscope-england.vercel.app` domain still resolves too, since Vercel
   doesn't drop an old default alias on rename, so nothing broke in the
-  transition). Schema gained a `Nation` enum
-  (`ENGLAND`/`SCOTLAND`/`WALES`/`NORTHERN_IRELAND`) on `School` and
-  `LocalAuthority`, deployed via migration, with all 10,000 existing
-  schools and 92 local authorities correctly backfilled to `ENGLAND`
-  (verified by query, not assumed).
+  transition). Schema gained a `Nation` enum (`ENGLAND`/`SCOTLAND`/`WALES`;
+  `NORTHERN_IRELAND` was added and later removed, see the entry at the
+  top of this file) on `School` and `LocalAuthority`, deployed via
+  migration, with all 10,000 existing schools and 92 local authorities
+  correctly backfilled to `ENGLAND` (verified by query, not assumed).
 
-- **All four UK nations are live in production, not just England.** Real
-  adapters (`adapters/scotland.py`, `adapters/wales.py`,
-  `adapters/northern_ireland.py`), each live-verified against its actual
-  source before being wired in, each a structurally distinct problem, not
-  "GIAS again":
+- **All three Great Britain nations are live in production, not just
+  England.** Real adapters (`adapters/scotland.py`, `adapters/wales.py`),
+  each live-verified against its actual source before being wired in,
+  each a structurally distinct problem, not "GIAS again":
   - **Scotland** (`import-scotland`): the Scottish Government's
     ScottishSchoolRoll ArcGIS MapServer (`maps.gov.scot`). 2,483 schools,
     32 local authorities imported. Schools keyed by SchUID (not the bare
@@ -117,43 +160,30 @@ disk, not what is intended.
     returning 500s/timeouts), so Wales's local authority codes are
     prefixed `W-` as a deliberate collision-safety measure. Same
     no-status-field limitation as Scotland.
-  - **Northern Ireland** (`import-northern-ireland`): Open Data NI's
-    "School Locations" CKAN dataset. 1,555 schools imported. This source
-    is genuinely stale - its only resource is dated **February 2016** -
-    and rather than omit it, every row carries `source_extract_date =
-2016-02-01` explicitly, surfaced everywhere a Northern Ireland school
-    appears (a "Not live data" badge in search results and on the map, a
-    full data-currency notice on the school's own page). No
-    local-authority equivalent exists in this source (NI schools are run
-    centrally by the Education Authority); the traditional six counties
-    are recorded in `School.county` instead.
 
-  Total: **15,478 schools** across all four nations (10,000 England +
-  2,483 Scotland + 1,440 Wales + 1,555 Northern Ireland), verified by
-  direct query against production, not just a CLI exit code.
+  Total: **13,923 schools** across all three nations (10,000 England +
+  2,483 Scotland + 1,440 Wales), verified by direct query against
+  production, not just a CLI exit code.
 
   A `Nation` filter and column now runs through the whole web app, not
   just the database: `packages/shared`'s `SchoolSearchFiltersSchema` /
   `LocalAuthoritySearchFiltersSchema` gained a `nation` field, every page
   that lists or shows a school or local authority displays which nation
   it's from, and the map's default viewport was widened from an
-  England-only bounding box to cover all four nations. This work also
+  England-only bounding box to cover Great Britain. This work also
   caught a real bug: the URN search filter's regex only accepted digits,
-  which would have silently rejected every Scotland (`8212627P`) and
-  Northern Ireland (`1AB0427`) school lookup by id - fixed to accept
-  alphanumeric.
+  which would have silently rejected every Scotland (`8212627P`) school
+  lookup by id - fixed to accept alphanumeric.
 
-  Scheduled GitHub Actions workflows exist for all three
-  (`ingest-scotland.yml`, `ingest-wales.yml`,
-  `ingest-northern-ireland.yml`, mirroring `ingest-gias.yml`'s shape), and
-  each was test-triggered for real via `workflow_dispatch` before being
-  trusted: Wales and Northern Ireland both succeeded from GitHub Actions'
-  own IP ranges and are enabled on schedule
-  (`DEVOLVED_NATIONS_INGESTION_ENABLED=true`, weekly and monthly
-  respectively). Scotland's `maps.gov.scot` returned a 403 from GitHub
-  Actions - the same Azure-datacenter-IP block GIAS hits - confirmed live,
-  not assumed; it has its own gate (`SCOTLAND_INGESTION_ENABLED=false`) so
-  that one nation's WAF doesn't hold back the two that genuinely work.
+  Scheduled GitHub Actions workflows exist for both (`ingest-scotland.yml`,
+  `ingest-wales.yml`, mirroring `ingest-gias.yml`'s shape), and each was
+  test-triggered for real via `workflow_dispatch` before being trusted:
+  Wales succeeded from GitHub Actions' own IP ranges and is enabled on
+  schedule (`DEVOLVED_NATIONS_INGESTION_ENABLED=true`, weekly). Scotland's
+  `maps.gov.scot` returned a 403 from GitHub Actions - the same
+  Azure-datacenter-IP block GIAS hits - confirmed live, not assumed; it
+  has its own gate (`SCOTLAND_INGESTION_ENABLED=false`) so that one
+  nation's WAF doesn't hold back the one that genuinely works.
 
 - **Pilot data import ran for real against production** (task from the
   previous "Exact next steps"). `scripts/calibration-report.md` is filled in
@@ -416,7 +446,7 @@ false)` right before the foreign keys) still failed intermittently:
   `refresh-metrics`, `verify`, `cleanup`, `run`). The local test image was
   removed after verification; nothing was pushed anywhere.
 - **`services/ingestor`** full check suite still passes: `ruff check .`,
-  `mypy src` (16 files), `pytest -q` (81 tests).
+  `mypy src` (15 files), `pytest -q` (76 tests).
 
 ## Unfinished
 
@@ -424,31 +454,38 @@ false)` right before the foreign keys) still failed intermittently:
   can't fill it as designed.** See "Known gap" above. Needs either a
   school-level DfE metrics source or a schema change (e.g. a local-
   authority-level metrics table) before this is worth revisiting. Not
-  nation-specific: Scotland/Wales/Northern Ireland each have their own,
-  entirely separate statistics bodies (National Records of Scotland,
-  StatsWales, NISRA) that have not been looked at at all.
+  nation-specific: Scotland and Wales each have their own, entirely
+  separate statistics bodies (National Records of Scotland, StatsWales)
+  that have not been looked at at all.
 - **`SchoolCatchmentArea` (linking a catchment polygon to the school it
   covers) is entirely unimplemented, and confirmed not solvable by name-
-  matching.** Both real sources currently in production were checked:
-  Sheffield's features carry no name at all, Aberdeen's `NAME` field is a
-  place/zone name with no textual relationship to any school name. Would
-  need real per-source research (which school actually serves each named
-  zone), likely one local authority at a time, not a generic algorithm.
-  Until this exists, a matched catchment on `/admissions` correctly shows
-  the area name but an empty served-schools list - degraded, not wrong.
-- **Catchment coverage is 5 local authorities out of ~200+ across the
-  UK** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow City,
-  Fife/Scotland). Scotland turned out to have real ArcGIS-hosted catchment
-  data much more widely than expected (every Scottish council checked so
-  far has had one); 27 other Scottish council areas remain unchecked.
-  Wales has no viable source found yet beyond Cardiff (ruled out); other
-  Welsh councils have not been checked. Northern Ireland is a confirmed
-  dead end (no catchment concept in its admissions system at all).
-- **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife) are
-  map-overlay-only, not reachable via `/admissions`.** See "Completed and
-  verified" above for why (geographic overlap between denominations). The
-  checker would need to ask "which denomination" before this can extend
-  to Scotland's `/admissions` results; not attempted.
+  matching for most sources.** Sheffield's features carry no name at all;
+  Aberdeen's `NAME` field is a place/zone name with no textual
+  relationship to any school name. Edinburgh's is the one real exception
+  found so far: its `EST_NAME` field carries the actual school name
+  (verified live, e.g. "Abbeyhill Primary School"), a genuine candidate
+  for this if pursued. Until this exists generally, a matched catchment
+  on `/admissions` correctly shows the area name but an empty
+  served-schools list - degraded, not wrong.
+- **Catchment coverage is 9 local authorities out of ~200+ across Great
+  Britain** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow
+  City, Fife, North Lanarkshire, Highland, Dundee City, Perth and
+  Kinross/Scotland). Scotland turned out to have real ArcGIS-hosted
+  catchment data much more widely than expected (every Scottish council
+  checked so far has had one - 8 for 8); a genuine national aggregate
+  (Spatial Hub Scotland / Improvement Service, covering all of Scotland
+  in one WFS with per-feature local-authority fields) was found but could
+  not be reached from this session's environment (403, see the
+  `catchment-sources.yml` candidate entry) - worth retrying from a
+  different network origin before checking the remaining ~24 council
+  areas individually. Wales has no viable source found yet beyond
+  Cardiff (ruled out); other Welsh councils have not been checked.
+- **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife,
+  North Lanarkshire, Dundee, Perth and Kinross) are map-overlay-only, not
+  reachable via `/admissions`.** See "Completed and verified" above for
+  why (geographic overlap between denominations). The checker would need
+  to ask "which denomination" before this can extend to Scotland's
+  `/admissions` results; not attempted.
 - **Playwright end-to-end tests do not exist yet** (`playwright.config.ts`
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
@@ -456,19 +493,20 @@ false)` right before the foreign keys) still failed intermittently:
 ## Known failing tests
 
 None. Every test suite that was run passed: `packages/shared` (42),
-`apps/web` (29), `services/ingestor` (81).
+`apps/web` (29), `services/ingestor` (76).
 
 ## Exact next steps, in order
 
-1. Check the remaining 27 Scottish council areas for real, licensed,
-   machine-readable catchment sources, matching the same verification
-   rigor Aberdeen/Edinburgh/Glasgow/Fife got - every one checked so far
-   has had one, but don't assume the pattern holds without checking each.
-   Separately, check more Welsh councils beyond Cardiff (ruled out).
+1. Try Spatial Hub Scotland's national catchment WFS aggregate again from
+   a different network origin (403 from this session's environment - see
+   "Completed and verified" above); if reachable, it likely obsoletes
+   most of the per-council entries already added. Otherwise keep
+   checking the remaining ~24 Scottish council areas individually,
+   matching the same verification rigor the first 8 got. Separately,
+   check more Welsh councils beyond Cardiff (ruled out).
 2. Decide on a path for the metrics gap (school-level DfE source for
-   England, or entirely separate research for Scotland/Wales/Northern
-   Ireland's own statistics bodies) before spending more time on
-   `import-statistics`.
+   England, or entirely separate research for Scotland/Wales's own
+   statistics bodies) before spending more time on `import-statistics`.
 3. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
    before any larger/national GIAS import (that report predates the
    devolved-nations work and only covers England). The report's own
@@ -477,7 +515,9 @@ None. Every test suite that was run passed: `packages/shared` (42),
    rolled out one local authority at a time with real console figures
    checked after each addition, not assumed to scale linearly from the
    single Sheffield sample.
-4. Optional polish: `SchoolCatchmentArea` per-source research (see
+4. Frontend/UX polish pass (explicitly requested): review every page for
+   visual consistency and finish, not just functional correctness.
+5. Optional polish: `SchoolCatchmentArea` per-source research (see
    "Unfinished" above - Edinburgh's `EST_NAME` field is the most
    promising real starting point), a denomination-aware `/admissions`
    flow for Scotland's ND/RC catchment splits, Playwright e2e coverage

@@ -27,10 +27,10 @@ type CatchmentFeatureProperties = {
   academicYear: string;
 };
 
-// Covers all four UK nations (west coast of Northern Ireland to Shetland
-// in the north-east), not just England - schools from all four nations are
-// loaded here now.
-const UK_BOUNDS: [number, number, number, number] = [-8.7, 49.8, 1.9, 61.0];
+// Covers Great Britain (England, Scotland and Wales) - west to Scotland's
+// Outer Hebrides, north to Shetland - not just England. Northern Ireland
+// is deliberately excluded from this project (see PROJECT_STATUS.md).
+const GB_BOUNDS: [number, number, number, number] = [-8.7, 49.8, 1.9, 61.0];
 
 export function SchoolMap({
   styleUrl,
@@ -56,7 +56,7 @@ export function SchoolMap({
     const map = new MapLibreMap({
       container: containerRef.current,
       style: styleUrl,
-      bounds: UK_BOUNDS,
+      bounds: GB_BOUNDS,
       attributionControl: { customAttribution: attribution },
     });
     mapRef.current = map;

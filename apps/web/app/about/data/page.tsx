@@ -86,30 +86,6 @@ export default function AboutDataPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Northern Ireland: school register</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm">
-          <p>
-            <a
-              href="https://www.opendatani.gov.uk/dataset/locate-a-school"
-              className="text-primary underline underline-offset-2"
-              rel="noreferrer"
-            >
-              Open Data NI&apos;s &ldquo;School Locations&rdquo; dataset
-            </a>
-            , published by the Department of Education. This is the only
-            machine-readable register found for Northern Ireland, and its only
-            available extract is dated <strong>February 2016</strong> &mdash;
-            every Northern Ireland school shown here carries a data currency
-            notice on its page for that reason. It is included because the data
-            is real and useful, not because it is current; treat enrolment,
-            address and open/closed status as liable to have changed since 2016.
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Published performance statistics</CardTitle>
         </CardHeader>
         <CardContent className="text-sm">
@@ -182,6 +158,13 @@ export default function AboutDataPage() {
             </li>
             <li>
               A composite or aggregated &ldquo;best school&rdquo; ranking.
+            </li>
+            <li>
+              Northern Ireland&apos;s school register: the only machine-readable
+              source found (Open Data NI&apos;s &ldquo;School Locations&rdquo;
+              dataset) has been stale since February 2016, with no current
+              extract available. Rather than show schools that may no longer be
+              accurate, Northern Ireland is not covered here at all.
             </li>
           </ul>
         </CardContent>
