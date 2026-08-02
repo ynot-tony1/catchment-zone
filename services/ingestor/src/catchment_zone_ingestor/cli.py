@@ -22,6 +22,7 @@ from catchment_zone_ingestor import db
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
+from catchment_zone_ingestor.adapters import scotland as scotland_adapter
 from catchment_zone_ingestor.adapters import statistics as statistics_adapter
 from catchment_zone_ingestor.config import Settings, get_settings
 from catchment_zone_ingestor.logging_setup import configure_logging, get_logger, set_run_context
@@ -50,7 +51,7 @@ def _fail(message: str, source: str) -> None:
 def _http_client(settings: Settings) -> httpx.Client:
     return httpx.Client(
         timeout=settings.http_timeout_seconds,
-        headers={"User-Agent": "SchoolScopeEngland-Ingestor/0.1 (public-data ingestion; contact via repo)"},
+        headers={"User-Agent": "catchment-zone-ingestor/0.1 (public-data ingestion; contact via repo)"},
     )
 
 
@@ -219,6 +220,65 @@ def import_trusts(
         raise
     except Exception as exc:
         _fail(f"trust import failed: {exc}", source="gias_trusts")
+
+
+# ---------------------------------------------------------------------------
+# import-scotland
+# ---------------------------------------------------------------------------
+
+
+@app.command("import-scotland")
+def import_scotland(
+    row_limit: Annotated[int | None, typer.Option(help="Only process the first N features (testing/debugging).")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and validate only; do not write to the database.")] = False,
+) -> None:
+    """Import Scotland's school register from the live ScottishSchoolRoll ArcGIS service.
+
+    No checksum-skip here (unlike import-gias): the ArcGIS service has no
+    published extract-date/version field to compare against, so every run
+    re-fetches and re-upserts the current 2,483 rows.
+    """
+    settings = get_settings()
+    set_run_context(source="scotland_schools")
+    conn = _connect_or_none(settings, dry_run=dry_run)
+
+    try:
+        with _http_client(settings) as client:
+            features = scotland_adapter.fetch_scotland_schools(client)
+
+        result = scotland_adapter.parse_scotland_schools(features, row_limit=row_limit)
+        logger.info(
+            "parsed Scotland school register",
+            extra={"rows_processed": result.rows_processed, "rows_rejected": result.rows_rejected},
+        )
+        if result.rejection_samples:
+            logger.warning("sample rejected Scotland rows", extra={"samples": result.rejection_samples})
+
+        if dry_run:
+            typer.echo(
+                f"dry-run: {len(result.schools)} valid schools, "
+                f"{len(result.local_authorities)} local authorities, {result.rows_rejected} rejected rows"
+            )
+            return
+
+        if conn is None:
+            _fail("no database connection available and --dry-run was not set", source="scotland_schools")
+            return
+
+        la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
+        rows = [s.model_dump(mode="json") for s in result.schools]
+        with db.transaction(conn):
+            la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+            inserted = db.upsert_many(conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size)
+
+        logger.info(
+            "imported Scotland schools", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
+        )
+        typer.echo(f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)")
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        _fail(f"Scotland import failed: {exc}", source="scotland_schools")
 
 
 # ---------------------------------------------------------------------------

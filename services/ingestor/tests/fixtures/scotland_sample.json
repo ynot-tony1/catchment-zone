@@ -1,0 +1,106 @@
+{
+  "type": "FeatureCollection",
+  "_fixture_notice": "Invented test fixture only. schuid values, school names and addresses are fake and do not describe any real Scottish school. Shape matches a real response from https://maps.gov.scot/server/rest/services/ScotGov/UtilityGovernmental/MapServer/0/query, verified live 2026-08-02.",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-4.7, 55.65] },
+      "properties": {
+        "objectid": 1,
+        "seedcode": 9900001,
+        "schuid": "9900001P",
+        "schooltype": "Primary",
+        "centretype": "Local Authority",
+        "schoolname": "Test Primary School (fixture)",
+        "addressline1": "1 Fixture Street",
+        "addressline2": null,
+        "addressline3": "TESTTOWN",
+        "postcode": "TE1 1ST",
+        "laname": "Test Council",
+        "lacode": "S99000001",
+        "denomination": "Non-denominational",
+        "pupilroll": 210,
+        "email": "test@example.invalid",
+        "phone": "01234 567890",
+        "website": "https://example.invalid",
+        "latitude": 55.65,
+        "longitude": -4.7
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-3.17, 55.95] },
+      "properties": {
+        "objectid": 2,
+        "seedcode": 9900001,
+        "schuid": "9900001S",
+        "schooltype": "Secondary",
+        "centretype": "Grant Aided",
+        "schoolname": "Test Secondary School (fixture)",
+        "addressline1": "2 Fixture Street",
+        "addressline2": "Fixture District",
+        "addressline3": null,
+        "postcode": "TE2 2ST",
+        "laname": "Test Council",
+        "lacode": "S99000001",
+        "denomination": "Roman Catholic",
+        "pupilroll": 850,
+        "email": "test2@example.invalid",
+        "phone": "01234 567891",
+        "website": null,
+        "latitude": 55.95,
+        "longitude": -3.17
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-2.5, 56.5] },
+      "properties": {
+        "objectid": 3,
+        "seedcode": 9900002,
+        "schuid": "9900002SP",
+        "schooltype": "Special",
+        "centretype": "Local Authority",
+        "schoolname": "Test Special School (fixture)",
+        "addressline1": "3 Fixture Street",
+        "addressline2": null,
+        "addressline3": null,
+        "postcode": "TE3 3ST",
+        "laname": "Other Test Council",
+        "lacode": "S99000002",
+        "denomination": "Non-denominational",
+        "pupilroll": 45,
+        "email": null,
+        "phone": null,
+        "website": null,
+        "latitude": 56.5,
+        "longitude": -2.5
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-1.0, 57.0] },
+      "properties": {
+        "objectid": 4,
+        "seedcode": 9900003,
+        "schuid": "",
+        "schooltype": "Primary",
+        "centretype": "Local Authority",
+        "schoolname": "Rejected: blank schuid (fixture)",
+        "addressline1": null,
+        "addressline2": null,
+        "addressline3": null,
+        "postcode": null,
+        "laname": "Other Test Council",
+        "lacode": "S99000002",
+        "denomination": null,
+        "pupilroll": null,
+        "email": null,
+        "phone": null,
+        "website": null,
+        "latitude": 57.0,
+        "longitude": -1.0
+      }
+    }
+  ]
+}
