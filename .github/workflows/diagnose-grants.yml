@@ -1,0 +1,31 @@
+name: Diagnose school_ingestor grants
+
+# Temporary, read-only diagnostic workflow. Uses the existing
+# MIGRATION_DATABASE_URL secret (school_migrator, already scoped to schema
+# management) to inspect grants; never touches or prints any credential.
+# Remove once the grants issue it was added to debug is resolved.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Show grants on ingestion_runs
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW GRANTS ON TABLE ingestion_runs;"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      - name: Show all grants for school_ingestor
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW GRANTS FOR school_ingestor;"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+
+      - name: Show schema-level grants
+        run: psql "${DATABASE_URL}&sslrootcert=system" -c "SHOW GRANTS ON SCHEMA public FOR school_ingestor;" || echo "syntax not supported on this version, skipping"
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
