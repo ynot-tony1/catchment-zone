@@ -32,8 +32,26 @@ enum SchoolStatus {
   CLOSED
 }
 
+// England is GIAS-sourced; the other three each have their own official
+// register with its own identifier scheme (Scotland: 7-digit SEED code /
+// SchUID via the ScottishSchoolRoll ArcGIS service; Northern Ireland: an
+// alphanumeric "Reference" via the Department of Education's Schools+
+// extract, currently only available as a stale 2016 CSV on Open Data NI,
+// not live-verified as current - see PROJECT_STATUS.md; Wales: no
+// confirmed machine-readable API found yet, only address-list CSVs). `urn`
+// stores whatever identifier that nation's own register uses; nation
+// disambiguates its meaning rather than the ingestor inventing a shared
+// cross-nation numbering scheme.
+enum Nation {
+  ENGLAND
+  SCOTLAND
+  WALES
+  NORTHERN_IRELAND
+}
+
 model School {
   urn                     String   @id
+  nation                  Nation   @default(ENGLAND)
   schoolName              String   @map("school_name")
   normalisedName          String   @map("normalised_name")
   status                  SchoolStatus
@@ -155,6 +173,7 @@ enum CatchmentCoverageStatus {
 
 model LocalAuthority {
   code                     String   @id
+  nation                   Nation   @default(ENGLAND)
   name                     String
   regionCode                String?  @map("region_code")
   admissionsWebsite         String?  @map("admissions_website")

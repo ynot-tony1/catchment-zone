@@ -58,6 +58,18 @@ class IngestionStatus(str, enum.Enum):
     SKIPPED_UNCHANGED = "SKIPPED_UNCHANGED"
 
 
+class Nation(str, enum.Enum):
+    """Which UK nation's own official register a School/LocalAuthority row
+    came from. England is GIAS; the other three each have a structurally
+    different source (see adapters/__init__.py and PROJECT_STATUS.md for
+    what is and is not live-verified yet for each)."""
+
+    ENGLAND = "ENGLAND"
+    SCOTLAND = "SCOTLAND"
+    WALES = "WALES"
+    NORTHERN_IRELAND = "NORTHERN_IRELAND"
+
+
 class _Row(BaseModel):
     """Base class for rows this service writes. Forbids unexpected fields
     so a source schema drift is caught as a validation error, not silently
@@ -68,6 +80,7 @@ class _Row(BaseModel):
 
 class School(_Row):
     urn: str
+    nation: Nation = Nation.ENGLAND
     school_name: str
     normalised_name: str
     status: SchoolStatus
@@ -134,6 +147,7 @@ class LocalAuthority(_Row):
     future dedicated source as real catchment coverage is added."""
 
     code: str
+    nation: Nation = Nation.ENGLAND
     name: str
 
 
