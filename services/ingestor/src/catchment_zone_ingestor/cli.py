@@ -653,6 +653,20 @@ def import_catchments(
                     update_columns=_CATCHMENT_AREA_UPDATE_COLUMNS,
                     batch_size=settings.batch_size,
                 )
+                # Real, verified catchment data now exists for this local
+                # authority; reflect that so /local-authorities doesn't keep
+                # showing "not available" for one that actually has coverage
+                # (found live: this had never been set anywhere, so Sheffield
+                # itself showed as NOT_AVAILABLE despite having 127 areas).
+                # Only upgrades from the NOT_AVAILABLE default, never
+                # downgrades a status set some other way (e.g. by hand).
+                if build_result.areas:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "UPDATE local_authorities SET catchment_coverage_status = 'PILOT', "
+                            "updated_at = now() WHERE code = %(code)s AND catchment_coverage_status = 'NOT_AVAILABLE'",
+                            {"code": source["local_authority_code"]},
+                        )
 
     typer.echo(f"built {total_areas} catchment areas ({total_rejected} rejected)")
 

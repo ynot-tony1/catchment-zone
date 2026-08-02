@@ -48,6 +48,42 @@ sources:
       Access and Admissions Team, Sheffield City Council is the named
       accessInformation contact on the source item.
 
+  - local_authority_code: "S12000033"
+    local_authority_name: "Aberdeen City"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://spatialdata-accabdn.opendata.arcgis.com/datasets/accabdn::primary-school-catchments"
+    download_url: "https://services5.arcgis.com/0sktPVp3t1LvXc9z/arcgis/rest/services/Primary_School_Catchments/FeatureServer/58"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      49 primary catchment polygons, each carrying the school's own SEED_CODE
+      (Scotland's school-register identifier), verified live. No explicit
+      "illustrative only" caveat is stated on this item, unlike Sheffield's;
+      treat catchment boundaries as indicative of priority admission, not a
+      legal guarantee, per this project's general admissions-safety rule.
+
+  - local_authority_code: "S12000033"
+    local_authority_name: "Aberdeen City"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://spatialdata-accabdn.opendata.arcgis.com/datasets/accabdn::academy-school-catchments"
+    download_url: "https://services5.arcgis.com/0sktPVp3t1LvXc9z/arcgis/rest/services/Academy_School_Catchments/FeatureServer/5"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      14 secondary ("Academy", Scotland's term for secondary school, not to
+      be confused with England's academy-trust governance model) catchment
+      polygons. Same source item family as the primary layer above.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -55,7 +91,9 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
-  - local_authority_name: "Aberdeen City"
-    reason_not_enabled: "Scottish education/admissions system falls outside GIAS/DfE scope for this England-focused MVP."
   - local_authority_name: "Buckinghamshire"
     reason_not_enabled: "Identified an ArcGIS MapServer (Schools_and_Gates) but licence and exact catchment vs. walking-zone semantics not yet verified."
+  - local_authority_name: "Cardiff (Wales)"
+    reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
+  - local_authority_name: "Northern Ireland (all)"
+    reason_not_enabled: "Confirmed (live research, 2026-08-02): the Department of Education does not hold catchment-area data centrally at all - each school sets its own admissions/enrolment criteria, and NI's 'school planning areas' are a demographic planning concept, not a catchment boundary. There is nothing to source here, not a research gap."
