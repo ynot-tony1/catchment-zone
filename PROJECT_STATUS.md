@@ -5,6 +5,50 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Renamed to catchment-zone; scope expanded from England-only to the
+  whole UK.** GitHub repo, Vercel project/domain, npm workspace scope
+  (`@catchment-zone/*`), and the Python package
+  (`catchment_zone_ingestor`) are all renamed and live. Current, correct
+  URLs: repo `https://github.com/ynot-tony1/catchment-zone`, production
+  `https://catchment-zone.vercel.app` (verified: all 7 app routes return
+  200 on the new domain post-rename; the old
+  `schoolscope-england.vercel.app` domain still resolves too, since Vercel
+  doesn't drop an old default alias on rename, so nothing broke in the
+  transition). Schema gained a `Nation` enum
+  (`ENGLAND`/`SCOTLAND`/`WALES`/`NORTHERN_IRELAND`) on `School` and
+  `LocalAuthority`, deployed via migration, with all 10,000 existing
+  schools and 92 local authorities correctly backfilled to `ENGLAND`
+  (verified by query, not assumed).
+
+  Actual UK-nation data coverage is still England-only; live-verified
+  research (not guesses) into the other three nations' data landscape
+  found each is a structurally distinct problem, not "GIAS again":
+  - **Scotland**: real, live, national-scale ArcGIS MapServer
+    (`maps.gov.scot`, layer `ScottishSchoolRoll`, 2,483 schools), using
+    7-digit SEED codes / SchUID identifiers and its own local-authority
+    code scheme (`S12000...`, no collision risk with England's numeric LA
+    codes). Structurally similar to the Sheffield ArcGIS FeatureServer
+    code this project already has in `adapters/catchments.py`, so probably
+    the most tractable next nation to actually build.
+  - **Northern Ireland**: Open Data NI's "School Locations" dataset
+    (CKAN API, `admin.opendatani.gov.uk`) is real and has a documented API,
+    but its only resource is a CSV dated **February 2016** — over a decade
+    stale despite metadata claiming quarterly updates. Deliberately not
+    wired in: importing decade-stale data as if current would violate this
+    project's own "never present outdated info as current" principle and
+    could genuinely mislead a parent. Revisit only if a newer NI source
+    surfaces.
+  - **Wales**: no confirmed machine-readable API found yet (`My Local
+School` at `mylocalschool.gov.wales` appears to be a static site);
+    likely CSV-only from gov.wales stats pages. Needs more research before
+    any adapter work starts.
+
+  Both GIAS's WAF (browser User-Agent required) and Open Data NI's WAF (same
+  requirement) were hit during this research, suggesting it's worth
+  building the User-Agent handling as a shared helper if a second/third
+  real adapter gets built, rather than copy-pasting GIAS's `_GIAS_HEADERS`
+  pattern per nation.
+
 - **Pilot data import ran for real against production** (task from the
   previous "Exact next steps"). `scripts/calibration-report.md` is filled in
   with real measured numbers, not a template. Result: 10,000 schools, 92
@@ -314,23 +358,30 @@ None. Every test suite that was run passed: `packages/shared` (39),
 
 ## Exact next steps, in order
 
-1. Re-check `/status`, `/schools`, and the map now that real data exists
+1. Build the Scotland adapter for real: `maps.gov.scot`'s ScottishSchoolRoll
+   ArcGIS MapServer (verified live, 2,483 schools, SEED/SchUID identifiers).
+   Same rigor as GIAS got: live-verify field mappings and pagination against
+   the real service, write tests against a fixture, dry-run against
+   production before a real write, update
+   `config/catchment-sources.yml`-style source registry and CLI wiring for
+   a `nation`-aware import command.
+2. Research Wales's actual data access options (no confirmed API found
+   yet) before attempting any Wales adapter work.
+3. Re-check `/status`, `/schools`, and the map now that real data exists
    (10,000 schools, 92 local authorities, 7,176 trusts, 127 Sheffield
    catchment areas), to confirm search, pagination, and catchment overlays
    behave correctly against non-empty tables, not just against an empty
    database.
-2. Decide on a path for the metrics gap (school-level DfE source, or a
+4. Decide on a path for the metrics gap (school-level DfE source, or a
    schema change) before spending more time on `import-statistics`.
-3. Delete `.github/workflows/diagnose-grants.yml`; fix `ingest-gias.yml`'s
-   step order (trusts before establishments).
-4. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
+5. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
    before any larger/national GIAS import. The report's own recommendation:
    national schools/trusts/local-authorities data looks cheap; catchment
    geometry is the dominant storage cost and should be rolled out one local
    authority at a time with real console figures checked after each
    addition, not assumed to scale linearly from the single Sheffield
    sample.
-5. Optional polish: catchment overlay toggle on `/map` (real data now
+6. Optional polish: catchment overlay toggle on `/map` (real data now
    available to test it against), `SchoolCatchmentArea` name-matching,
    `ingestion_runs` write-through, Playwright e2e coverage for the golden
    paths (search a school, check a postcode, view the map).

@@ -7,8 +7,7 @@ admission areas across the UK. Coverage currently starts with England
 nation, each from that nation's own official register, not assumed to
 share GIAS's identifiers, schema or update schedule.
 
-**Live URL:** https://schoolscope-england.vercel.app (Vercel project
-rename pending; see docs/deployment.md)
+**Live URL:** https://catchment-zone.vercel.app
 
 ## Purpose
 
