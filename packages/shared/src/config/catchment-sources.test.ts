@@ -6,28 +6,39 @@ import {
   listEnabledCatchmentSources,
 } from "./catchment-sources";
 
+// Local authorities with real pilot catchment coverage; kept as a single
+// list so adding another authority only means editing here and in
+// catchment-sources.yml, not chasing a hardcoded global total that grows
+// every time a new one is added.
+const PILOT_LOCAL_AUTHORITIES = [
+  { code: "373", name: "Sheffield", sourceTypeCount: 2 },
+  { code: "S12000033", name: "Aberdeen City", sourceTypeCount: 2 },
+  { code: "S12000036", name: "City of Edinburgh", sourceTypeCount: 4 },
+  { code: "S12000049", name: "Glasgow City", sourceTypeCount: 4 },
+  { code: "S12000047", name: "Fife", sourceTypeCount: 4 },
+];
+
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
-  it("reflects the current pilot-authority reality (Sheffield, Aberdeen City, City of Edinburgh)", () => {
-    expect(getPilotLocalAuthorityCodes().sort()).toEqual([
-      "373",
-      "S12000033",
-      "S12000036",
-    ]);
+  it("reflects every local authority with real pilot catchment coverage", () => {
+    expect(getPilotLocalAuthorityCodes().sort()).toEqual(
+      PILOT_LOCAL_AUTHORITIES.map((la) => la.code).sort(),
+    );
   });
 
-  it("has both a primary and secondary source for Sheffield and Aberdeen City, and four denomination-split sources for Edinburgh", () => {
+  it("has the expected number of enabled sources for each pilot authority", () => {
     const sources = listEnabledCatchmentSources();
-    expect(sources).toHaveLength(8);
-    expect(sources.map((s) => s.source_type).sort()).toEqual([
-      "primary_catchment",
-      "primary_catchment",
-      "primary_catchment_nd",
-      "primary_catchment_rc",
-      "secondary_catchment",
-      "secondary_catchment",
-      "secondary_catchment_nd",
-      "secondary_catchment_rc",
-    ]);
+    expect(sources).toHaveLength(
+      PILOT_LOCAL_AUTHORITIES.reduce((sum, la) => sum + la.sourceTypeCount, 0),
+    );
+    for (const la of PILOT_LOCAL_AUTHORITIES) {
+      const laSources = sources.filter(
+        (s) => s.local_authority_code === la.code,
+      );
+      expect(laSources).toHaveLength(la.sourceTypeCount);
+      expect(laSources.every((s) => s.local_authority_name === la.name)).toBe(
+        true,
+      );
+    }
   });
 
   it("finds the Sheffield primary source for the current academic year", () => {

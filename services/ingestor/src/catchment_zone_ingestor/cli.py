@@ -696,6 +696,10 @@ def import_catchments(
                     # (verified live: "Abbeyhill Primary School" etc.)
                     # unlike Sheffield/Aberdeen's zone-name-only sources.
                     "EST_NAME",
+                    # Fife's four catchment layers use this truncated
+                    # (10-char, shapefile-derived) field name - not the
+                    # same as "SCHOOL_NAME" above, verified live.
+                    "SCHOOL_NAM",
                 ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),

@@ -158,6 +158,136 @@ sources:
     enabled: true
     notes: "4 secondary (Roman Catholic) catchment polygons."
 
+  # Glasgow City: same ND/RC geographic-overlap reasoning as Edinburgh
+  # above applies here too (source_type suffixed, not the exact
+  # "primary_catchment"/"secondary_catchment" the /admissions checker
+  # looks up).
+  - local_authority_code: "S12000049"
+    local_authority_name: "Glasgow City"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.glasgow.gov.uk/maps/2bfa782d5da84302bf15219e19a05112"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/2bfa782d5da84302bf15219e19a05112/rest/services/OPEN_DATA/Schools_Catchments_Open/MapServer/6"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Glasgow City Council; contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      120 primary (non-denominational) catchment polygons. Most carry a real
+      school name (NAME field, e.g. "Thornwood Primary School"), verified
+      live, though a handful are an area/zone name instead (e.g.
+      "Scotstoun/Bankhead") rather than a school name.
+
+  - local_authority_code: "S12000049"
+    local_authority_name: "Glasgow City"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.glasgow.gov.uk/maps/2bfa782d5da84302bf15219e19a05112"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/2bfa782d5da84302bf15219e19a05112/rest/services/OPEN_DATA/Schools_Catchments_Open/MapServer/7"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Glasgow City Council; contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "33 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000049"
+    local_authority_name: "Glasgow City"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://data.glasgow.gov.uk/maps/2bfa782d5da84302bf15219e19a05112"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/2bfa782d5da84302bf15219e19a05112/rest/services/OPEN_DATA/Schools_Catchments_Open/MapServer/8"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Glasgow City Council; contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "77 primary (Roman Catholic) catchment polygons."
+
+  - local_authority_code: "S12000049"
+    local_authority_name: "Glasgow City"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://data.glasgow.gov.uk/maps/2bfa782d5da84302bf15219e19a05112"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/2bfa782d5da84302bf15219e19a05112/rest/services/OPEN_DATA/Schools_Catchments_Open/MapServer/9"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (Glasgow City Council; contains OS data, Crown copyright and database right)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "24 secondary (Roman Catholic) catchment polygons."
+
+  # Fife: same ND/denominational geographic-overlap reasoning as Edinburgh
+  # and Glasgow above. Fife's own item metadata states "no conditions
+  # apply" rather than citing "Open Government Licence v3.0" by name and
+  # URL the way Sheffield/Aberdeen/Edinburgh/Glasgow's items do; recorded
+  # here exactly as stated by Fife Council rather than relabelled as OGL,
+  # since it is a real, checkable, explicit licence statement (plus
+  # standard OS/Crown-copyright attribution) even though it does not name
+  # a specific framework.
+  - local_authority_code: "S12000047"
+    local_authority_name: "Fife"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=ac562fec51cd44ffbf892f58eb70ac08"
+    download_url: "https://services-eu1.arcgis.com/PDjKizfiWWTgpUeI/arcgis/rest/services/Fife_School_catchments_primary_non_denominational/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: '"No conditions apply" (Fife Council; contains OS data, Crown copyright and database rights 2025) - see source_url'
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: >
+      119 primary (non-denominational) catchment polygons, each carrying the
+      school's own SEED_CODE, verified live.
+
+  - local_authority_code: "S12000047"
+    local_authority_name: "Fife"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=f825c83fee1248d2a2023e9d289ffac6"
+    download_url: "https://services-eu1.arcgis.com/PDjKizfiWWTgpUeI/arcgis/rest/services/Fife_School_catchments_primary_denominational/FeatureServer/1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: '"No conditions apply" (Fife Council; contains OS data, Crown copyright and database rights 2025) - see source_url'
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "14 primary (denominational) catchment polygons."
+
+  - local_authority_code: "S12000047"
+    local_authority_name: "Fife"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=b7b7c67f9448447c9d7a815cf84adc87"
+    download_url: "https://services-eu1.arcgis.com/PDjKizfiWWTgpUeI/arcgis/rest/services/Fife_School_catchments_secondary_non_denominational/FeatureServer/2"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: '"No conditions apply" (Fife Council; contains OS data, Crown copyright and database rights 2025) - see source_url'
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "16 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000047"
+    local_authority_name: "Fife"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=6b703cf80a6b4f9993861e1f6eee0456"
+    download_url: "https://services-eu1.arcgis.com/PDjKizfiWWTgpUeI/arcgis/rest/services/Fife_School_catchments_secondary_denominational/FeatureServer/3"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: '"No conditions apply" (Fife Council; contains OS data, Crown copyright and database rights 2025) - see source_url'
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "2 secondary (denominational) catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
