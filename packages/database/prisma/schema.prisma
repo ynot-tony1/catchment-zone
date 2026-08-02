@@ -229,6 +229,7 @@ model CatchmentSource {
 
   catchmentAreas   CatchmentArea[]
 
+  @@unique([localAuthorityCode, academicYear, sourceType])
   @@index([localAuthorityCode, academicYear])
   @@map("catchment_sources")
 }
