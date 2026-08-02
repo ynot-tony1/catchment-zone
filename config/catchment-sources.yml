@@ -491,6 +491,123 @@ sources:
     enabled: true
     notes: "1 secondary (Roman Catholic) catchment polygon."
 
+  # North Ayrshire: found via Spatial Hub Scotland's catalog
+  # (data.spatialhub.scot), confirming a real ArcGIS REST endpoint exists
+  # alongside the WFS one the catalog lists directly.
+  - local_authority_code: "S12000021"
+    local_authority_name: "North Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-na"
+    download_url: "https://www.maps.north-ayrshire.gov.uk/arcgis/rest/services/AGOL/Open_Data_Portal/MapServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "40 primary (non-denominational) catchment polygons, each carrying the school's own SEED code."
+
+  - local_authority_code: "S12000021"
+    local_authority_name: "North Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-na"
+    download_url: "https://www.maps.north-ayrshire.gov.uk/arcgis/rest/services/AGOL/Open_Data_Portal/MapServer/1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "10 primary (Roman Catholic) catchment polygons."
+
+  - local_authority_code: "S12000021"
+    local_authority_name: "North Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-na"
+    download_url: "https://www.maps.north-ayrshire.gov.uk/arcgis/rest/services/AGOL/Open_Data_Portal/MapServer/2"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "9 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000021"
+    local_authority_name: "North Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-na"
+    download_url: "https://www.maps.north-ayrshire.gov.uk/arcgis/rest/services/AGOL/Open_Data_Portal/MapServer/3"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "3 secondary (Roman Catholic) catchment polygons."
+
+  # South Ayrshire: single large multi-purpose Inspire/OpenData MapServer,
+  # catchment layers 24-27 among many unrelated ones.
+  - local_authority_code: "S12000028"
+    local_authority_name: "South Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-sa"
+    download_url: "https://gisext.south-ayrshire.gov.uk/server/rest/services/Inspire/OpenData/MapServer/24"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "44 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000028"
+    local_authority_name: "South Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-sa"
+    download_url: "https://gisext.south-ayrshire.gov.uk/server/rest/services/Inspire/OpenData/MapServer/25"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "12 primary (denominational) catchment polygons."
+
+  - local_authority_code: "S12000028"
+    local_authority_name: "South Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-sa"
+    download_url: "https://gisext.south-ayrshire.gov.uk/server/rest/services/Inspire/OpenData/MapServer/26"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "22 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000028"
+    local_authority_name: "South Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-sa"
+    download_url: "https://gisext.south-ayrshire.gov.uk/server/rest/services/Inspire/OpenData/MapServer/27"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (per Spatial Hub Scotland's catalogue entry, license_title: Open)"
+    last_verified_at: "2026-08-02"
+    parser_name: "sheffield_arcgis_feature_service"
+    enabled: true
+    notes: "2 secondary (denominational) catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the

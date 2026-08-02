@@ -20,6 +20,8 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "S12000017", name: "Highland", sourceTypeCount: 2 },
   { code: "S12000042", name: "Dundee City", sourceTypeCount: 4 },
   { code: "S12000048", name: "Perth and Kinross", sourceTypeCount: 4 },
+  { code: "S12000021", name: "North Ayrshire", sourceTypeCount: 4 },
+  { code: "S12000028", name: "South Ayrshire", sourceTypeCount: 4 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {

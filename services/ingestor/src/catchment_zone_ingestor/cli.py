@@ -639,6 +639,13 @@ def import_catchments(
                     # use these field names respectively, verified live.
                     "SECONDARY",
                     "School",
+                    # South Ayrshire's four layers each use their own
+                    # lowercase field name, verified live (real school
+                    # names, e.g. "Sacred Heart", "Marr College").
+                    "ndprimary",
+                    "rcprimary",
+                    "ndsecondar",
+                    "schoolname",
                 ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),
