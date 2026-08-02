@@ -126,6 +126,21 @@ disk, not what is intended.
   general network block. Recorded in `catchment-sources.yml`'s candidates
   as worth retrying from a different network origin.
 
+- **Catchment coverage extended to 3 more Scottish councils, and generic
+  WFS ingestion support added.** North Ayrshire (62 areas, four layers)
+  and South Ayrshire (79 areas, four layers - one feature correctly
+  rejected for genuinely empty geometry) were both found via Spatial Hub
+  Scotland's catalog and are ArcGIS-hosted, same as every council so far.
+  Angus (67 areas, three layers) is the first source that is **not**
+  ArcGIS - it is hosted on an XMap Cloud OGC WFS 2.0 server, which needed
+  a new `query_all_wfs_features` pagination helper in `catchments.py`
+  (mirrors the existing ArcGIS pagination but for WFS `GetFeature`
+  `startIndex`/`count`) and a new `wfs_geojson` format value in
+  `catchment-sources.yml`/`cli.py`. Every Scottish council checked so far
+  (11 of 11) has had real, licensed catchment data. Total catchment
+  coverage after this: **12 local authorities, 1,396 real catchment
+  areas**, verified against production.
+
 - **Renamed to catchment-zone; scope expanded from England-only to Great
   Britain.** GitHub repo, Vercel project/domain, npm workspace scope
   (`@catchment-zone/*`), and the Python package
@@ -467,17 +482,18 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 9 local authorities out of ~200+ across Great
+- **Catchment coverage is 12 local authorities out of ~200+ across Great
   Britain** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow
   City, Fife, North Lanarkshire, Highland, Dundee City, Perth and
-  Kinross/Scotland). Scotland turned out to have real ArcGIS-hosted
-  catchment data much more widely than expected (every Scottish council
-  checked so far has had one - 8 for 8); a genuine national aggregate
-  (Spatial Hub Scotland / Improvement Service, covering all of Scotland
-  in one WFS with per-feature local-authority fields) was found but could
-  not be reached from this session's environment (403, see the
+  Kinross, North Ayrshire, South Ayrshire, Angus/Scotland). Scotland
+  turned out to have real, licensed catchment data much more widely than
+  expected (every Scottish council checked so far has had one - 11 for
+  11, ArcGIS for all but Angus which is WFS); a genuine national
+  aggregate (Spatial Hub Scotland / Improvement Service, covering all of
+  Scotland in one WFS with per-feature local-authority fields) was found
+  but could not be reached from this session's environment (403, see the
   `catchment-sources.yml` candidate entry) - worth retrying from a
-  different network origin before checking the remaining ~24 council
+  different network origin before checking the remaining ~21 council
   areas individually. Wales has no viable source found yet beyond
   Cardiff (ruled out); other Welsh councils have not been checked.
 - **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife,
@@ -490,6 +506,34 @@ false)` right before the foreign keys) still failed intermittently:
   is present but there is no `tests/e2e/` content). Not attempted this
   session; would need a running app and, for full coverage, real data.
 
+## Completed and verified: frontend polish pass, including the map
+
+Screenshotted the live production site (light and dark mode, every major
+page) with an ad-hoc Playwright script to find real issues rather than
+guessing from code. Found and fixed:
+
+- **Production `/map` was rendering as a blank rectangle with zero
+  basemap detail (no coastlines, roads, labels) the entire time this
+  project has been live.** Root cause: `NEXT_PUBLIC_MAP_STYLE_URL` was
+  never actually set in Vercel, so the app silently fell back to its own
+  hardcoded default of MapLibre's own `demotiles.maplibre.org` style - an
+  intentionally bare demo style (country-level shapes only), not a real
+  basemap. Fixed by switching the default (and Vercel Production/Preview
+  env vars, and both `.env.example`/`.env.local` templates) to
+  OpenFreeMap (`tiles.openfreemap.org/styles/liberty`) - free, no API
+  key, no rate limit. Verified live in production after deploy: real
+  terrain shading, coastlines, and correct GB geography now render.
+- **`searchSchools`/`searchTrusts`/`searchLocalAuthorities` all compute a
+  real `nextCursor`, but no page ever rendered a "next page" control** -
+  a genuine functional gap, not cosmetic, since the default page size
+  means results beyond the first page were unreachable. Added
+  `trustFiltersToSearchParams`/`localAuthorityFiltersToSearchParams`
+  (mirroring the existing `schoolFiltersToSearchParams`) and wired a
+  "Next page" link into all three search pages.
+- The `/map` catchment-areas checkbox still hardcoded "Sheffield,
+  Aberdeen City pilots only" as its label, stale since coverage grew to
+  12 local authorities; reworded to "where published".
+
 ## Known failing tests
 
 None. Every test suite that was run passed: `packages/shared` (42),
@@ -501,8 +545,8 @@ None. Every test suite that was run passed: `packages/shared` (42),
    a different network origin (403 from this session's environment - see
    "Completed and verified" above); if reachable, it likely obsoletes
    most of the per-council entries already added. Otherwise keep
-   checking the remaining ~24 Scottish council areas individually,
-   matching the same verification rigor the first 8 got. Separately,
+   checking the remaining ~21 Scottish council areas individually,
+   matching the same verification rigor the first 11 got. Separately,
    check more Welsh councils beyond Cardiff (ruled out).
 2. Decide on a path for the metrics gap (school-level DfE source for
    England, or entirely separate research for Scotland/Wales's own
@@ -515,8 +559,11 @@ None. Every test suite that was run passed: `packages/shared` (42),
    rolled out one local authority at a time with real console figures
    checked after each addition, not assumed to scale linearly from the
    single Sheffield sample.
-4. Frontend/UX polish pass (explicitly requested): review every page for
-   visual consistency and finish, not just functional correctness.
+4. Continue the frontend/UX polish pass: the map basemap, missing
+   pagination, and the stale catchment-checkbox label are fixed (see
+   "Completed and verified" above); review the remaining screenshots
+   (trusts, local authorities, admissions, about/data, status, and dark
+   mode across all pages) for further real issues.
 5. Optional polish: `SchoolCatchmentArea` per-source research (see
    "Unfinished" above - Edinburgh's `EST_NAME` field is the most
    promising real starting point), a denomination-aware `/admissions`
