@@ -18,8 +18,10 @@ from pathlib import Path
 from typing import Annotated, Any, cast
 
 import httpx
+import psycopg
 import typer
 import yaml
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from catchment_zone_ingestor import db, pipeline
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
@@ -77,6 +79,32 @@ def _connect_or_none(settings: Settings, *, dry_run: bool) -> db.ConnectionLike 
     except Exception as exc:
         logger.warning("could not connect to database, continuing without persistence", extra={"error": str(exc)})
         return None
+
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type(psycopg.errors.SerializationFailure),
+)
+def _upsert_many_with_retry(
+    conn: db.ConnectionLike,
+    table: str,
+    rows: list[dict[str, Any]],
+    conflict_columns: list[str],
+    batch_size: int,
+) -> int:
+    """Runs one table's upsert inside its own transaction, retrying the
+    whole transaction from scratch on a CockroachDB SERIALIZABLE retry
+    error (SQLSTATE 40001) - a transient, expected-under-contention error
+    for a long-running, many-statement transaction (verified live: a
+    ~98,000-row single-table upsert hit this in production). Safe to
+    retry from scratch since every write here is an idempotent upsert
+    (ON CONFLICT DO UPDATE) and rows is a plain list, not a
+    single-use iterator, so a fresh iter(rows) is taken on every attempt.
+    """
+    with db.transaction(conn):
+        return db.upsert_many(conn, table, iter(rows), conflict_columns=conflict_columns, batch_size=batch_size)
 
 
 class _RunTracker:
@@ -488,17 +516,93 @@ def import_statistics(
 
 
 @app.command("import-performance")
-def import_performance() -> None:
-    """Reserved for DfE school performance tables (exam results) once a source is added to config/statistics-sources.yml.
-
-    No performance-tables publication is registered there yet (only
-    school-capacity, pupil-absence-in-schools-in-england,
-    pupil-attendance-in-schools and school-workforce-in-england are), so this
-    command currently only reports that fact rather than importing anything
-    invented.
+def import_performance(
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Parse and validate only; do not write to the database.")] = False,
+) -> None:
+    """Import SchoolMetric rows for the school performance tables listed
+    under performance_datasets in config/statistics-sources.yml (GCSE/
+    key stage 4 and key stage 2 SATs results) - genuinely school-level
+    data, unlike import-statistics's local-authority-level publications.
     """
-    logger.info("no performance-tables source configured; nothing to import")
-    typer.echo("no performance-tables source is registered in config/statistics-sources.yml yet; skipped")
+    settings = get_settings()
+    set_run_context(source="dfe_performance")
+    conn = _connect_or_none(settings, dry_run=dry_run)
+
+    config = _load_statistics_config(settings)
+    base_url = str(config["api"]["base_url"])
+    datasets: list[dict[str, Any]] = config.get("performance_datasets", [])
+    if not datasets:
+        typer.echo("no performance_datasets configured in config/statistics-sources.yml; skipped")
+        return
+
+    # SchoolMetric.school_urn is a real foreign key to schools.urn; a
+    # performance-table row for a URN not (yet) in schools would fail the
+    # whole upsert batch it lands in rather than just that one row, so
+    # known URNs are checked up front and unknown ones are skipped and
+    # logged individually instead, consistent with every other adapter's
+    # per-row tolerance.
+    known_urns: set[str] = set()
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT urn FROM schools")
+            known_urns = {row["urn"] for row in cur.fetchall()}
+
+    total_upserted = 0
+    total_skipped_unknown_urn = 0
+    total_failed_datasets = 0
+
+    with _http_client(settings) as client:
+        for dataset_config in datasets:
+            slug = str(dataset_config["publication_slug"])
+            title = str(dataset_config["dataset_title"])
+            try:
+                release = statistics_adapter.find_dataset_id_by_title(client, base_url, slug, title)
+                rows = statistics_adapter.fetch_dataset_csv_rows(client, base_url, release.dataset_id)
+                metrics = list(statistics_adapter.map_performance_rows_to_metrics(rows, dataset_config, release))
+            except Exception as exc:
+                total_failed_datasets += 1
+                logger.warning(
+                    "could not import performance dataset",
+                    extra={"publication_slug": slug, "dataset_title": title, "error": str(exc)},
+                )
+                continue
+
+            if known_urns:
+                before = len(metrics)
+                metrics = [m for m in metrics if m.school_urn in known_urns]
+                total_skipped_unknown_urn += before - len(metrics)
+
+            logger.info(
+                "parsed performance dataset",
+                extra={"publication_slug": slug, "dataset_title": title, "metric_rows": len(metrics)},
+            )
+
+            if dry_run or conn is None:
+                typer.echo(f"dry-run: {title!r} -> {len(metrics)} metric rows")
+                continue
+
+            metric_rows = [m.model_dump(mode="json") for m in metrics]
+            with _tracked_run(conn, f"dfe_performance:{slug}", dry_run) as tracker:
+                upserted = _upsert_many_with_retry(
+                    conn,
+                    "school_metrics",
+                    metric_rows,
+                    conflict_columns=["school_urn", "metric_code", "academic_year"],
+                    batch_size=settings.batch_size,
+                )
+                tracker.counts.rows_processed = len(metrics)
+                tracker.counts.rows_inserted = upserted
+            total_upserted += upserted
+
+    if total_failed_datasets == len(datasets):
+        _fail("could not import any configured performance dataset", source="dfe_performance")
+        return
+
+    typer.echo(
+        f"imported {total_upserted} school metric rows "
+        f"({total_skipped_unknown_urn} skipped for unknown school_urn, "
+        f"{total_failed_datasets} dataset(s) failed)"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -821,6 +925,8 @@ def refresh_metrics() -> None:
     referenced_codes: set[str] = set()
     for pub in stats_config.get("publications", []):
         referenced_codes.update(pub.get("metric_codes", []))
+    for dataset in stats_config.get("performance_datasets", []):
+        referenced_codes.update(metric["metric_code"] for metric in dataset.get("metrics", []))
 
     missing = referenced_codes - known_codes
     if missing:
@@ -949,7 +1055,7 @@ def run_full_pipeline(
     _run("import-gias", lambda: import_gias(row_limit=None, force=False, dry_run=dry_run))
     _run("import-trusts", lambda: import_trusts(force=False, dry_run=dry_run))
     _run("import-statistics", lambda: import_statistics(dry_run=dry_run))
-    _run("import-performance", import_performance)
+    _run("import-performance", lambda: import_performance(dry_run=dry_run))
     _run("import-catchments", lambda: import_catchments(local_authority=None, academic_year=None, geometry_validation_only=False, dry_run=dry_run))
 
     if not skip_admissions and admissions_source_file is not None:

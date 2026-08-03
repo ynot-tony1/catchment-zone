@@ -14,8 +14,28 @@ describe("metric definitions loaded from config/metric-definitions.yml", () => {
         "persistent_absence_rate",
         "pupil_teacher_ratio",
         "fsm_eligibility_rate",
+        "attainment8_average",
+        "progress8_average",
+        "ks2_rwm_expected_standard_percent",
+        "ks2_rwm_higher_standard_percent",
+        "ks2_reading_average_scaled_score",
+        "ks2_maths_average_scaled_score",
       ]),
     );
+  });
+
+  it("returns a full definition for the key stage 4 headline metric", () => {
+    const def = getMetricDefinition("attainment8_average");
+    expect(def).not.toBeNull();
+    expect(def?.label).toBe("Attainment 8 score");
+    expect(def?.phases).toEqual(["secondary", "all_through"]);
+  });
+
+  it("returns a full definition for the key stage 2 headline metric", () => {
+    const def = getMetricDefinition("ks2_rwm_expected_standard_percent");
+    expect(def).not.toBeNull();
+    expect(def?.unit).toBe("percent");
+    expect(def?.phases).toEqual(["primary"]);
   });
 
   it("returns a full definition for a known code", () => {

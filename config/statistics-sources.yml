@@ -53,6 +53,110 @@ publications:
     applies_to_phases: ["primary", "secondary", "special"]
     notes: "Census-based; November census point-in-time snapshot."
 
+# ---------------------------------------------------------------------------
+# School performance tables (exam/assessment results)
+#
+# Distinct from `publications` above: those EES publications only expose
+# local-authority/regional/national aggregates (confirmed live - see
+# PROJECT_STATUS.md), not per-school rows, so they can never populate
+# SchoolMetric (which requires a non-null school_urn). The publications
+# below are DfE's official school performance tables, republished through
+# the same EES API but as genuinely school-level datasets (geographicLevel:
+# "School", confirmed live against the API), downloaded via the API's CSV
+# endpoint (GET /data-sets/{id}/csv) rather than its /query endpoint, since
+# the CSV's column headers are the real metric names (e.g.
+# "attainment8_average") while /query responses are keyed by opaque
+# indicator/filter IDs this service has no live-verified mapping for.
+#
+# Each publication can contain many data sets (18, for key-stage-4-
+# performance); dataset_title is matched against the publication's own
+# data-sets listing at run time (not a hardcoded dataset UUID, consistent
+# with the rest of this file), picking out the one this service wants.
+#
+# Every dataset mixes "headline" (whole-school, no subgroup) rows together
+# with many pupil-characteristic breakdowns (by sex, disadvantage status,
+# prior attainment, etc.) in the same table. headline_filter identifies
+# the row per school this service imports as the school's own metric,
+# ignoring the subgroup breakdown rows entirely (subgroup-level metrics
+# are a possible future addition, not attempted here).
+performance_datasets:
+  - publication_slug: "key-stage-4-performance"
+    dataset_title: "Performance tables schools data"
+    display_name: "GCSE (key stage 4) performance tables"
+    applies_to_phases: ["secondary", "all_through"]
+    urn_field: "school_urn"
+    time_period_field: "time_period"
+    headline_filter:
+      breakdown_topic: "Total"
+      breakdown: "Total"
+    metrics:
+      - metric_code: "attainment8_average"
+        column: "attainment8_average"
+      - metric_code: "progress8_average"
+        column: "progress8_average"
+    notes: >
+      Verified live (2026-08-02): every school's progress8_average in the
+      current 2024/25 release reads "z" (DfE's not-applicable marker) -
+      not a per-school gap, the whole current release does not carry it
+      yet. Stored as unavailable (not suppressed, not estimated) like any
+      other not-applicable cell; a later release may populate it without
+      needing a code change.
+
+  - publication_slug: "key-stage-2-attainment"
+    dataset_title: "Key stage 2 institutional level  - Schools (performance)"
+    display_name: "Key stage 2 (SATs) performance tables"
+    applies_to_phases: ["primary"]
+    urn_field: "school_urn"
+    time_period_field: "time_period"
+    headline_filter:
+      breakdown_topic: "All pupils"
+      breakdown: "Total"
+      subject: "Reading, writing and maths"
+    metrics:
+      - metric_code: "ks2_rwm_expected_standard_percent"
+        column: "expected_standard_pupil_percent"
+      - metric_code: "ks2_rwm_higher_standard_percent"
+        column: "higher_standard_pupil_percent"
+    notes: >
+      This dataset's dataset_title has two spaces between "level" and "-"
+      in the API's own listing (verified live, not a typo introduced
+      here) - must match exactly, not a normalised/trimmed comparison.
+
+  - publication_slug: "key-stage-2-attainment"
+    dataset_title: "Key stage 2 institutional level  - Schools (performance)"
+    display_name: "Key stage 2 (SATs) average scaled scores"
+    applies_to_phases: ["primary"]
+    urn_field: "school_urn"
+    time_period_field: "time_period"
+    headline_filter:
+      breakdown_topic: "All pupils"
+      breakdown: "Total"
+      subject: "Reading"
+    metrics:
+      - metric_code: "ks2_reading_average_scaled_score"
+        column: "average_scaled_score"
+    notes: >
+      Same dataset as the row above, but average_scaled_score only has a
+      real value under subject="Reading" or subject="Maths" specifically
+      (verified live: it reads "z" for the combined "Reading, writing and
+      maths" subject row and for "Writing", which has no scaled score at
+      all - teacher-assessed, not tested) - hence a second entry with a
+      different subject filter rather than one shared filter.
+
+  - publication_slug: "key-stage-2-attainment"
+    dataset_title: "Key stage 2 institutional level  - Schools (performance)"
+    display_name: "Key stage 2 (SATs) average scaled scores"
+    applies_to_phases: ["primary"]
+    urn_field: "school_urn"
+    time_period_field: "time_period"
+    headline_filter:
+      breakdown_topic: "All pupils"
+      breakdown: "Total"
+      subject: "Maths"
+    metrics:
+      - metric_code: "ks2_maths_average_scaled_score"
+        column: "average_scaled_score"
+
 # Metric definitions (denominator, suppression rules, comparability notes)
 # live in metric-definitions.yml, not here, so a metric's meaning is defined
 # once regardless of which publication currently supplies its value.

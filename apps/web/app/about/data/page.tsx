@@ -99,9 +99,15 @@ export default function AboutDataPage() {
             >
               Explore Education Statistics API
             </a>
-            . Suppressed figures (where a cohort is too small to publish without
+            , including DfE&apos;s official school performance tables: key stage
+            2 (SATs) results for primary schools and key stage 4 (GCSE) results,
+            including Attainment 8 and Progress 8, for secondary schools.
+            Suppressed figures (where a cohort is too small to publish without
             risking identifying individual pupils) are shown as suppressed,
-            never estimated or backed out.
+            never estimated or backed out. Where a measure is not applicable or
+            not yet published for a school (e.g. Progress 8 in the most recent
+            release, or a scaled score for a subject that has none), it is shown
+            as not available rather than as zero or suppressed.
           </p>
         </CardContent>
       </Card>

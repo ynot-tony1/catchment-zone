@@ -34,8 +34,10 @@ releases.
 
 from __future__ import annotations
 
+import csv
+import io
 import logging
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -51,8 +53,12 @@ logger = logging.getLogger(__name__)
 SUPPRESSED_MARKERS = {"c", "x", "low", "suppressed", ":"}
 #: Markers meaning "not applicable", stored as neither a value nor a
 #: suppression (there is nothing being withheld, the metric just does not
-#: apply, e.g. sixth form places at a school with no sixth form).
-NOT_APPLICABLE_MARKERS = {"n/a", "na", "-"}
+#: apply, e.g. sixth form places at a school with no sixth form). "z" is
+#: DfE/EES's own convention for this in the school performance tables CSVs
+#: (verified live: e.g. average_scaled_score for a subject with no scaled
+#: score, or progress8_average school-wide in a release that does not yet
+#: carry it) - distinct from a genuine small-cohort suppression.
+NOT_APPLICABLE_MARKERS = {"n/a", "na", "-", "z"}
 
 
 @dataclass
@@ -170,6 +176,106 @@ def resolve_current_release(client: httpx.Client, base_url: str, publication_slu
         is_provisional=bool(latest_version.get("provisional", False)),
         published_at=latest_version.get("published"),
     )
+
+
+def find_dataset_id_by_title(
+    client: httpx.Client, base_url: str, publication_slug: str, dataset_title: str
+) -> ResolvedRelease:
+    """Resolve a specific data set within a publication by its exact title,
+    for publications with many data sets covering different breakdowns
+    (e.g. key-stage-4-performance has 18) where resolve_current_release's
+    "take the first one" is not good enough to reliably pick the right one.
+    """
+    publication_id = find_publication_id(client, base_url, publication_slug)
+    datasets = list_publication_datasets(client, base_url, publication_id)
+    for dataset in datasets:
+        if dataset.get("title") == dataset_title:
+            latest_version = dataset.get("latestVersion", {})
+            return ResolvedRelease(
+                publication_slug=publication_slug,
+                dataset_id=str(dataset.get("id")),
+                release_id=str(latest_version.get("version", "unknown")),
+                release_label=str(latest_version.get("version", "unknown")),
+                is_provisional=bool(latest_version.get("provisional", False)),
+                published_at=latest_version.get("published"),
+            )
+    available = [str(d.get("title")) for d in datasets]
+    raise StatisticsApiError(
+        f"no data set titled {dataset_title!r} found in publication {publication_slug!r} "
+        f"(available titles: {available!r})"
+    )
+
+
+def fetch_dataset_csv_rows(client: httpx.Client, base_url: str, dataset_id: str) -> Iterator[dict[str, str]]:
+    """Download a data set's full CSV export and yield each row as a dict.
+
+    Unlike fetch_dataset_rows (the /query endpoint below, whose rows are
+    keyed by opaque indicator/filter IDs this service has no live-verified
+    mapping for), the CSV endpoint's header row is the data set's real,
+    documented column names (e.g. "attainment8_average", "school_urn") -
+    verified live against the key-stage-4-performance and
+    key-stage-2-attainment publications. The server compresses the
+    response (Content-Encoding: gzip, verified live); httpx decompresses
+    transport encodings transparently, so response.text is already plain
+    CSV text, not gzip bytes needing manual decompression.
+    """
+    response = client.get(f"{base_url}/data-sets/{dataset_id}/csv")
+    response.raise_for_status()
+    reader = csv.DictReader(io.StringIO(response.text))
+    yield from reader
+
+
+def format_academic_year(time_period: str) -> str:
+    """Converts EES's compact time_period ("202425") to this service's
+    "YYYY-YYYY" academic year convention ("2024-2025"). Falls back to the
+    raw value unchanged if it does not match the expected 6-digit shape,
+    rather than raising and losing the whole row over one field.
+    """
+    if len(time_period) == 6 and time_period.isdigit():
+        return f"{time_period[:4]}-{time_period[:2]}{time_period[4:]}"
+    return time_period
+
+
+def map_performance_rows_to_metrics(
+    rows: Iterable[dict[str, str]],
+    dataset_config: dict[str, Any],
+    release: ResolvedRelease,
+) -> Iterator[SchoolMetric]:
+    """Map raw school-performance-tables CSV rows to SchoolMetric records.
+
+    Each data set mixes headline (whole-school) rows together with many
+    pupil-characteristic subgroup breakdowns in the same table; only rows
+    matching every key/value pair in dataset_config["headline_filter"] are
+    imported (see config/statistics-sources.yml's performance_datasets
+    entries for what each publication's headline filter is and why).
+    """
+    urn_field = str(dataset_config["urn_field"])
+    time_period_field = str(dataset_config["time_period_field"])
+    headline_filter: dict[str, str] = dataset_config["headline_filter"]
+    metrics: list[dict[str, str]] = dataset_config["metrics"]
+
+    for row in rows:
+        if any(row.get(key) != value for key, value in headline_filter.items()):
+            continue
+        urn = str(row.get(urn_field, "")).strip()
+        academic_year = format_academic_year(str(row.get(time_period_field, "")).strip())
+        if not urn or not academic_year:
+            continue
+        for metric in metrics:
+            column = metric["column"]
+            if column not in row:
+                continue
+            value_numeric, suppressed = _classify_cell(row.get(column))
+            yield SchoolMetric(
+                school_urn=urn,
+                metric_code=metric["metric_code"],
+                academic_year=academic_year,
+                value_numeric=value_numeric,
+                suppressed=suppressed,
+                provisional=release.is_provisional,
+                source_release=release.release_label,
+                source_published_at=release.published_at,
+            )
 
 
 def fetch_dataset_rows(

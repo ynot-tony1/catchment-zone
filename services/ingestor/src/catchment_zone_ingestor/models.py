@@ -163,6 +163,14 @@ class SchoolRelationship(_Row):
 
 
 class SchoolMetric(_Row):
+    """id has no SQL-level DEFAULT (see CatchmentSource's docstring for why),
+    so it must always be supplied; the default_factory below covers this
+    service's own writes. Nothing else in the schema references
+    school_metrics.id as a foreign key, so unlike CatchmentSource/
+    CatchmentArea there is no need to look up and reuse an existing row's
+    id on re-import - a fresh uuid on every upsert is harmless here."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     school_urn: str
     metric_code: str
     academic_year: str

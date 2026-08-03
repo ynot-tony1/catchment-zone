@@ -69,3 +69,51 @@ metrics:
     unit: "percent"
     phases: ["primary", "secondary", "special"]
     comparability_notes: "A commonly used proxy for socioeconomic disadvantage, not a precise poverty measure. Eligibility rules changed with Universal Credit transitional protections; check the release's methodology note before comparing years."
+
+  attainment8_average:
+    label: "Attainment 8 score"
+    description: "Average Attainment 8 score (pupils' achievement across 8 GCSE-level qualifications, from the official DfE school performance tables) for pupils at the end of key stage 4."
+    denominator: "n/a (average score, 0-90 scale)"
+    unit: "score"
+    phases: ["secondary", "all_through"]
+    comparability_notes: "Grading and methodology have changed between years (e.g. post-2020 exam disruption); DfE advises against comparing Attainment 8 scores across years without checking its own methodology notes for the releases involved. Not available for schools/colleges without a KS4 cohort (e.g. primary schools, sixth-form-only colleges)."
+
+  progress8_average:
+    label: "Progress 8 score"
+    description: "Average Progress 8 score (how much progress pupils made between key stage 2 and key stage 4, relative to pupils nationally with similar prior attainment), from the official DfE school performance tables."
+    denominator: "n/a (average score, typically -1 to +1)"
+    unit: "score"
+    phases: ["secondary", "all_through"]
+    comparability_notes: "Requires a valid KS2-to-KS4 cohort match; not calculated for every school in every release (verified live: entirely unavailable in the most recent 2024/25 release at time of writing, for every school in the source data, not a per-school gap). Never comparable to Attainment 8 directly - they measure different things (absolute outcome vs. relative progress)."
+
+  ks2_rwm_expected_standard_percent:
+    label: "KS2 reading, writing & maths: expected standard"
+    description: "Percentage of pupils meeting the expected standard in reading, writing and maths combined at the end of key stage 2 (SATs), from the official DfE school performance tables."
+    denominator: "eligible pupils at the end of key stage 2"
+    unit: "percent"
+    phases: ["primary"]
+    comparability_notes: "A combined measure: a pupil must meet the expected standard in all three of reading, writing and maths to count, so this is always lower than or equal to each individual subject's own rate. Small cohort schools can show large year-on-year swings from a handful of pupils."
+
+  ks2_rwm_higher_standard_percent:
+    label: "KS2 reading, writing & maths: higher standard"
+    description: "Percentage of pupils meeting the higher standard in reading, writing and maths combined at the end of key stage 2 (SATs), from the official DfE school performance tables."
+    denominator: "eligible pupils at the end of key stage 2"
+    unit: "percent"
+    phases: ["primary"]
+    comparability_notes: "A combined measure across all three subjects, same caveat as the expected-standard figure. This is a subset of pupils meeting the expected standard, not an additional/separate cohort."
+
+  ks2_reading_average_scaled_score:
+    label: "KS2 reading: average scaled score"
+    description: "Average scaled score in reading at the end of key stage 2 (SATs), from the official DfE school performance tables. Scaled scores run from 80 to 120; 100 is the expected standard."
+    denominator: "n/a (average scaled score, 80-120 range)"
+    unit: "score"
+    phases: ["primary"]
+    comparability_notes: "Scaled scores are designed to be comparable across years for the same subject (unlike raw marks), but DfE periodically revises the underlying test; check the release's own methodology note before comparing across a boundary year. Writing has no scaled score (it is teacher-assessed, not tested) - only reading and maths do."
+
+  ks2_maths_average_scaled_score:
+    label: "KS2 maths: average scaled score"
+    description: "Average scaled score in maths at the end of key stage 2 (SATs), from the official DfE school performance tables. Scaled scores run from 80 to 120; 100 is the expected standard."
+    denominator: "n/a (average scaled score, 80-120 range)"
+    unit: "score"
+    phases: ["primary"]
+    comparability_notes: "Scaled scores are designed to be comparable across years for the same subject (unlike raw marks), but DfE periodically revises the underlying test; check the release's own methodology note before comparing across a boundary year."
