@@ -276,6 +276,28 @@ def reproject_if_needed(geometry: BaseGeometry, detected_wkid: int | None, fallb
     return shapely_transform(transformer.transform, geometry)
 
 
+def _to_2d_geojson_geometry(geometry: dict[str, Any]) -> dict[str, Any]:
+    """Strips any Z/M dimensions beyond X,Y from a raw GeoJSON geometry's
+    coordinates. Some ArcGIS servers (e.g. South Lanarkshire's
+    Non-Denominational catchments layer, verified live) return 4D
+    [lon, lat, z, m] coordinate tuples with a null M (measure) value on
+    every point, which shapely's shape() cannot parse - only X, Y and a
+    numeric Z are ever meaningful for a catchment boundary, so anything
+    past the second coordinate is simply discarded rather than repaired.
+    """
+
+    def strip(coords: Any) -> Any:
+        if not coords:
+            return coords
+        if isinstance(coords[0], int | float):
+            return coords[:2]
+        return [strip(item) for item in coords]
+
+    if "coordinates" not in geometry:
+        return geometry
+    return {**geometry, "coordinates": strip(geometry["coordinates"])}
+
+
 @dataclass
 class CatchmentBuildResult:
     areas: list[CatchmentArea]
@@ -309,7 +331,7 @@ def build_catchment_areas(
     for index, feature in enumerate(features):
         area_name = _extract_name(feature, name_field_candidates, index)
         try:
-            geometry = shape(feature["geometry"])
+            geometry = shape(_to_2d_geojson_geometry(feature["geometry"]))
             geometry = reproject_if_needed(geometry, detected_wkid, fallback_source_crs)
             geometry = validate_and_repair(geometry)
         except (InvalidGeometryError, KeyError, ValueError, TypeError) as exc:

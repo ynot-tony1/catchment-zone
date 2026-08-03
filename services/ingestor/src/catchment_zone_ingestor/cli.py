@@ -823,12 +823,19 @@ def import_catchments(
 
             source_id = _resolve_catchment_source_id(conn, source)
 
-            build_result = catchments_adapter.build_catchment_areas(
-                query_result.features,
-                source_id=source_id,
-                area_type=str(source["source_type"]),
-                academic_year=str(source["academic_year"]),
-                name_field_candidates=[
+            # A source may declare exactly which field to use (name_field)
+            # rather than relying on the generic candidate list below -
+            # needed for South Lanarkshire, whose combined layers carry
+            # both a primary and a secondary school name on every single
+            # feature (ND_PS/ND_SS), so the generic first-match-wins
+            # candidate list could never correctly pick the secondary
+            # name for the secondary_catchment_nd entry without also
+            # accidentally matching the primary_catchment_nd entry first.
+            name_field_override = source.get("name_field")
+            name_field_candidates = (
+                [str(name_field_override)]
+                if name_field_override
+                else [
                     "SCHOOL_NAME",
                     "NAME",
                     "name",
@@ -870,7 +877,23 @@ def import_catchments(
                     "NM",
                     # Moray's ArcGIS layers use this, verified live.
                     "SCHOOL",
-                ],
+                    # West Lothian's four layers use inconsistent field
+                    # names per layer, verified live: ND_secondary uses
+                    # "cachsec" (the real school name, e.g. "Balerno High
+                    # School"), RC_secondary uses lowercase "school".
+                    # ND_primary and RC_primary already match "schoolname"
+                    # above.
+                    "cachsec",
+                    "school",
+                ]
+            )
+
+            build_result = catchments_adapter.build_catchment_areas(
+                query_result.features,
+                source_id=source_id,
+                area_type=str(source["source_type"]),
+                academic_year=str(source["academic_year"]),
+                name_field_candidates=name_field_candidates,
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),
                 valid_from_iso=datetime.now(UTC).isoformat(),

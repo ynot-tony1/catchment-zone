@@ -1196,6 +1196,292 @@ sources:
     enabled: true
     notes: "Denominational secondary catchment polygons (2 of 34 total features)."
 
+  # Midlothian, West Lothian and South Lanarkshire: real, live,
+  # publicly-queryable ArcGIS data with NO licence evidence anywhere -
+  # no ArcGIS item licenseInfo, and none of the three councils have a
+  # data.gov.uk organisation to check for sibling-dataset evidence,
+  # unlike every other source in this file. Enabled at the user's
+  # explicit direction after this gap was raised and discussed, not
+  # because a licence was found. Treat the licence field on these
+  # entries as a genuine unknown, not a confirmed permission - unlike
+  # every "inferred" licence elsewhere in this file, there is no
+  # evidence chain behind this one at all.
+  - local_authority_code: "S12000019"
+    local_authority_name: "Midlothian"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    download_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    arcgis_where: "Type='ND_PS'"
+    name_field: "school_name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for Midlothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational primary catchment polygons (25 of 39 total features; excludes 1 unclassified 'Shawfair Catchment' feature with no Type and 3 'ND_HS_Pro' features covering a not-yet-open proposed high school)."
+
+  - local_authority_code: "S12000019"
+    local_authority_name: "Midlothian"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    download_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    arcgis_where: "Type='D_PS'"
+    name_field: "school_name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for Midlothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Denominational primary catchment polygons (6 of 39 total features)."
+
+  - local_authority_code: "S12000019"
+    local_authority_name: "Midlothian"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    download_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    arcgis_where: "Type='ND_HS'"
+    name_field: "school_name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for Midlothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational secondary catchment polygons (3 of 39 total features)."
+
+  - local_authority_code: "S12000019"
+    local_authority_name: "Midlothian"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    download_url: "https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1"
+    arcgis_where: "Type='D_HS'"
+    name_field: "school_name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for Midlothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Denominational secondary catchment polygons (1 of 39 total features)."
+
+  # West Lothian: the combined web map's "School catchments" layer has
+  # url: null, but the 4 underlying FeatureServer services are
+  # independently queryable and each already split by phase/denomination
+  # (no arcgis_where needed). Field names are inconsistent per layer,
+  # verified live for each.
+  - local_authority_code: "S12000040"
+    local_authority_name: "West Lothian"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/ND_primary_catchment_areas/FeatureServer/4"
+    download_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/ND_primary_catchment_areas/FeatureServer/4"
+    name_field: "schoolname"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for West Lothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "53 non-denominational primary catchment polygons."
+
+  - local_authority_code: "S12000040"
+    local_authority_name: "West Lothian"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/RC_primary_catchment_areas/FeatureServer/11"
+    download_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/RC_primary_catchment_areas/FeatureServer/11"
+    name_field: "schoolname"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for West Lothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "16 Roman Catholic (RC) primary catchment polygons."
+
+  - local_authority_code: "S12000040"
+    local_authority_name: "West Lothian"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/ND_secondary_catchment_areas/FeatureServer/10"
+    download_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/ND_secondary_catchment_areas/FeatureServer/10"
+    name_field: "cachsec"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for West Lothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "11 non-denominational secondary catchment polygons."
+
+  - local_authority_code: "S12000040"
+    local_authority_name: "West Lothian"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/RC_secondary_catchment_areas/FeatureServer/12"
+    download_url: "https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/RC_secondary_catchment_areas/FeatureServer/12"
+    name_field: "school"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo on the ArcGIS item and no data.gov.uk organisation for West Lothian Council to check for sibling evidence. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "3 Roman Catholic (RC) secondary catchment polygons."
+
+  # South Lanarkshire: a genuinely different data model from every
+  # other source in this file - each polygon represents a combined
+  # primary+secondary catchment pair (one geographic area feeding one
+  # specific primary AND one specific secondary school at once), not
+  # one school per feature. Imported as two entries per denomination
+  # pointing at the exact same underlying layer, using the new
+  # name_field override to pick the primary school's name for one
+  # entry and the secondary school's name for the other - the same 102
+  # (or 32) polygons are genuinely both a primary and a secondary
+  # catchment simultaneously, so duplicating them under two source_type
+  # values is an honest representation of the source, not a data
+  # quality issue.
+  - local_authority_code: "S12000029"
+    local_authority_name: "South Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/5"
+    download_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/5"
+    name_field: "ND_PS"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - self-hosted ArcGIS server with no item metadata to check, and no data.gov.uk organisation for South Lanarkshire Council. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "102 non-denominational combined primary+secondary catchment polygons, named here by their primary school (ND_PS). Same polygons are also imported as secondary_catchment_nd, named by ND_SS."
+
+  - local_authority_code: "S12000029"
+    local_authority_name: "South Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/5"
+    download_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/5"
+    name_field: "ND_SS"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - self-hosted ArcGIS server with no item metadata to check, and no data.gov.uk organisation for South Lanarkshire Council. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "102 non-denominational combined primary+secondary catchment polygons, named here by their secondary school (ND_SS). Same polygons are also imported as primary_catchment_nd, named by ND_PS."
+
+  - local_authority_code: "S12000029"
+    local_authority_name: "South Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/4"
+    download_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/4"
+    name_field: "DENOM_PS"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - self-hosted ArcGIS server with no item metadata to check, and no data.gov.uk organisation for South Lanarkshire Council. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "32 denominational combined primary+secondary catchment polygons, named here by their primary school (DENOM_PS). Same polygons are also imported as secondary_catchment_denom, named by DENOM_SS."
+
+  - local_authority_code: "S12000029"
+    local_authority_name: "South Lanarkshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/4"
+    download_url: "https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/4"
+    name_field: "DENOM_SS"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - self-hosted ArcGIS server with no item metadata to check, and no data.gov.uk organisation for South Lanarkshire Council. Enabled at the user's explicit direction despite this gap; do not cite this as an evidenced licence."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "32 denominational combined primary+secondary catchment polygons, named here by their secondary school (DENOM_SS). Same polygons are also imported as primary_catchment_denom, named by DENOM_PS."
+
+  # West Dunbartonshire: unlike every other UNCONFIRMED source in this
+  # file, this one's licence is not merely missing, it EXPLICITLY
+  # PROHIBITS this exact use. The ArcGIS item's own licenceInfo reads:
+  # "Crown copyright and database rights ... You are granted a
+  # non-exclusive, royalty free revocable licence solely to view the
+  # licensed data for non-commercial purposes ... You are not permitted
+  # to copy, sub-license, distribute, sell or otherwise make available
+  # the Licensed Data to third parties in any form." Publishing these
+  # polygons on this site is a direct, known breach of that term, not
+  # an unknown-permission situation like Midlothian/West
+  # Lothian/South Lanarkshire above. Enabled anyway at the user's
+  # explicit, informed direction after this specific distinction was
+  # raised and confirmed - flagged here in full so anyone auditing this
+  # file later understands this was a deliberate, disclosed choice, not
+  # an oversight.
+  - local_authority_code: "S12000039"
+    local_authority_name: "West Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/5"
+    download_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/5"
+    name_field: "school_nam"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "EXPLICITLY PROHIBITED - Ordnance Survey-derived licence text on the ArcGIS item states data may not be copied, distributed, sold or otherwise made available to third parties. Included anyway at the user's explicit, informed direction; this is a knowing use outside the stated terms, not an unknown-permission gap."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "19 non-denominational primary catchment polygons."
+
+  - local_authority_code: "S12000039"
+    local_authority_name: "West Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/3"
+    download_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/3"
+    name_field: "school_nam"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "EXPLICITLY PROHIBITED - Ordnance Survey-derived licence text on the ArcGIS item states data may not be copied, distributed, sold or otherwise made available to third parties. Included anyway at the user's explicit, informed direction; this is a knowing use outside the stated terms, not an unknown-permission gap."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "14 denominational primary catchment polygons."
+
+  - local_authority_code: "S12000039"
+    local_authority_name: "West Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/4"
+    download_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/4"
+    name_field: "sch_name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "EXPLICITLY PROHIBITED - Ordnance Survey-derived licence text on the ArcGIS item states data may not be copied, distributed, sold or otherwise made available to third parties. Included anyway at the user's explicit, informed direction; this is a knowing use outside the stated terms, not an unknown-permission gap."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "3 non-denominational secondary catchment polygons."
+
+  - local_authority_code: "S12000039"
+    local_authority_name: "West Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/2"
+    download_url: "https://services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer/2"
+    name_field: "school_nam"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "EXPLICITLY PROHIBITED - Ordnance Survey-derived licence text on the ArcGIS item states data may not be copied, distributed, sold or otherwise made available to third parties. Included anyway at the user's explicit, informed direction; this is a knowing use outside the stated terms, not an unknown-permission gap."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "2 denominational secondary catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -1222,42 +1508,6 @@ candidates:
       workaround pattern) before spending more effort on individual councils.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
-  - local_authority_name: "Midlothian"
-    reason_not_enabled: >
-      Real, live, sampled ArcGIS FeatureServer found at
-      https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1
-      (39 features, school_name/seed_code/Type fields). Item's own
-      licenseInfo is blank and Midlothian Council has no data.gov.uk
-      organization at all (0 packages), so there is no sibling-dataset
-      licence evidence to point to either - unlike every enabled source
-      in this file. Do not enable without a real licence statement from
-      somewhere (a council webpage, a FOI response, or a data.gov.uk
-      listing appearing later).
-  - local_authority_name: "West Lothian"
-    reason_not_enabled: >
-      Real, live, sampled ArcGIS FeatureServer set found (the web map's
-      combined "School catchments" layer has url: null, but the 4
-      underlying services are independently queryable):
-      https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/ND_primary_catchment_areas/FeatureServer/4
-      (53 features), .../ND_secondary_catchment_areas/FeatureServer/10
-      (11), .../RC_primary_catchment_areas/FeatureServer/11 (16),
-      .../RC_secondary_catchment_areas/FeatureServer/12 (3). No
-      licenseInfo on any of the 4 items and no data.gov.uk organization
-      for West Lothian Council exists to check for sibling evidence.
-      Same "real data, no licence evidence anywhere" situation as
-      Midlothian above - do not enable without a real licence source.
-  - local_authority_name: "South Lanarkshire"
-    reason_not_enabled: >
-      Real, live, sampled self-hosted ArcGIS MapServer found:
-      https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/4
-      (Denominational, 32 features) and .../MapServer/5
-      (Non-Denominational, 102 features). Each polygon covers a combined
-      primary+secondary catchment pair (fields DENOM_PS/DENOM_SS or
-      ND_PS/ND_SS) rather than one school per feature, so this source
-      would need its own parsing logic even before licensing is solved.
-      Self-hosted server has no ArcGIS Online item metadata to check,
-      and South Lanarkshire Council has no data.gov.uk organization
-      (0 packages) - no licence evidence found anywhere.
   - local_authority_name: "East Dunbartonshire"
     reason_not_enabled: >
       Licence evidence is the strongest of any candidate here - all 4
@@ -1274,18 +1524,6 @@ candidates:
       certificate/server is fixed; this should be one of the first
       candidates enabled when it is, given the licence is already
       confirmed.
-  - local_authority_name: "West Dunbartonshire"
-    reason_not_enabled: >
-      Real data found (services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer,
-      layers 2-5 for denominational/non-denominational primary/secondary
-      catchments) but deliberately excluded: the item's licence text is
-      an Ordnance Survey non-commercial viewing licence that explicitly
-      states "You are not permitted to copy, sub-license, distribute,
-      sell or otherwise make available the Licensed Data to third
-      parties in any form" - directly incompatible with serving this
-      data to end users on a public map. Do not import under this
-      licence; only worth reconsidering if the council publishes the
-      same data under different (OGL or equivalent) terms elsewhere.
   - local_authority_name: "East Ayrshire (re-checked)"
     reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
   - local_authority_name: "Inverclyde"

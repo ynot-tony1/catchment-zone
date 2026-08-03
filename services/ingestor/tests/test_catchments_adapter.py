@@ -84,3 +84,41 @@ def test_geometry_survives_as_geojson_polygon_with_interior_ring() -> None:
     geometry = json.loads(with_hole.geometry_geojson)
     assert geometry["type"] == "Polygon"
     assert len(geometry["coordinates"]) == 2  # exterior ring + one interior ring (the hole)
+
+
+def test_strips_xyzm_coordinates_from_arcgis_features() -> None:
+    """South Lanarkshire's Non-Denominational catchments layer returns 4D
+    [lon, lat, z, m] coordinates with a null M (measure) value on every
+    point, verified live - shapely.shape() cannot parse a 4-tuple with a
+    None in it. build_catchment_areas must strip anything past X,Y rather
+    than rejecting every feature from a source shaped like this.
+    """
+    feature = {
+        "type": "Feature",
+        "properties": {"ND_PS": "XYZM Test Primary School"},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [-1.5, 53.4, 0, None],
+                    [-1.4, 53.4, 0, None],
+                    [-1.4, 53.5, 0, None],
+                    [-1.5, 53.5, 0, None],
+                    [-1.5, 53.4, 0, None],
+                ]
+            ],
+        },
+    }
+    result = build_catchment_areas(
+        [feature],
+        source_id="S12000029:primary_catchment_nd",
+        area_type="primary_catchment_nd",
+        academic_year="2025-2026",
+        name_field_candidates=["ND_PS"],
+        detected_wkid=4326,
+        fallback_source_crs="EPSG:4326",
+        valid_from_iso="2025-09-01T00:00:00",
+    )
+    assert result.rejected_count == 0
+    assert len(result.areas) == 1
+    assert result.areas[0].area_name == "XYZM Test Primary School"

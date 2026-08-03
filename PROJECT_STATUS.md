@@ -122,23 +122,55 @@ disk, not what is intended.
   its 5-of-5 data.gov.uk datasets being unanimously OGL is the
   strongest sibling-inference ratio found so far, though the source
   service's own name ("Education_Web_Maps_2020_Temp") is a real,
-  disclosed caveat on how current/authoritative it is. Total scored
-  areas stay at 135 (Scotland still has no performance metrics).
-  Several further councils were investigated and deliberately left
-  unenabled, documented as `candidates:` entries in
-  `catchment-sources.yml` rather than silently dropped: Midlothian and
-  West Lothian and South Lanarkshire (real data found, but zero licence
-  evidence anywhere - no data.gov.uk organisation and no item
-  licenceInfo); East Dunbartonshire (licence is the strongest of any
-  candidate, explicit OGL v3 on all 4 items, but the council's own
-  server has an expired TLS certificate and hangs even with
-  verification disabled - a live infrastructure problem, not a
-  licensing one, worth rechecking later); West Dunbartonshire (real
-  data, but an explicit Ordnance Survey licence that prohibits
-  redistribution to third parties, so deliberately not used); East
+  disclosed caveat on how current/authoritative it is.
+
+- **Four more Scottish councils added at the user's explicit direction
+  despite unresolved licensing (424 more real catchment areas),
+  taking Scotland to 23 councils.** Midlothian (35 areas), West
+  Lothian (83 areas) and South Lanarkshire (268 areas) all have real,
+  live, publicly-queryable ArcGIS data but no licence evidence
+  anywhere - no ArcGIS item `licenseInfo`, no data.gov.uk organisation
+  for any of the three councils to check for sibling evidence. This
+  gap was raised explicitly and the user chose to include them anyway;
+  each entry's `licence` field in `catchment-sources.yml` says
+  `UNCONFIRMED` rather than overstating confidence. West Dunbartonshire
+  (38 areas) is different in kind, not just degree: its ArcGIS item's
+  own licence text explicitly states "You are not permitted to copy,
+  sub-license, distribute, sell or otherwise make available the
+  Licensed Data to third parties in any form" - a direct, known breach
+  of a stated term rather than an absence of one. This distinction was
+  raised separately and the user confirmed including it anyway too;
+  its `licence` field says `EXPLICITLY PROHIBITED` and spells out the
+  breach in full so this is never mistaken for an oversight later.
+  South Lanarkshire's data model is also genuinely different from
+  every other source in this file: each polygon is a combined
+  primary+secondary catchment (one area feeds one specific primary AND
+  one specific secondary school at once, fields `ND_PS`/`ND_SS` or
+  `DENOM_PS`/`DENOM_SS`), not one school per feature - handled with a
+  new per-source `name_field` override (`cli.py`) that picks a single
+  authoritative field instead of the shared candidate-list heuristic,
+  and the same polygons are deliberately imported twice (once as
+  primary, once as secondary) since that is what the source actually
+  represents. Importing South Lanarkshire's non-denominational layer
+  also surfaced a real, previously-unseen geometry bug: that one
+  ArcGIS layer returns 4D `[lon, lat, z, m]` coordinates with a null
+  `m` on every point, which shapely cannot parse - fixed generically in
+  `catchments.py` by stripping any dimension past X,Y before
+  constructing the geometry, covered by a new unit test. Total scored
+  areas stay at 135 of 2,546 (Scotland still has no performance
+  metrics, so none of its 23 councils' catchments score, licensed or
+  not). Midlothian and West Lothian and South Lanarkshire and West
+  Dunbartonshire's `candidates:` entries were removed from
+  `catchment-sources.yml` since they are now enabled sources instead.
+  Remaining genuinely-dead-end Scottish councils (no structured data at
+  all, not a licensing question): Falkirk, Scottish Borders, East
   Ayrshire, Inverclyde, East Lothian, Na h-Eileanan an Iar and Shetland
-  Islands (genuinely no structured data exists, PDF/text/proprietary-
-  viewer only).
+  Islands. East Dunbartonshire remains the one real exception - its
+  licence is the strongest of any candidate (explicit OGL v3 on all 4
+  items) but the council's own server has an expired TLS certificate
+  and hangs even with verification disabled, a live infrastructure
+  problem rather than a licensing or data question, worth rechecking
+  later.
 
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
