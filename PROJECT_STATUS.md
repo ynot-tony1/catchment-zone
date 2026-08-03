@@ -203,7 +203,7 @@ disk, not what is intended.
   independently re-querying the ArcGIS sharing REST search API myself
   (not just trusting a sub-agent's report) that 4 companion items on
   that same AGOL organisation carry explicit `licenseInfo: "Open
-  Government Licence V3.0"`. East Dunbartonshire's and East Lothian's
+Government Licence V3.0"`. East Dunbartonshire's and East Lothian's
   `candidates:` entries were removed from `catchment-sources.yml` since
   they are now enabled sources instead. `refresh-catchment-scores`
   re-run afterwards: still 135 of 2,759 scored (Scotland has no
