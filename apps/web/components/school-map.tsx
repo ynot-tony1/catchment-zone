@@ -45,6 +45,14 @@ type CatchmentFeatureProperties = {
 // covered area.
 const UNSCORED_CATCHMENT_COLOR = "#4263eb";
 
+// Individual catchment polygons (typically a few km across) are visually
+// imperceptible at the initial full-GB zoom (around 5) even when real data
+// is loaded and coloured - there just aren't enough pixels per polygon.
+// Below this zoom, the "no data in this view" hint is shown regardless of
+// how many features actually came back, since a non-zero count doesn't
+// mean anything is visible to the user.
+const CATCHMENT_VISIBLE_ZOOM_THRESHOLD = 9;
+
 // Covers Great Britain (England, Scotland and Wales) - west to Scotland's
 // Outer Hebrides, north to Shetland - not just England. Northern Ireland
 // is deliberately excluded from this project (see PROJECT_STATUS.md).
@@ -69,6 +77,7 @@ export function SchoolMap({
   const [catchmentCountInView, setCatchmentCountInView] = useState<
     number | null
   >(null);
+  const [zoom, setZoom] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -180,7 +189,9 @@ export function SchoolMap({
       });
 
       loadSchoolsInView(map, setError);
+      setZoom(map.getZoom());
       map.on("moveend", () => {
+        setZoom(map.getZoom());
         loadSchoolsInView(map, setError);
         if (showCatchmentsRef.current)
           loadCatchmentsInView(map, setError, setCatchmentCountInView);
@@ -239,21 +250,38 @@ export function SchoolMap({
           <span className="text-muted-foreground">no data</span>
         </div>
       )}
-      {showCatchments && catchmentCountInView === 0 && (
-        <p className="text-muted-foreground text-xs">
-          No catchment areas are published in the current view. Coverage is
-          still limited to a couple of dozen local authorities - try zooming
-          into Sheffield, several Scottish council areas, or Powys and
-          Pembrokeshire in Wales, or see the{" "}
-          <Link
-            href="/local-authorities"
-            className="text-primary underline underline-offset-2"
-          >
-            local authorities page
-          </Link>{" "}
-          for the full list.
-        </p>
-      )}
+      {showCatchments &&
+        zoom !== null &&
+        zoom < CATCHMENT_VISIBLE_ZOOM_THRESHOLD && (
+          <p className="text-muted-foreground text-xs">
+            Catchment area boundaries are too small to see at this zoom level -
+            zoom in to a covered area (try Sheffield, several Scottish council
+            areas, or Powys and Pembrokeshire in Wales) to see them, or check
+            the{" "}
+            <Link
+              href="/local-authorities"
+              className="text-primary underline underline-offset-2"
+            >
+              local authorities page
+            </Link>{" "}
+            for the full coverage list.
+          </p>
+        )}
+      {showCatchments &&
+        zoom !== null &&
+        zoom >= CATCHMENT_VISIBLE_ZOOM_THRESHOLD &&
+        catchmentCountInView === 0 && (
+          <p className="text-muted-foreground text-xs">
+            No catchment areas are published for this area. See the{" "}
+            <Link
+              href="/local-authorities"
+              className="text-primary underline underline-offset-2"
+            >
+              local authorities page
+            </Link>{" "}
+            for the full coverage list.
+          </p>
+        )}
       <div
         ref={containerRef}
         className="border-border h-[70vh] w-full rounded-lg border"
