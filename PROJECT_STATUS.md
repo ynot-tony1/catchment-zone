@@ -419,17 +419,23 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   Grammar and "Non-Catchment" (fed by a neighbouring authority's school)
   layer variants - only the two standard "In Catchment" Primary/
   Secondary layers are imported, matching this project's existing
-  convention. Also investigated and found real but not yet integrated:
-  Herefordshire's schoolservice API
+  convention. Also investigated Herefordshire's schoolservice API
   (restservices.herefordshire.gov.uk/opendata/services/schoolservice,
-  OGL v2 licensed, verified live with a real ~90-vertex polygon) - not a
-  single bulk download like every other source in this file, but queried
-  per exact school name with no bulk "list every catchment" endpoint
-  found, so it would need a bespoke per-school adapter (Wales-performance-
-  scraper shaped, but name-keyed rather than URN-keyed, with fuzzy-match
-  risk against Herefordshire's own naming) rather than a quick config
-  addition - recorded as a candidate for a future session, not
-  abandoned. Further London-borough dead ends conclusively resolved via
+  OGL v2 licensed) further and concluded it is not worth building a
+  bespoke adapter for, not just "not yet built": tested the primary-
+  catchment endpoint against a random sample of 15 of Herefordshire's 78
+  open primary schools using their exact GIAS name, and only 4 of 15
+  (27%) returned real polygon geometry - the rest returned HTTP 200 with
+  an empty body, meaning the name didn't match the API's own internal
+  naming. No name-discovery endpoint exists to learn the real names, and
+  fuzzy-matching GIAS names against them risks attributing the wrong
+  catchment to the wrong school - a real data-quality risk this project
+  does not take, even with licensing not being a gate. The secondary
+  endpoint tested even less reliably (a name containing an apostrophe
+  404'd, one returned what looks like a school-info record instead of a
+  catchment polygon). Recorded as a real, licensed, but unreliable
+  source in the candidates section rather than pursued further. Further
+  London-borough dead ends conclusively resolved via
   Playwright network capture (not guessed URLs): Wandsworth's Aurora
   platform only serves school-location point layers, no catchment
   polygons; Greenwich's "catchment radius" tool is confirmed to be a
