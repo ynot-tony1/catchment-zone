@@ -1032,6 +1032,8 @@ def import_catchments(
                     query_result = catchments_adapter.query_all_wfs_gml_features(
                         client, feature_url, type_name, extra_params=extra_params
                     )
+                elif source.get("format") == "geojson":
+                    query_result = catchments_adapter.download_geojson_features(client, feature_url)
                 elif source.get("format") == "shapefile_zip":
                     query_result = catchments_adapter.download_shapefile_zip_features(
                         client, feature_url

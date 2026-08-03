@@ -512,6 +512,43 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   `refresh-catchment-scores` re-run after all of this: scored areas now
   stand at 2,804 of 5,469 (up from 2,608 of 5,289).
 
+- **England expanded to 32 local authorities: 9 more county councils
+  added (Cambridgeshire, Warwickshire, Shropshire, Worcestershire,
+  Somerset, Cornwall, East Riding of Yorkshire, Nottinghamshire,
+  Lancashire), roughly 1,700 new catchment areas.** Two more genuinely
+  new platforms found this batch: Warwickshire runs a rare GeoServer
+  instance (native WFS 2.0 GeoJSON, no reprojection or GML parsing
+  needed) publishing 7 separate layers (primary/secondary plus
+  infant/junior/Catholic-primary/Catholic-secondary/grammar splits, all
+  imported as distinct source_types); Nottinghamshire runs a bespoke
+  council API (`schoolsearchapi.nottinghamshire.gov.uk`) returning
+  already-WGS84 GeoJSON directly, needing a new
+  `download_geojson_features`/`format: geojson` adapter (the simplest
+  integration found this session - no query params, no pagination, no
+  reprojection). Cambridgeshire and Somerset are both Astun iShare
+  GML-only WFS, reusing North Lincolnshire's new `wfs_gml` adapter
+  unchanged. Lancashire's data mixes primary and secondary schools in
+  one layer with no phase field to split on (the source's own
+  description confirms this is intentional) - imported as a single
+  `catchment_mixed_phase` source_type rather than guessing phase from
+  school name. Cornwall's "designated areas" carry an explicit
+  transport/admission-priority caveat, quoted verbatim in its notes
+  field, the same pattern as Sheffield's existing illustrative-only
+  disclaimer. Hampshire has real, well-evidenced data (a data.gov.uk
+  listing plus Google-indexed ArcGIS layer titles) but `maps.hants.gov.uk`
+  returns an explicit "Access denied" 403 from this session's
+  environment on independent re-verification - recorded as a candidate
+  alongside Dorset (real "School Catchments" layer confirmed to exist in
+  Dorset's DorsetExplorer platform, but the correct layer ID could not be
+  found within budget) rather than guessed at. 9 more England dead ends
+  documented, including Gloucestershire's catchment map being genuinely
+  login-gated (a hard stop per this project's standing rule against
+  bypassing authentication, not a licensing question) and Kent/Surrey
+  confirmed to use distance-based admissions/school-gate point data
+  instead of catchment polygons at all, not just an undiscovered data
+  gap. `refresh-catchment-scores` re-run after this batch: scored areas
+  now stand at 4,349 of 7,334 (up from 2,804 of 5,469).
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -1142,12 +1179,12 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 53 local authorities out of ~200+ across Great
+- **Catchment coverage is 62 local authorities out of ~200+ across Great
   Britain as of the last count (see `PILOT_LOCAL_AUTHORITIES` in
   `packages/shared/src/config/catchment-sources.test.ts` for the exact,
   current, tested list rather than repeating it here - it grew steadily
   across this session and this bullet is otherwise guaranteed to go
-  stale again): 28 Scotland, 23 England, 2 Wales.** Every one of
+  stale again): 28 Scotland, 32 England, 2 Wales.** Every one of
   Scotland's 32 councils and every one of Wales's 22 councils has now
   been individually investigated, not just the ones that yielded real
   data, so both nations are close to as complete as this project can

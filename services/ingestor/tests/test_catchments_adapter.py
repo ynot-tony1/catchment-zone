@@ -10,11 +10,15 @@ import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import httpx
+import pytest
 from shapely.geometry import Point
 
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters.catchments import (
+    CatchmentSourceError,
     build_catchment_areas,
+    download_geojson_features,
     reproject_if_needed,
 )
 
@@ -323,3 +327,46 @@ def test_gml_parsed_features_flow_through_build_catchment_areas_with_bng_reproje
     assert area.area_name == "Test Primary With Hole (fixture)"
     assert -1.0 < area.minimum_longitude < 0.0
     assert 53.0 < area.minimum_latitude < 54.0
+
+
+def test_download_geojson_features_returns_features_with_no_detected_wkid() -> None:
+    """Nottinghamshire's bespoke schoolsearchapi returns a single, already-
+    complete GeoJSON FeatureCollection with no crs block - unlike the
+    ArcGIS/WFS adapters, there is no pagination and no query string."""
+    body = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"NAME": "Test Primary (fixture)"},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [[-1.1, 53.0], [-1.0, 53.0], [-1.0, 53.1], [-1.1, 53.1], [-1.1, 53.0]]
+                    ],
+                },
+            }
+        ],
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.query == b""
+        return httpx.Response(200, json=body)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = download_geojson_features(client, "https://example.invalid/api/catchments")
+
+    assert result.detected_wkid is None
+    assert len(result.features) == 1
+    assert result.features[0]["properties"]["NAME"] == "Test Primary (fixture)"
+
+
+def test_download_geojson_features_rejects_non_feature_collection() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"type": "Point", "coordinates": [0, 0]})
+
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler)) as client,
+        pytest.raises(CatchmentSourceError),
+    ):
+        download_geojson_features(client, "https://example.invalid/api/catchments")

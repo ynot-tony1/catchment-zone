@@ -227,6 +227,34 @@ def query_all_wfs_features(
     wait=wait_exponential(multiplier=1, min=1, max=15),
     retry=retry_if_exception_type(httpx.TransportError),
 )
+def download_geojson_features(client: httpx.Client, url: str) -> FeatureQueryResult:
+    """Fetch a single, already-complete GeoJSON FeatureCollection from a
+    fixed URL - no ArcGIS query params, no WFS request/pagination.
+
+    Needed for councils that publish a bespoke REST API rather than a
+    standard ArcGIS/WFS platform (e.g. Nottinghamshire's
+    schoolsearchapi.nottinghamshire.gov.uk, verified live to already
+    return WGS84 coordinates with no crs block - detected_wkid is None
+    here for the same reason as the shapefile/GML adapters, so the
+    source's declared coordinate_reference_system in
+    catchment-sources.yml must be accurate).
+    """
+    response = client.get(url)
+    response.raise_for_status()
+    payload: dict[str, Any] = response.json()
+    if payload.get("type") != "FeatureCollection":
+        raise CatchmentSourceError(
+            f"unexpected GeoJSON response shape for {url}: {payload!r}"[:500]
+        )
+    return FeatureQueryResult(features=payload.get("features", []), detected_wkid=None)
+
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=15),
+    retry=retry_if_exception_type(httpx.TransportError),
+)
 def download_shapefile_zip_features(client: httpx.Client, zip_url: str) -> FeatureQueryResult:
     """Download a zipped ESRI Shapefile and return its records as GeoJSON
     features. Some councils (e.g. Aberdeenshire, Orkney, via Spatial Hub
