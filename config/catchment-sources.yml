@@ -2247,6 +2247,17 @@ candidates:
       reverse-engineer the click-query attribute lookup is found.
   - local_authority_name: "Newport, Swansea, Neath Port Talbot (Wales)"
     reason_not_enabled: "All three have a live ArcGIS Online Hub open-data portal (data-newport.opendata.arcgis.com, data-swansea.opendata.arcgis.com, data-nptc.opendata.arcgis.com), checked via their DCAT feed and arcgis.com/data.gov.uk search - no school catchment dataset found on any of the three."
+  - local_authority_name: "Bridgend (Wales)"
+    reason_not_enabled: >
+      Runs a Cadcorp GeognoSIS 9 WebMap (maps.bridgend.gov.uk/webmap9) -
+      but a live Playwright network capture of the actual map (not just a
+      guessed URL) shows its tile backend is an internal-only server
+      (http://CORTES2.INTERNAL.BRIDGEND.GOV.UK:4338/GeognoSIS/9/...),
+      reached only via a session-scoped `proxy.axd` relay that serves
+      rendered PNG map tiles, never vector data. No WFS/wfs.exe endpoint
+      (the pattern that works for Clackmannanshire's Cadcorp Cloud WFS)
+      was found publicly reachable for this council. A real
+      infrastructure barrier, not a licensing question.
   - local_authority_name: "East Ayrshire (re-checked)"
     reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
   - local_authority_name: "Inverclyde"
