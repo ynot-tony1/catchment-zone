@@ -30,6 +30,7 @@ from catchment_zone_ingestor.adapters import gias as gias_adapter
 from catchment_zone_ingestor.adapters import scotland as scotland_adapter
 from catchment_zone_ingestor.adapters import statistics as statistics_adapter
 from catchment_zone_ingestor.adapters import wales as wales_adapter
+from catchment_zone_ingestor.adapters import wales_performance as wales_performance_adapter
 from catchment_zone_ingestor.config import Settings, get_settings
 from catchment_zone_ingestor.logging_setup import configure_logging, get_logger, set_run_context
 from catchment_zone_ingestor.models import IngestionStatus
@@ -627,6 +628,81 @@ def import_performance(
 
 
 # ---------------------------------------------------------------------------
+# import-wales-performance
+# ---------------------------------------------------------------------------
+
+
+@app.command("import-wales-performance")
+def import_wales_performance(
+    row_limit: Annotated[int | None, typer.Option(help="Only fetch the first N schools (testing/debugging).")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and parse only; do not write to the database.")] = False,
+) -> None:
+    """Import key stage 4 SchoolMetric rows for Welsh secondary schools from
+    mylocalschool.gov.wales (no bulk API exists; one page per school - see
+    wales_performance.py's module docstring for why this source and
+    fetch shape were chosen).
+    """
+    settings = get_settings()
+    set_run_context(source="wales_performance")
+    # Unlike every other command's dry_run gating, a connection is needed
+    # here even in dry-run mode: it is the only way to list which Welsh
+    # secondary schools to fetch (there is no external "source list" to
+    # read from first the way GIAS/EES-backed imports have). dry_run only
+    # skips the write at the end.
+    conn = _connect_or_none(settings, dry_run=False)
+    if conn is None:
+        _fail("a database connection is required to list Welsh secondary schools", source="wales_performance")
+        return
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT urn FROM schools WHERE nation = 'WALES' AND phase_name ILIKE %(pattern)s ORDER BY urn",
+            {"pattern": "%secondary%"},
+        )
+        urns = [row["urn"] for row in cur.fetchall()]
+    if row_limit is not None:
+        urns = urns[:row_limit]
+
+    with _http_client(settings) as client:
+        fetch_result = wales_performance_adapter.fetch_all_schools_performance(client, urns)
+
+    logger.info(
+        "fetched Wales school performance pages",
+        extra={
+            "schools_fetched": fetch_result.schools_fetched,
+            "schools_failed": fetch_result.schools_failed,
+            "metric_rows": len(fetch_result.metrics),
+        },
+    )
+    if fetch_result.failure_samples:
+        logger.warning("sample failed Wales school performance fetches", extra={"samples": fetch_result.failure_samples})
+
+    if dry_run:
+        typer.echo(
+            f"dry-run: {fetch_result.schools_fetched} schools fetched, "
+            f"{len(fetch_result.metrics)} metric rows, {fetch_result.schools_failed} schools failed"
+        )
+        return
+
+    metric_rows = [m.model_dump(mode="json") for m in fetch_result.metrics]
+    with _tracked_run(conn, "wales_performance", dry_run) as tracker:
+        upserted = _upsert_many_with_retry(
+            conn,
+            "school_metrics",
+            metric_rows,
+            conflict_columns=["school_urn", "metric_code", "academic_year"],
+            batch_size=settings.batch_size,
+        )
+        tracker.counts.rows_processed = len(fetch_result.metrics)
+        tracker.counts.rows_inserted = upserted
+
+    typer.echo(
+        f"imported {upserted} school metric rows from {fetch_result.schools_fetched} schools "
+        f"({fetch_result.schools_failed} schools failed)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # import-catchments
 # ---------------------------------------------------------------------------
 
@@ -948,6 +1024,10 @@ def refresh_metrics() -> None:
         referenced_codes.update(pub.get("metric_codes", []))
     for dataset in stats_config.get("performance_datasets", []):
         referenced_codes.update(metric["metric_code"] for metric in dataset.get("metrics", []))
+    # Wales's performance metric codes are not config-driven (mylocalschool.gov.wales
+    # has no source config the way EES-backed datasets do), so they are
+    # checked directly against the adapter's own name-to-code mapping.
+    referenced_codes.update(wales_performance_adapter.METRIC_NAME_TO_CODE.values())
 
     missing = referenced_codes - known_codes
     if missing:
@@ -1038,6 +1118,7 @@ _PIPELINE_STEPS = (
     "import-trusts",
     "import-statistics",
     "import-performance",
+    "import-wales-performance",
     "import-catchments",
     "import-admissions",
     "refresh-metrics",
@@ -1077,6 +1158,7 @@ def run_full_pipeline(
     _run("import-trusts", lambda: import_trusts(force=False, dry_run=dry_run))
     _run("import-statistics", lambda: import_statistics(dry_run=dry_run))
     _run("import-performance", lambda: import_performance(dry_run=dry_run))
+    _run("import-wales-performance", lambda: import_wales_performance(row_limit=None, dry_run=dry_run))
     _run("import-catchments", lambda: import_catchments(local_authority=None, academic_year=None, geometry_validation_only=False, dry_run=dry_run))
 
     if not skip_admissions and admissions_source_file is not None:

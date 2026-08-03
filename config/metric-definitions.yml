@@ -117,3 +117,43 @@ metrics:
     unit: "score"
     phases: ["primary"]
     comparability_notes: "Scaled scores are designed to be comparable across years for the same subject (unlike raw marks), but DfE periodically revises the underlying test; check the release's own methodology note before comparing across a boundary year."
+
+  wales_ks4_capped9_points_score:
+    label: "Capped 9 points score"
+    description: "Capped 9 points score (interim measures version) at the end of key stage 4, from mylocalschool.gov.wales - the pupil's best 9 qualification results, points-weighted, capped at 9 entries."
+    denominator: "n/a (points score)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Interim measures version, introduced after Wales moved away from its previous Capped 9 methodology; not directly comparable to pre-reform figures. Not published for schools without a key stage 4 cohort."
+
+  wales_ks4_literacy_points_score:
+    label: "Literacy points score"
+    description: "Literacy points score at the end of key stage 4, from mylocalschool.gov.wales."
+    denominator: "n/a (points score)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Not published for schools without a key stage 4 cohort."
+
+  wales_ks4_numeracy_points_score:
+    label: "Numeracy points score"
+    description: "Numeracy points score at the end of key stage 4, from mylocalschool.gov.wales."
+    denominator: "n/a (points score)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Not published for schools without a key stage 4 cohort."
+
+  wales_ks4_science_points_score:
+    label: "Science points score"
+    description: "Science points score at the end of key stage 4, from mylocalschool.gov.wales."
+    denominator: "n/a (points score)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Not published for schools without a key stage 4 cohort."
+
+  wales_ks4_welsh_bacc_points_score:
+    label: "Welsh Baccalaureate points score"
+    description: "Welsh Baccalaureate Skills Challenge Certificate points score at the end of key stage 4, from mylocalschool.gov.wales."
+    denominator: "n/a (points score)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Not published for schools without a key stage 4 cohort, or for schools that do not offer the Welsh Baccalaureate."
