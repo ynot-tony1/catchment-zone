@@ -87,6 +87,20 @@ def _connect_or_none(settings: Settings, *, dry_run: bool) -> db.ConnectionLike 
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(psycopg.errors.SerializationFailure),
 )
+def _upsert_batch_with_retry(
+    conn: db.ConnectionLike,
+    table: str,
+    batch: list[dict[str, Any]],
+    conflict_columns: list[str],
+) -> int:
+    """Upserts one batch inside its own short transaction, retrying just
+    that batch from scratch on a CockroachDB SERIALIZABLE retry error
+    (SQLSTATE 40001). Safe to retry since every write here is an
+    idempotent upsert (ON CONFLICT DO UPDATE)."""
+    with db.transaction(conn):
+        return db.upsert_batch(conn, table, batch, conflict_columns=conflict_columns)
+
+
 def _upsert_many_with_retry(
     conn: db.ConnectionLike,
     table: str,
@@ -94,17 +108,24 @@ def _upsert_many_with_retry(
     conflict_columns: list[str],
     batch_size: int,
 ) -> int:
-    """Runs one table's upsert inside its own transaction, retrying the
-    whole transaction from scratch on a CockroachDB SERIALIZABLE retry
-    error (SQLSTATE 40001) - a transient, expected-under-contention error
-    for a long-running, many-statement transaction (verified live: a
-    ~98,000-row single-table upsert hit this in production). Safe to
-    retry from scratch since every write here is an idempotent upsert
-    (ON CONFLICT DO UPDATE) and rows is a plain list, not a
-    single-use iterator, so a fresh iter(rows) is taken on every attempt.
-    """
-    with db.transaction(conn):
-        return db.upsert_many(conn, table, iter(rows), conflict_columns=conflict_columns, batch_size=batch_size)
+    """Upserts a large row set as many small, independently-committed and
+    independently-retried transactions, one per batch, rather than a
+    single transaction spanning the whole data set.
+
+    Verified live: wrapping an entire ~98,000-row upsert (about 99
+    batches of 1000) in one transaction reliably hit a CockroachDB
+    SERIALIZABLE retry error on COMMIT, even with a whole-transaction
+    retry wrapper retried 3 times - the transaction is simply too
+    long-running/many-statement for serializable isolation to commit
+    reliably at this size on this cluster. Trades all-or-nothing
+    atomicity per data set for reliability at this data volume: a run
+    that fails partway through leaves the batches committed so far in
+    place, and a re-run safely fills in the rest (every write is an
+    idempotent upsert)."""
+    total = 0
+    for batch in db.batched(rows, batch_size=batch_size):
+        total += _upsert_batch_with_retry(conn, table, batch, conflict_columns)
+    return total
 
 
 class _RunTracker:
