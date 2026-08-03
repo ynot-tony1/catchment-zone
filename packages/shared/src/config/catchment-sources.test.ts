@@ -53,6 +53,13 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "895", name: "Cheshire East", sourceTypeCount: 2 },
   { code: "896", name: "Cheshire West and Chester", sourceTypeCount: 2 },
   { code: "882", name: "Southend-on-Sea", sourceTypeCount: 2 },
+  { code: "878", name: "Devon", sourceTypeCount: 2 },
+  { code: "867", name: "Bracknell Forest", sourceTypeCount: 2 },
+  { code: "874", name: "Peterborough", sourceTypeCount: 2 },
+  { code: "392", name: "North Tyneside", sourceTypeCount: 3 },
+  { code: "211", name: "Tower Hamlets", sourceTypeCount: 2 },
+  { code: "316", name: "Newham", sourceTypeCount: 2 },
+  { code: "872", name: "Wokingham", sourceTypeCount: 2 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {

@@ -157,3 +157,75 @@ metrics:
     unit: "score"
     phases: ["secondary"]
     comparability_notes: "Not published for schools without a key stage 4 cohort, or for schools that do not offer the Welsh Baccalaureate."
+
+  scotland_leaver_tariff_lowest20:
+    label: "Average tariff score (lowest 20% of leavers)"
+    description: "Average total SQA tariff score of the lowest-attaining 20% of that year's S4-S6 school leavers, from statistics.gov.scot's 'Attainment for All' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a leaver cohort to report, and not published for Junior High schools (which do not run to S6). Not directly comparable to England's Attainment 8 or Wales's Capped 9 - a different national qualifications framework and scoring scale."
+
+  scotland_leaver_tariff_middle60:
+    label: "Average tariff score (middle 60% of leavers)"
+    description: "Average total SQA tariff score of the middle 60% of that year's S4-S6 school leavers, from statistics.gov.scot's 'Attainment for All' dataset - the band used by this service as the representative headline figure for a school, since it is the least skewed by a handful of very high or very low leavers."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a leaver cohort to report, and not published for Junior High schools (which do not run to S6). Not directly comparable to England's Attainment 8 or Wales's Capped 9 - a different national qualifications framework and scoring scale."
+
+  a_level_aps_per_entry:
+    label: "A level average point score per entry"
+    description: "Average point score per A level entry at the end of 16-18 study, from the official DfE 'A level and other 16 to 18 results' school performance tables."
+    denominator: "n/a (average score per entry)"
+    unit: "score"
+    phases: ["secondary", "all_through"]
+    comparability_notes: "Only available for the 'A level' exam cohort specifically - schools whose sixth-form entries are predominantly vocational/applied general/technical qualifications instead will show no value here even if their post-16 provision is strong, since those use a different scoring scale. Not available for schools/colleges with no 16-18 cohort."
+
+  scotland_leaver_tariff_highest20:
+    label: "Average tariff score (highest 20% of leavers)"
+    description: "Average total SQA tariff score of the highest-attaining 20% of that year's S4-S6 school leavers, from statistics.gov.scot's 'Attainment for All' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a leaver cohort to report, and not published for Junior High schools (which do not run to S6). Not directly comparable to England's Attainment 8 or Wales's Capped 9 - a different national qualifications framework and scoring scale."
+
+  scotland_leaver_tariff_simd_q1:
+    label: "Average tariff score (most deprived SIMD quintile)"
+    description: "Average total SQA tariff score of that year's S4-S6 school leavers whose home postcode falls in the most deprived fifth of Scotland (SIMD quintile 1), from statistics.gov.scot's 'Attainment by Deprivation' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "A within-school attainment-gap view, not a duplicate of the lowest/middle/highest-20 attainment bands (SIMD quintile is about a leaver's home postcode deprivation, not their own attainment rank). Suppressed for schools with too small a cohort in this quintile to report, and not published for Junior High schools."
+
+  scotland_leaver_tariff_simd_q2:
+    label: "Average tariff score (SIMD quintile 2)"
+    description: "Average total SQA tariff score of that year's S4-S6 school leavers whose home postcode falls in SIMD quintile 2 (second most deprived fifth), from statistics.gov.scot's 'Attainment by Deprivation' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a cohort in this quintile to report, and not published for Junior High schools."
+
+  scotland_leaver_tariff_simd_q3:
+    label: "Average tariff score (SIMD quintile 3)"
+    description: "Average total SQA tariff score of that year's S4-S6 school leavers whose home postcode falls in SIMD quintile 3 (middle fifth), from statistics.gov.scot's 'Attainment by Deprivation' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a cohort in this quintile to report, and not published for Junior High schools."
+
+  scotland_leaver_tariff_simd_q4:
+    label: "Average tariff score (SIMD quintile 4)"
+    description: "Average total SQA tariff score of that year's S4-S6 school leavers whose home postcode falls in SIMD quintile 4 (second least deprived fifth), from statistics.gov.scot's 'Attainment by Deprivation' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a cohort in this quintile to report, and not published for Junior High schools."
+
+  scotland_leaver_tariff_simd_q5:
+    label: "Average tariff score (least deprived SIMD quintile)"
+    description: "Average total SQA tariff score of that year's S4-S6 school leavers whose home postcode falls in the least deprived fifth of Scotland (SIMD quintile 5), from statistics.gov.scot's 'Attainment by Deprivation' dataset."
+    denominator: "n/a (tariff points)"
+    unit: "score"
+    phases: ["secondary"]
+    comparability_notes: "Suppressed for schools with too small a cohort in this quintile to report, and not published for Junior High schools."

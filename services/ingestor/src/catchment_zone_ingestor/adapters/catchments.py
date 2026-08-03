@@ -368,9 +368,13 @@ def build_catchment_areas(
 
 
 def _extract_name(feature: dict[str, Any], candidates: list[str], index: int) -> str:
+    """Some sources (e.g. Bracknell Forest's fixed-width source fields,
+    verified live) pad their name field with trailing spaces - stripped
+    here since it is a source formatting artifact, not part of the real
+    name, and would otherwise show up verbatim in the UI."""
     properties = feature.get("properties", {}) or {}
     for field_name in candidates:
         value = properties.get(field_name)
-        if value:
-            return str(value)
+        if value and str(value).strip():
+            return str(value).strip()
     return f"Unnamed catchment area {index}"

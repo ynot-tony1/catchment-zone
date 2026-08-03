@@ -122,3 +122,31 @@ def test_strips_xyzm_coordinates_from_arcgis_features() -> None:
     assert result.rejected_count == 0
     assert len(result.areas) == 1
     assert result.areas[0].area_name == "XYZM Test Primary School"
+
+
+def test_strips_trailing_whitespace_from_fixed_width_name_fields() -> None:
+    """Bracknell Forest's source fields are fixed-width and pad every
+    value with trailing spaces, verified live (e.g. "Harmans Water
+    Primary School" followed by ~20 trailing spaces) - a source
+    formatting artifact, not part of the real name."""
+    feature = {
+        "type": "Feature",
+        "properties": {"Description": "Harmans Water Primary School                      "},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+                [[-0.75, 51.4], [-0.74, 51.4], [-0.74, 51.41], [-0.75, 51.41], [-0.75, 51.4]]
+            ],
+        },
+    }
+    result = build_catchment_areas(
+        [feature],
+        source_id="867:primary_catchment",
+        area_type="primary_catchment",
+        academic_year="2025-2026",
+        name_field_candidates=["Description"],
+        detected_wkid=4326,
+        fallback_source_crs="EPSG:4326",
+        valid_from_iso="2025-09-01T00:00:00",
+    )
+    assert result.areas[0].area_name == "Harmans Water Primary School"

@@ -143,6 +143,34 @@ performance_datasets:
       all - teacher-assessed, not tested) - hence a second entry with a
       different subject filter rather than one shared filter.
 
+  - publication_slug: "a-level-and-other-16-to-18-results"
+    dataset_title: "Schools and colleges - performance"
+    display_name: "A level average point score per entry"
+    applies_to_phases: ["secondary", "all_through"]
+    urn_field: "school_urn"
+    time_period_field: "time_period"
+    headline_filter:
+      disadvantage_status: "Total"
+      exam_cohort: "A level"
+    metrics:
+      - metric_code: "a_level_aps_per_entry"
+        column: "aps_per_entry"
+    notes: >
+      A previously-uncovered sixth-form/post-16 dataset - genuinely
+      school-level (geographicLevel: "School", verified live), not
+      LA/national-level like the EES "Schools and colleges - national
+      performance" dataset in the same publication (a different data set
+      in this publication, not to be confused with this one - do not
+      substitute it). This dataset's `exam_cohort` filter has several
+      values (A level, Academic, Applied general, Tech level, Technical
+      certificate, E/M measures); "A level" specifically was chosen since
+      it is the standard, most widely recognised post-16 headline figure.
+      Verified live (2026-08-03): City of London School (URN 100003),
+      academic year 2024-25, disadvantage_status=Total,
+      exam_cohort="A level" -> aps_per_entry 50.44, matching the school's
+      own published results. Not published for schools with no 16-18
+      cohort (most primaries and many secondaries without a sixth form).
+
   - publication_slug: "key-stage-2-attainment"
     dataset_title: "Key stage 2 institutional level  - Schools (performance)"
     display_name: "Key stage 2 (SATs) average scaled scores"

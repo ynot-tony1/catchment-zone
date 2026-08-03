@@ -2181,6 +2181,310 @@ sources:
     enabled: true
     notes: "6 secondary school catchment polygons."
 
+  - local_authority_code: "878"
+    local_authority_name: "Devon"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.devon.gov.uk/children-families-education/education/school-admissions/school-designated-areas/"
+    download_url: "https://map.devon.gov.uk/arcgis/rest/services/Education/Year_Plus_One_Designated_Areas/MapServer/0"
+    name_field: "SCHOOL"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence metadata on the service (copyrightText empty), and no OGL statement confirmed on the council's designated-areas page or its ArcGIS Hub site. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '332 primary school "designated area" polygons (Devon''s own term for its catchment-equivalent boundaries).'
+
+  - local_authority_code: "878"
+    local_authority_name: "Devon"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.devon.gov.uk/children-families-education/education/school-admissions/school-designated-areas/"
+    download_url: "https://map.devon.gov.uk/arcgis/rest/services/Education/Year_Plus_One_Designated_Areas/MapServer/1"
+    name_field: "SECONDARY"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence metadata on the service (copyrightText empty), and no OGL statement confirmed on the council's designated-areas page or its ArcGIS Hub site. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '39 secondary school "designated area" polygons.'
+
+  - local_authority_code: "867"
+    local_authority_name: "Bracknell Forest"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://ckan.publishing.service.gov.uk/dataset/bracknell-forest-primary-school-designated-areas"
+    download_url: "https://services9.arcgis.com/5eO9hmsd8SoBl0Cj/arcgis/rest/services/PrimarySchoolsDesignatedAreas/FeatureServer/14"
+    name_field: "Description"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package "Bracknell Forest Primary School Designated Areas", license_id uk-ogl, isopen: true - independently verified by this project directly against the CKAN API, not just carried over from the initial search).'
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      36 primary school "designated area" polygons. Name field values are
+      fixed-width and padded with trailing spaces at the source (e.g.
+      "Harmans Water Primary School" followed by ~20 spaces) - the
+      ingestor now strips trailing whitespace from every source's name
+      field generically (see catchments.py's _extract_name), not just
+      for this source.
+
+  - local_authority_code: "867"
+    local_authority_name: "Bracknell Forest"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://ckan.publishing.service.gov.uk/dataset/bracknell-forest-secondary-school-designated-areas"
+    download_url: "https://services9.arcgis.com/5eO9hmsd8SoBl0Cj/ArcGIS/rest/services/GIS_SecondarySchoolsDesignatedAreas/FeatureServer/0"
+    name_field: "Descriptio"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package "Bracknell Forest Secondary School Designated Areas", license_id uk-ogl, isopen: true - independently verified by this project directly against the CKAN API, not just carried over from the initial search).'
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      7 secondary school "designated area" polygons, including some
+      shared with Windsor & Maidenhead (RBWM) schools (e.g. "Charters
+      Secondary School (RBWM)") - a genuine cross-border catchment, kept
+      as-is rather than filtered out.
+
+  - local_authority_code: "874"
+    local_authority_name: "Peterborough"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.peterborough.gov.uk/residents/schools-and-education/school-admissions/researching-schools-and-catchment-area"
+    download_url: "https://atlas.peterborough.gov.uk/arcgis/rest/services/Hawkeye_Public/Education/MapServer/1"
+    name_field: "Name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence metadata on the service (copyrightText empty), and no matching dataset found on Peterborough's ArcGIS Hub or general open-data page. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      55 primary school catchment polygons. This MapServer also has
+      roughly 70 per-school detail layers (ids 101+/1044+ etc.) not used
+      here - layer 1 is a separate, simpler consolidated bulk layer
+      covering every school's catchment in one query.
+
+  - local_authority_code: "874"
+    local_authority_name: "Peterborough"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.peterborough.gov.uk/residents/schools-and-education/school-admissions/researching-schools-and-catchment-area"
+    download_url: "https://atlas.peterborough.gov.uk/arcgis/rest/services/Hawkeye_Public/Education/MapServer/2"
+    name_field: "Name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence metadata on the service (copyrightText empty), and no matching dataset found on Peterborough's ArcGIS Hub or general open-data page. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "12 secondary school catchment polygons (consolidated bulk layer, same service as the primary layer above)."
+
+  # North Tyneside: a genuine three-tier system (Primary/Middle/High),
+  # unusual for England - the "High" layer is this council's final,
+  # exam-bearing tier and is the closest fit to secondary_catchment.
+  - local_authority_code: "392"
+    local_authority_name: "North Tyneside"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=2d449474a7e84785bc34ac640d50bfaf"
+    download_url: "https://services3.arcgis.com/y0Mj0TLNFif07RwB/arcgis/rest/services/Primary/FeatureServer/0"
+    name_field: "CATCH_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item; access is public. The council's own public-facing viewer (maps.northtyneside.gov.uk/Catchment) returns 403 to a bare request (likely a disclaimer/cookie gate), but this underlying FeatureServer is reachable directly with no such gate."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      42 primary catchment-zone polygons, named by zone (e.g.
+      "Cullercoats") rather than by a specific school - the same
+      zone-based naming convention already seen in Sheffield/Aberdeen,
+      not a data quality issue here.
+
+  - local_authority_code: "392"
+    local_authority_name: "North Tyneside"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=2d449474a7e84785bc34ac640d50bfaf"
+    download_url: "https://services3.arcgis.com/y0Mj0TLNFif07RwB/arcgis/rest/services/Middle/FeatureServer/0"
+    name_field: "CATCHMENT_"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item; access is public."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      4 of 5 middle-tier catchment-zone polygons (1 of 5 rejected for a
+      genuinely null/empty geometry with no name either - a real gap in
+      the source data, not a parsing bug). Field name truncated to
+      "CATCHMENT_" (from "CATCHMENT_NAME") at the source, verified live.
+
+  - local_authority_code: "392"
+    local_authority_name: "North Tyneside"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=2d449474a7e84785bc34ac640d50bfaf"
+    download_url: "https://services3.arcgis.com/y0Mj0TLNFif07RwB/arcgis/rest/services/High/FeatureServer/0"
+    name_field: "CATCH_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item; access is public."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '9 "High" (this council''s final, exam-bearing tier) catchment polygons, e.g. "Burnside College".'
+
+  # Tower Hamlets: the first London borough found with real catchment
+  # polygon data this session - London schools more commonly use
+  # distance-based admission, so this is a genuine exception, not the
+  # norm (see the many London boroughs recorded as dead ends below,
+  # confirmed distance-only, not a search gap).
+  - local_authority_code: "211"
+    local_authority_name: "Tower Hamlets"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=40931838f3054e9fa00bcd0550a83e2e"
+    download_url: "https://services1.arcgis.com/KZuCGRSe2K5BiG1Z/arcgis/rest/services/Internet_Education_Learning/FeatureServer/4"
+    name_field: "AREA_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: >-
+      Stated verbatim on the ArcGIS item's own licenseInfo: "No special
+      restrictions or limitations on using the item's content have been
+      provided, except that data scrapping tools should not be used to
+      access the data if they impact website's usability." Verified
+      directly against the item metadata (not carried over from a
+      search result) - this project's own access pattern (occasional
+      scheduled imports, not a sustained scraping load) does not impact
+      the source's usability, so this is treated as a real, if unusually
+      worded, permissive licence.
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '6 primary catchment-zone polygons, named by area (e.g. "Area 6 (Bethnal Green)") rather than by school - the same zone-based naming convention already seen in Sheffield/Aberdeen/North Tyneside.'
+
+  - local_authority_code: "211"
+    local_authority_name: "Tower Hamlets"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=40931838f3054e9fa00bcd0550a83e2e"
+    download_url: "https://services1.arcgis.com/KZuCGRSe2K5BiG1Z/arcgis/rest/services/Internet_Education_Learning/FeatureServer/2"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: >-
+      Stated verbatim on the ArcGIS item's own licenseInfo: "No special
+      restrictions or limitations on using the item's content have been
+      provided, except that data scrapping tools should not be used to
+      access the data if they impact website's usability." Verified
+      directly against the item metadata - this project's own access
+      pattern does not impact the source's usability.
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      3 raw features, 2 distinct polygons imported (Swanlea School and
+      Stepney Green Mathematics and Computing College) - Mulberry School
+      for Girls and Stepney Green share one identical "Zone A" catchment
+      boundary (verified live), correctly deduplicated by the
+      (source_id, geometry_checksum) unique constraint. This service's
+      layer 3 ("Priority Zone B for Swanlea Secondary School") was
+      checked and found to return byte-identical data to this layer
+      (layer 2) - only layer 2 is imported, to avoid double-counting the
+      same polygons under two source entries.
+
+  - local_authority_code: "316"
+    local_authority_name: "Newham"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.newham.gov.uk/schools-education/school-finder"
+    download_url: "https://services1.arcgis.com/trOdpHvvP7HrTfdb/arcgis/rest/services/My_Maps_Data/FeatureServer/13"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo set on the ArcGIS item (owner LBNewham), item is public with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '48 primary school catchment polygons, e.g. "North Beckton".'
+
+  - local_authority_code: "316"
+    local_authority_name: "Newham"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.newham.gov.uk/schools-education/school-finder"
+    download_url: "https://services1.arcgis.com/trOdpHvvP7HrTfdb/arcgis/rest/services/My_Maps_Data/FeatureServer/14"
+    name_field: "Name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo set on the ArcGIS item (owner LBNewham), item is public with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      9 Roman Catholic school catchment polygons (the service's own
+      layer title is "Roman Catholic School Catchments", verified live).
+      Named by area (e.g. "Manor Park") rather than by school, and the
+      layer does not itself state whether it covers RC primary,
+      secondary or both - classified here as primary_catchment_denom
+      since Newham's RC secondary provision is not known to use
+      fine-grained catchment zones like this, but this is an inference,
+      not confirmed on the source.
+
+  - local_authority_code: "872"
+    local_authority_name: "Wokingham"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://experience.arcgis.com/experience/de7992d0efe34b1c99c319f39addf3c9"
+    download_url: "https://services.arcgis.com/Uk58AEewwvNNTAX2/arcgis/rest/services/School%20Catchment%20Areas/FeatureServer/0"
+    arcgis_where: "FEATURE_TYPE='Primary School Catchment Areas'"
+    name_field: "FEATURE_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo on the ArcGIS item. Item owner WBC_JamieClarkson, tagged wdc-tsdata, confirming Wokingham Borough Council as the real publisher."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      56 raw features, 41 distinct polygons imported (e.g. "Aldryngton")
+      - the other 15 are genuine infant/junior school pairs sharing a
+      byte-identical catchment boundary (verified live, e.g. "Emmbrook
+      Infant" and "Emmbrook Junior" hash to the same geometry), correctly
+      deduplicated by the (source_id, geometry_checksum) unique
+      constraint rather than imported as spurious separate polygons. A
+      separate FOI-released shapefile
+      (wokingham.gov.uk/foi/secondary-school-designated-areas) also
+      exists for secondary areas but is redundant with this live service
+      covering both phases in one place - not used, to avoid a second,
+      harder-to-maintain source for the same council.
+
+  - local_authority_code: "872"
+    local_authority_name: "Wokingham"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://experience.arcgis.com/experience/de7992d0efe34b1c99c319f39addf3c9"
+    download_url: "https://services.arcgis.com/Uk58AEewwvNNTAX2/arcgis/rest/services/School%20Catchment%20Areas/FeatureServer/0"
+    arcgis_where: "FEATURE_TYPE='Secondary School Catchment Areas'"
+    name_field: "FEATURE_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo on the ArcGIS item. Item owner WBC_JamieClarkson, tagged wdc-tsdata, confirming Wokingham Borough Council as the real publisher."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      11 raw features, 8 distinct polygons imported - Bohunt, St
+      Crispin's, The Emmbrook and The Holt share one identical catchment
+      boundary (verified live), deduplicated the same way as the primary
+      layer above. Same service, split by FEATURE_TYPE.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -2280,3 +2584,52 @@ candidates:
     reason_not_enabled: "PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map, confirmed via Content-Type: application/pdf) - no ArcGIS Online presence found for the council."
   - local_authority_name: "City of London (England)"
     reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."
+  - local_authority_name: "Redbridge (England)"
+    reason_not_enabled: >
+      Real, live, named data found (my.redbridge.gov.uk/Map/GetMapLocations?layerId=142,
+      10 features, field "Title", e.g. "Beal High School Catchment
+      Area") - but the JSON response only contains a bounding-box
+      ("PolyBounds"), not the actual polygon vertices. The true boundary
+      is rendered server-side as a raster map tile
+      (mapcache.redbridge.gov.uk/.../image.png); no vector/WFS endpoint
+      behind it was found after probing the MappingService REST tree.
+      Importing a bounding box as if it were the real catchment boundary
+      would misrepresent whether a given address is actually inside or
+      outside the catchment - the same "too degraded to usefully import"
+      judgement as the City of London entry above, not a licensing gap.
+  - local_authority_name: "Bexley, Southwark, Hackney (England)"
+    reason_not_enabled: 'All three explicitly confirmed distance-based, not catchment-zone, admission (Bexley''s own wording: "There is no such thing as a catchment area in Bexley") - a genuine structural absence of this data type, not a search gap.'
+  - local_authority_name: "Camden, Richmond upon Thames, Lambeth, Brent (England)"
+    reason_not_enabled: 'Checked via CKAN, ArcGIS Online, and each council''s own GIS/data portal directly - Camden has only a 5-zone census-profile Excel file (not per-school); Richmond''s WMS (60 layers enumerated) has school points only; Lambeth''s ArcGIS Server has school points only; Brent''s only "catchment"-titled AGOL item is travel-time data, not a boundary polygon. No catchment layer found for any of the four.'
+  - local_authority_name: "Trafford, Dudley, Swindon (England)"
+    reason_not_enabled: >
+      All three run the Astun iShare platform, confirmed via
+      atMapSettingsJS.aspx - but unlike the Welsh iShare councils
+      checked earlier (Monmouthshire/Cardiff: geometry with no
+      attributes; RCT: WFS disabled outright), these three simply do not
+      have a catchment/priority-area layer in their WFS catalog at all
+      (42/78/138 real feature types enumerated via GetCapabilities for
+      the three respectively, checked individually - only point layers
+      like primaryschools/secondaryschools/schools_primary exist). A
+      clean, different kind of dead end: the platform works fully here,
+      the data itself was never published on it.
+  - local_authority_name: "Wandsworth, Brighton and Hove, Islington, Greenwich, Kensington and Chelsea, Merton, Sutton, Westminster, Hammersmith and Fulham, Waltham Forest, Barking and Dagenham (England)"
+    reason_not_enabled: >
+      Not conclusively resolved, worth a dedicated follow-up rather than
+      a fresh full search. Wandsworth runs a proprietary "Aurora"
+      platform (Aurora.svc, SharpKit-compiled JS), not iShare/ArcGIS - no
+      endpoint isolated yet. Brighton and Hove and Islington both have
+      real WhatDoTheyKnow FOI threads confirming shapefiles exist, but
+      the site now serves a Cloudflare JS challenge (not just a 403) to
+      automated requests - needs a real browser session, not curl/
+      WebFetch. Greenwich has a page literally named
+      "greenwich-schools-catchment-radius" (JS-rendered, likely a
+      distance/radius tool rather than true catchment polygons, not
+      confirmed either way). Kensington and Chelsea has only a static
+      PDF priority-area document found so far. Merton, Sutton and
+      Westminster returned nothing via CKAN/ArcGIS Online/direct site
+      checks (one promising Westminster AGOL hit turned out to be a
+      false positive belonging to Wokingham's app). Hammersmith and
+      Fulham, Waltham Forest and Barking and Dagenham were not deeply
+      checked at all (only a quick CKAN/AGOL pass, no council-portal
+      deep-dive) - the least-investigated group here.

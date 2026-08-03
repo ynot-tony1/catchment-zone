@@ -295,6 +295,124 @@ Government Licence V3.0"`. East Dunbartonshire's and East Lothian's
   of them. Wales remains at 2 of 22 councils covered (Powys,
   Pembrokeshire).
 
+- **Wales's genuinely-remaining 13 councils (Wrexham, Flintshire, Conwy,
+  Isle of Anglesey, Gwynedd, Ceredigion, Carmarthenshire, Denbighshire,
+  Torfaen, Caerphilly, Merthyr Tydfil, Blaenau Gwent, Vale of Glamorgan)
+  checked individually - every one has a live ArcGIS Hub portal but zero
+  published datasets, confirmed via each portal's own DCAT feed plus a
+  spot-check of Gwynedd's GIS team item list directly.** Wales is now
+  fully, individually accounted for: all 22 councils have either real
+  data (Powys, Pembrokeshire) or a documented, specific reason they do
+  not (19 candidates entries, not a generic "not found" note for any of
+  them). Bridgend was also resolved this pass: its Cadcorp GeognoSIS
+  WebMap's backend is on an internal-only server
+  (CORTES2.INTERNAL.BRIDGEND.GOV.UK), reached only through a
+  session-scoped tile-image proxy - a real infrastructure barrier, not a
+  licensing question.
+
+- **England expanded again, to 12 + 5 = 17 local authorities covered
+  (529 more real catchment areas): Devon, Bracknell Forest, Peterborough
+  and North Tyneside.** Devon (371 areas) and Peterborough (67 areas,
+  resolved from the earlier "70 per-school detail layers" confusion -
+  layers 1/2 on the same MapServer are separate, simple consolidated
+  bulk layers) are both `UNCONFIRMED` licence; Bracknell Forest (43
+  areas) has OGL v3.0 independently confirmed via CKAN. North Tyneside
+  (55 areas) runs a genuine three-tier Primary/Middle/High system, the
+  second English council found doing this after Buckinghamshire/
+  Northumberland - "High" (its final, exam-bearing tier) is used as
+  secondary_catchment. Fixed a real, generically-applicable bug while
+  importing Bracknell Forest: its source fields are fixed-width and pad
+  every value with trailing spaces (e.g. "Harmans Water Primary School"
+  followed by ~20 spaces) - `_extract_name` now strips whitespace for
+  every source, not just this one, covered by a new unit test.
+
+- **Scotland's biggest gap closed: real per-school performance data
+  found for the first time, after a prior session's "Scotland has zero
+  public school-level data" conclusion turned out to be wrong for one
+  specific dataset.** statistics.gov.scot's "Attainment for All" dataset
+  (`http://statistics.gov.scot/data/attainment-for-all`) has a genuine
+  `refEstablishment` dimension - one row per secondary school, giving
+  the average SQA leaver tariff score split into three attainment bands
+  (lowest 20% / middle 60% / highest 20%). Missed in the earlier check
+  because the dataset most similar in name (`pupil-attainment`) has since
+  been retired/renamed and the successor was never re-checked. The
+  dataset's numeric establishment id matches `schools.urn` exactly once
+  "S" is appended (verified live against a real row already in this
+  database: Aberdeen Grammar School, id 5244439 -> urn "5244439S") - a
+  clean, deterministic join, no name-matching heuristics needed. One CSV
+  GET per academic year covers every Scottish secondary school at once;
+  data exists for 2015-16 through 2024-25 (10 years, verified live by
+  checking the range boundaries return headers-only outside it). A new
+  `scotland_performance.py` adapter and `import-scotland-performance`
+  command import all 10 years in one run: 10,647 metric rows, 28 skipped
+  (establishment ids with no matching current school - expected, likely
+  since-closed schools in older years). Three suppression markers found
+  and handled distinctly, not conflated: "#" (whole row suppressed, too
+  few leavers), "*" (one band suppressed on its own, e.g. a small rural
+  school's lowest/highest 20% while middle 60% still has a real value)
+  and "NA" (no reportable cohort that year at all, all three bands
+  together) - all three stored as `suppressed=True`/`value_numeric=None`,
+  never dropped or invented. Middle 60% (`scotland_leaver_tariff_middle60`)
+  is used as Scotland's catchment-scoring candidate metric, being the
+  least skewed by a handful of very high/low leavers. A second,
+  structurally identical statistics.gov.scot dataset was found and added
+  in the same pass: "Attainment by Deprivation"
+  (`attainment-by-deprivation-quintile`) - same `refEstablishment` join,
+  same suppression markers, same 2015-16 to 2024-25 year range, but
+  splitting the average leaver tariff score into 5 SIMD deprivation
+  quintiles of the pupil's home postcode instead of 3 attainment bands -
+  a within-school attainment-gap view, not a duplicate of the first
+  dataset. `scotland_performance.py` was refactored to a small
+  `_DatasetSpec`/list-of-specs shape so both datasets share one
+  fetch/parse code path rather than being copy-pasted; 28,392 metric
+  rows across both datasets, 56 skipped (no matching school). Also found
+  and imported: a previously-uncovered England sixth-form/post-16 EES
+  dataset ("Schools and colleges - performance", part of "A level and
+  other 16 to 18 results") - genuinely school-level, `exam_cohort="A
+level"` + `disadvantage_status="Total"` as the headline filter,
+  verified live (City of London School, 2024-25, aps_per_entry 50.44,
+  matching the school's own published results) - 11,168 metric rows,
+  added as a fallback candidate after `attainment8_average` for
+  `("ENGLAND", "secondary")` scoring (covers standalone sixth-form
+  colleges with no KS4 cohort).
+
+- **England expanded to 19 local authorities covered (Tower Hamlets,
+  Newham, Wokingham added, 133 raw features / 114 distinct catchment
+  polygons after correct deduplication).** Tower Hamlets is the first
+  London borough found with real catchment polygon data this session -
+  London schools more commonly use distance-based admission, confirmed
+  as a genuine structural pattern (not a search gap) for the many London
+  boroughs also checked and recorded as dead ends this pass (Bexley,
+  Southwark, Hackney explicitly confirmed distance-only; Camden,
+  Richmond, Lambeth, Brent checked with no catchment layer found).
+  Tower Hamlets's ArcGIS item carries an unusual licence clause -
+  permissive except that "data scrapping tools should not be used...if
+  they impact website's usability" - judged not to apply to this
+  project's occasional scheduled-import access pattern. Newham (57
+  areas, primary + Roman Catholic) and Wokingham (49 distinct areas)
+  both `UNCONFIRMED`. Wokingham's raw 67 features included 18 genuine
+  infant/junior or shared-site school pairs with byte-identical
+  catchment geometry (verified live, e.g. "Emmbrook Infant"/"Emmbrook
+  Junior") - correctly deduplicated to 49 distinct polygons by the
+  existing `(source_id, geometry_checksum)` unique constraint, not a
+  bug, just a bigger instance of a pattern already seen elsewhere this
+  session. Redbridge was found and rejected: its live JSON endpoint only
+  returns a bounding box, not the real polygon vertices (the true
+  boundary renders server-side as a raster tile with no vector/WFS
+  behind it) - importing a bounding box as a catchment boundary would
+  misrepresent whether an address is really inside or outside it, the
+  same "too degraded to import" judgement as the City of London
+  candidate. Trafford, Dudley and Swindon (Astun iShare councils)
+  confirmed to have working WFS with no catchment layer published on it
+  at all - a different, cleaner kind of dead end than the Welsh iShare
+  councils' zero-attribute-fields problem. `refresh-catchment-scores`
+  re-run after all of this session's catchment and performance
+  additions: scored areas now stand at 2,608 of 5,289 (up from 135 at
+  the very start of this session) - by far the largest scoring increase
+  in the project's history, since every one of Scotland's 27 councils'
+  catchments can now score for the first time, on top of England's
+  8-council catchment expansion this session.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via

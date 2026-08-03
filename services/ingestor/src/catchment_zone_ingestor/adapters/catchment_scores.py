@@ -47,8 +47,9 @@ logger = logging.getLogger(__name__)
 #: figure - the UI shows which metric was used via performance_metric_code.
 _METRIC_CANDIDATES_BY_NATION_AND_PHASE: dict[tuple[str, str], list[str]] = {
     ("ENGLAND", "primary"): ["ks2_rwm_expected_standard_percent"],
-    ("ENGLAND", "secondary"): ["attainment8_average"],
+    ("ENGLAND", "secondary"): ["attainment8_average", "a_level_aps_per_entry"],
     ("WALES", "secondary"): ["wales_ks4_capped9_points_score"],
+    ("SCOTLAND", "secondary"): ["scotland_leaver_tariff_middle60"],
 }
 
 

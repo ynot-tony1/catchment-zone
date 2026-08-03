@@ -29,6 +29,7 @@ from catchment_zone_ingestor.adapters import catchment_scores as catchment_score
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
 from catchment_zone_ingestor.adapters import scotland as scotland_adapter
+from catchment_zone_ingestor.adapters import scotland_performance as scotland_performance_adapter
 from catchment_zone_ingestor.adapters import statistics as statistics_adapter
 from catchment_zone_ingestor.adapters import wales as wales_adapter
 from catchment_zone_ingestor.adapters import wales_performance as wales_performance_adapter
@@ -704,6 +705,74 @@ def import_wales_performance(
 
 
 # ---------------------------------------------------------------------------
+# import-scotland-performance
+# ---------------------------------------------------------------------------
+
+
+@app.command("import-scotland-performance")
+def import_scotland_performance(
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and parse only; do not write to the database.")] = False,
+) -> None:
+    """Import SQA leaver tariff-score SchoolMetric rows for Scottish secondary
+    schools from statistics.gov.scot's "Attainment for All" dataset - see
+    scotland_performance.py's module docstring for why this source, once
+    missed, is now used and how its data shape maps to this service's schema.
+    """
+    settings = get_settings()
+    set_run_context(source="scotland_performance")
+    # Like import-wales-performance, a connection is needed even in
+    # dry-run mode to know which establishment ids are real schools in
+    # this database before filtering the bulk CSV against them; dry_run
+    # only skips the write at the end.
+    conn = _connect_or_none(settings, dry_run=False)
+    if conn is None:
+        _fail("a database connection is required to list known Scotland school URNs", source="scotland_performance")
+        return
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT urn FROM schools WHERE nation = 'SCOTLAND'")
+        known_urns = {row["urn"] for row in cur.fetchall()}
+
+    with _http_client(settings) as client:
+        fetch_result = scotland_performance_adapter.fetch_all_years_performance(client, known_urns)
+
+    logger.info(
+        "fetched Scotland attainment CSVs",
+        extra={
+            "years_fetched": fetch_result.years_fetched,
+            "metric_rows": len(fetch_result.metrics),
+            "rows_skipped_no_school": fetch_result.rows_skipped_no_school,
+        },
+    )
+    if fetch_result.skipped_urn_samples:
+        logger.warning("sample Scotland attainment rows with no matching school", extra={"samples": fetch_result.skipped_urn_samples})
+
+    if dry_run:
+        typer.echo(
+            f"dry-run: {fetch_result.years_fetched} academic years fetched, "
+            f"{len(fetch_result.metrics)} metric rows, {fetch_result.rows_skipped_no_school} rows skipped (no matching school)"
+        )
+        return
+
+    metric_rows = [m.model_dump(mode="json") for m in fetch_result.metrics]
+    with _tracked_run(conn, "scotland_performance", dry_run) as tracker:
+        upserted = _upsert_many_with_retry(
+            conn,
+            "school_metrics",
+            metric_rows,
+            conflict_columns=["school_urn", "metric_code", "academic_year"],
+            batch_size=settings.batch_size,
+        )
+        tracker.counts.rows_processed = len(fetch_result.metrics)
+        tracker.counts.rows_inserted = upserted
+
+    typer.echo(
+        f"imported {upserted} school metric rows from {fetch_result.years_fetched} academic years "
+        f"({fetch_result.rows_skipped_no_school} rows skipped, no matching school)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # import-catchments
 # ---------------------------------------------------------------------------
 
@@ -1107,10 +1176,12 @@ def refresh_metrics() -> None:
         referenced_codes.update(pub.get("metric_codes", []))
     for dataset in stats_config.get("performance_datasets", []):
         referenced_codes.update(metric["metric_code"] for metric in dataset.get("metrics", []))
-    # Wales's performance metric codes are not config-driven (mylocalschool.gov.wales
-    # has no source config the way EES-backed datasets do), so they are
-    # checked directly against the adapter's own name-to-code mapping.
+    # Wales's and Scotland's performance metric codes are not config-driven
+    # (neither mylocalschool.gov.wales nor statistics.gov.scot has a source
+    # config the way EES-backed datasets do), so they are checked directly
+    # against each adapter's own metric codes.
     referenced_codes.update(wales_performance_adapter.METRIC_NAME_TO_CODE.values())
+    referenced_codes.update(scotland_performance_adapter.ALL_METRIC_CODES)
 
     missing = referenced_codes - known_codes
     if missing:
@@ -1202,6 +1273,7 @@ _PIPELINE_STEPS = (
     "import-statistics",
     "import-performance",
     "import-wales-performance",
+    "import-scotland-performance",
     "import-catchments",
     "import-admissions",
     "refresh-catchment-scores",
@@ -1243,6 +1315,7 @@ def run_full_pipeline(
     _run("import-statistics", lambda: import_statistics(dry_run=dry_run))
     _run("import-performance", lambda: import_performance(dry_run=dry_run))
     _run("import-wales-performance", lambda: import_wales_performance(row_limit=None, dry_run=dry_run))
+    _run("import-scotland-performance", lambda: import_scotland_performance(dry_run=dry_run))
     _run("import-catchments", lambda: import_catchments(local_authority=None, academic_year=None, geometry_validation_only=False, dry_run=dry_run))
 
     if not skip_admissions and admissions_source_file is not None:
