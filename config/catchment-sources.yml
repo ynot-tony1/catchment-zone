@@ -2206,7 +2206,47 @@ candidates:
       origin (e.g. the user's own machine, matching the GIAS/Azure-block
       workaround pattern) before spending more effort on individual councils.
   - local_authority_name: "Cardiff (Wales)"
-    reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
+    reason_not_enabled: >
+      Real reason found this time, not just "no API": Cardiff runs the
+      Astun Technology iShare platform (ishare.cardiff.gov.uk), whose
+      GetOWS.ashx proxy is a genuine WFS 1.1.0 endpoint in front of a real
+      MapServer instance (confirmed live: GetCapabilities lists real
+      typeNames catchprimary/catchsecondary/catchprimarywelsh/
+      catchsecondarywelsh) - but DescribeFeatureType on every one of those
+      layers returns only a single msGeometry element, no attribute
+      fields at all. GetFeature confirms this: real polygon geometry
+      comes back, but with zero properties, so there is no way to name
+      which school each polygon belongs to in bulk. Licensing is not the
+      blocker here - this is a genuine "no identifying data" gap, same
+      category as the City of London candidate elsewhere in this list.
+  - local_authority_name: "Monmouthshire (Wales)"
+    reason_not_enabled: >
+      Same platform, same exact limitation as Cardiff above: Astun iShare
+      (maps.monmouthshire.gov.uk), real WFS confirmed live
+      (PrimarySchoolCatchment2025, NewSecondarySchoolCatchment2021,
+      WelshPrimarySchoolCatchment_2024, WelshSecondarySchoolCatchment all
+      return real polygon geometry) but DescribeFeatureType confirms zero
+      attribute fields on every layer, including the School point layer
+      itself - the iShare UI's own "info click" attribute lookup clearly
+      uses a separate, non-WFS mechanism this project has not reverse-
+      engineered. Not a licensing gap.
+  - local_authority_name: "Rhondda Cynon Taf (Wales)"
+    reason_not_enabled: >
+      Also Astun iShare (maps.rctcbc.gov.uk), real catchment layers found
+      in the map config (EnglishPrimaryCatchment, EnglishSecondaryCatchment,
+      WelshPrimaryCatchment, WelshSecondaryCatchment) - but WFS is
+      explicitly disabled server-side for this council specifically
+      ("WFS request not enabled. Check wfs/ows_enable_request settings.",
+      verified live), a harder block than Cardiff/Monmouthshire's
+      geometry-only response. Given all three Astun iShare Welsh councils
+      checked this session hit a real structural wall (either no
+      attributes or WFS disabled entirely), this looks like a
+      platform-wide pattern rather than a per-council gap - worth
+      deprioritising further individual iShare-platform Welsh councils
+      (Bridgend, Newport, etc. if also iShare-based) unless a way to
+      reverse-engineer the click-query attribute lookup is found.
+  - local_authority_name: "Newport, Swansea, Neath Port Talbot (Wales)"
+    reason_not_enabled: "All three have a live ArcGIS Online Hub open-data portal (data-newport.opendata.arcgis.com, data-swansea.opendata.arcgis.com, data-nptc.opendata.arcgis.com), checked via their DCAT feed and arcgis.com/data.gov.uk search - no school catchment dataset found on any of the three."
   - local_authority_name: "East Ayrshire (re-checked)"
     reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
   - local_authority_name: "Inverclyde"
@@ -2215,3 +2255,5 @@ candidates:
     reason_not_enabled: "Catchment areas published only as plain HTML text tables of school-name-to-area-name (cne-siar.gov.uk/education-and-learning/schools/catchment-areas) - not even a PDF map exists, let alone structured boundary data."
   - local_authority_name: "Shetland Islands"
     reason_not_enabled: "PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map, confirmed via Content-Type: application/pdf) - no ArcGIS Online presence found for the council."
+  - local_authority_name: "City of London (England)"
+    reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."

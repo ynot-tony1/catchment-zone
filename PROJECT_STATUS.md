@@ -259,7 +259,41 @@ disk, not what is intended.
   sources, statistics sources, GIAS, Wales performance stats, Scotland's
   schools layer, postcode geocoding) was written to `DATA_SOURCES.txt` in
   the repo root at the user's request - deliberately gitignored, not
-  committed.
+  committed. Per a later, broader instruction, this file must be kept
+  updated as part of adding any future data source, not just catchments.
+
+- **Wales re-investigated for the remaining 20 uncovered councils - no
+  new source added, but a real structural finding replaces the previous
+  "no API found" verdict for 3 of them.** Monmouthshire, Cardiff and
+  Rhondda Cynon Taf all run the Astun Technology iShare platform
+  (maps.<council>.gov.uk or ishare.cardiff.gov.uk), and each has a real,
+  live WFS 1.1.0 endpoint behind its GetOWS.ashx proxy - found by reading
+  the map viewer's own `atMapSettingsJS.aspx` config for the real
+  `wmsUrl`/`dataUrl` endpoints (a Playwright network-capture session was
+  needed for Monmouthshire, since the config is only loaded once the map
+  actually initialises, not from the static landing page). GetCapabilities
+  and the map's own layer catalog confirm the exact catchment layer names
+  in each case (e.g. Cardiff's `catchprimary`/`catchsecondary`/
+  `catchprimarywelsh`/`catchsecondarywelsh`). But `DescribeFeatureType` on
+  every one of these layers - for both Monmouthshire and Cardiff, checked
+  independently - returns only a single `msGeometry` element and zero
+  attribute fields; `GetFeature` confirms real polygon geometry comes back
+  with genuinely no properties at all, so there is no way to identify
+  which school a given polygon belongs to in bulk. RCT hits an even harder
+  wall: WFS is explicitly disabled server-side
+  ("WFS request not enabled. Check wfs/ows_enable_request settings.").
+  None of this is a licensing gap - the data is reachable, just
+  unidentifiable or blocked outright - so it is recorded as three new,
+  more specific `candidates:` entries rather than a blanket "no API"
+  note, in case the iShare click-query attribute lookup is ever worth
+  reverse-engineering. Given the same wall was hit independently on all
+  three Welsh councils checked on this platform, remaining Welsh councils
+  on the same platform (if any) were deprioritised rather than
+  individually re-tested against the identical limitation. Newport,
+  Swansea and Neath Port Talbot were also checked (all three have a live
+  ArcGIS Hub open-data portal) - no school catchment dataset found on any
+  of them. Wales remains at 2 of 22 councils covered (Powys,
+  Pembrokeshire).
 
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
