@@ -5,6 +5,54 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Wales key stage 4 performance metrics added; Scotland investigated
+  and found to have no viable public source.** Every StatsWales dataset
+  title under the Schools and Pupils topics was checked (via the new
+  api.stats.gov.wales/v1 API): GCSE/key stage 4 results there break down
+  by local authority, national total, or pupil characteristic, never by
+  individual school. Real school-level results (Capped 9 points score,
+  Literacy, Numeracy, Science and Welsh Baccalaureate points scores) are
+  published only through mylocalschool.gov.wales's per-school pages, no
+  bulk API or CSV - a new adapter fetches and parses all 173 Welsh
+  secondary schools' pages directly (server-rendered, no JS execution
+  needed; verified live), one page per school with a politeness delay.
+  Imported for real: 865 metric rows, 0 failures. Primary schools have
+  no equivalent published score post-Curriculum for Wales reform, so
+  only secondaries are covered. Scotland was checked the same way (SQA
+  National Qualifications, Achievement of CfE levels, and
+  statistics.gov.scot's SPARQL endpoint) and found to publish only at
+  local-authority/national level; its one real school-level tool,
+  Insight, requires school/council authentication and is not public open
+  data - no metrics were added for Scotland, and none were invented.
+
+- **Catchment areas on the map are now coloured by the served school's
+  performance percentile: green for the best, through light red, to dark
+  red for the worst.** A new refresh-catchment-scores step (run after
+  catchments and performance metrics are imported, not at import time)
+  finds every school whose coordinates fall inside each catchment
+  polygon (real point-in-polygon test, bbox-prefiltered on the area's
+  own indexed min/max lat/lon columns, matching the same two-phase
+  pattern already used for the admissions checker), converts the served
+  school's most recent value for whichever metric applies to the area's
+  phase and nation into a percentile rank among every school with that
+  same metric (so an Attainment 8 score, a Capped 9 points score and a
+  percentage become comparable on one 0-1 scale), and writes it to two
+  new catchment_areas columns via a real production migration
+  (performance_percentile, performance_metric_code). An area is left
+  unscored whenever no metric is configured for its nation/phase
+  (currently every Scottish catchment area, since Scotland has no
+  performance metrics), its area_type mixes phases (Orkney's
+  all_through_catchment), or no matching school falls inside it - shown
+  as neutral grey on the map rather than an invented score. Verified
+  live against production: 127 of 1,617 catchment areas score, exactly
+  Sheffield's 101 primary + 26 secondary catchments per the original
+  pilot calibration report; every other current source (12 Scottish
+  councils, no catchments in Wales yet) correctly comes back unscored.
+  The map's catchment fill/outline colour and a new legend were verified
+  live in production (screenshot: real red-to-green catchment polygons
+  rendering near Sheffield/Stocksbridge), and the catchment click-detail
+  panel now shows the percentile and which metric it is based on.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -595,19 +643,26 @@ false)` right before the foreign keys) still failed intermittently:
 
 ## Unfinished
 
-- **England now has real performance metrics (KS2 SATs, KS4 Attainment 8/
-  Progress 8 - see "Completed and verified" above); Scotland and Wales
-  still have none.** Each has its own, entirely separate statistics body
-  (National Records of Scotland / Insight benchmarking; StatsWales) that
-  has not been looked at at all - unlike England's gap, this was not
-  previously investigated to find it was actually solvable, so it is
-  a genuinely open question whether either publishes an equivalent
-  school-level, machine-readable dataset. The original LA-level EES
-  publications (school-capacity, pupil-absence x2, school-workforce) are
-  still unusable for `SchoolMetric` as designed (no per-school rows) and
-  remain resolved-but-not-imported by `import-statistics`; a schema
-  change (e.g. a local-authority-level metrics table) would be needed to
-  use them at all, and has not been attempted.
+- **England and Wales now have real performance metrics; Scotland has
+  none, and confirmed not to have a viable public source right now** (see
+  "Completed and verified" above for both). Scotland's position could
+  change if the Improvement Service's Insight tool, or an equivalent, is
+  ever opened up as public data - worth rechecking periodically rather
+  than assumed permanently closed. The original LA-level EES publications
+  (school-capacity, pupil-absence x2, school-workforce) are still unusable
+  for `SchoolMetric` as designed (no per-school rows) and remain
+  resolved-but-not-imported by `import-statistics`; a schema change (e.g.
+  a local-authority-level metrics table) would be needed to use them at
+  all, and has not been attempted.
+- **Catchment area performance scoring only covers Sheffield (127 of
+  1,617 areas) right now** - not a bug, a direct consequence of current
+  catchment coverage: Scotland has no performance metrics at all, and
+  Wales has no catchment sources yet (see the next bullet). As catchment
+  coverage or performance-metric coverage grows, re-running
+  `refresh-catchment-scores` will pick up newly-scorable areas
+  automatically with no code change needed - it was written generically
+  against the nation/phase metric-candidate table, not hardcoded to
+  Sheffield.
 - **`SchoolCatchmentArea` (linking a catchment polygon to the school it
   covers) is entirely unimplemented, and confirmed not solvable by name-
   matching for most sources.** Sheffield's features carry no name at all;
@@ -675,16 +730,14 @@ guessing from code. Found and fixed:
 ## Known failing tests
 
 None. Every test suite that was run passed: `packages/shared` (45),
-`apps/web` (29), `services/ingestor` (85).
+`apps/web` (29), `services/ingestor` (100).
 
 ## Exact next steps, in order
 
-1. Look for a Scotland/Wales equivalent of DfE's school performance
-   tables (National Records of Scotland / Insight benchmarking;
-   StatsWales) - not yet investigated at all, unlike England's gap which
-   turned out to be solvable once actually looked into (see "Completed
-   and verified" above). If found, replicate the same headline-row-filter
-   - CSV-download pattern already built for KS2/KS4.
+1. Wales performance metrics are done and Scotland has been investigated
+   and closed (no viable public source right now, see "Completed and
+   verified" above) - periodically recheck Scotland in case Insight or an
+   equivalent ever becomes public.
 2. Spatial Hub Scotland's catalog is now exhausted (13 of 13 individual
    councils imported); its national aggregate WFS is still worth trying
    again from a different network origin (403 from this session's
@@ -692,7 +745,10 @@ None. Every test suite that was run passed: `packages/shared` (45),
    coverage. Further Scottish expansion means checking councils
    individually outside that catalog (not yet attempted, no discovery
    mechanism established for it yet). Separately, check more Welsh
-   councils beyond Cardiff (ruled out).
+   councils beyond Cardiff (ruled out) - Wales now has real performance
+   metrics but zero catchment sources, so adding even one Welsh
+   catchment source would immediately extend the map's colour-grading
+   feature there too, not just add coverage.
 3. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
    before further catchment-geometry expansion at scale (that report
    predates both the full-national GIAS import and the performance-
