@@ -220,6 +220,47 @@ disk, not what is intended.
   from this environment - looks like an IP/network-level block specific
   to this environment, not a fixable header/auth issue.
 
+- **England expanded from 1 to 12 local authorities covered (Sheffield
+  plus 11 new councils, 1,887 more real catchment areas), the single
+  largest remaining coverage gap in the whole project until now.** Added:
+  Norfolk (393 areas, 3-tier infant/junior/secondary), Buckinghamshire
+  (335 areas, a genuine 3-tier first/middle/upper system plus two
+  selective grammar priority-area layers - new `middle_school_catchment`
+  and `secondary_catchment_selective_boys`/`_girls` area_types introduced
+  since neither fits the standard primary/secondary split cleanly), West
+  Berkshire (74), Nottingham (75), Bristol (27, "first"/"second priority"
+  areas rather than a single catchment), Wiltshire (221), Northumberland
+  (146, also 3-tier with a `middle_school_catchment` layer), City of York
+  (56), Cheshire East and Cheshire West and Chester (266 each - found to
+  be a byte-identical shared legacy dataset from before the 2009 Cheshire
+  County split, verified live via matching feature counts and a
+  spot-checked identical polygon; both still imported since each is
+  genuinely, independently published under its own council's workspace,
+  clearly flagged in both entries so this is never mistaken for a
+  duplicate-import bug) and Southend-on-Sea (30). Licence status is mixed
+  and each is disclosed honestly per entry: Wiltshire, Northumberland,
+  City of York, Cheshire East and Cheshire West all have OGL v3.0
+  independently confirmed against the live data.gov.uk/CKAN API by
+  organisation name (not just carried over from a search result); Norfolk,
+  Buckinghamshire, West Berkshire, Nottingham and Southend are
+  `UNCONFIRMED` (real, live, publicly-queryable data with no licence
+  evidence found); Bristol's item carries an unfilled OS copyright
+  template placeholder, recorded verbatim rather than cleaned up. One
+  further candidate (City of London's COMPASS_School_Admissions layer)
+  was found and verified live but excluded: its single feature carries no
+  school-name or any other identifying property at all, too degraded to
+  usefully import. `refresh-catchment-scores` re-run afterwards: scored
+  areas jumped from 135 to 1,705 of 4,646, since England's catchments can
+  now match against the real EES performance metrics that already existed
+  for England schools - by far the largest scoring jump in the project's
+  history, a direct payoff of England's performance-metric coverage
+  finally having catchment geometry to combine with. A full structured
+  record of every dataset this project has downloaded from (catchment
+  sources, statistics sources, GIAS, Wales performance stats, Scotland's
+  schools layer, postcode geocoding) was written to `DATA_SOURCES.txt` in
+  the repo root at the user's request - deliberately gitignored, not
+  committed.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via

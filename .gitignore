@@ -39,6 +39,7 @@ test-results/
 services/ingestor/data/
 *.gz
 *.zip
+DATA_SOURCES.txt
 
 # OS / editor
 .DS_Store

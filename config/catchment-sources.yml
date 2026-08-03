@@ -1718,6 +1718,470 @@ sources:
     notes: "7 Roman Catholic primary catchment polygons. Despite the field name, verified live to hold real RC primary school names (e.g. \"St Mary's RC Primary\"), not secondary-school data."
 
 # ---------------------------------------------------------------------------
+# England: found by systematically searching each council's own GIS/open-data
+# presence, since Sheffield was previously the only English source in this
+# file out of ~150 English local authorities. All found and independently
+# verified live in this session; licence evidence was independently checked
+# against data.gov.uk's CKAN API by organisation name (not just trusted from
+# a search result), not just carried over from whatever first turned the URL
+# up.
+# ---------------------------------------------------------------------------
+
+  # Norfolk: three tiers (infant/primary, junior, secondary), same MapServer,
+  # academic-year field (Curr_Year) confirms 2025-2026 currency.
+  - local_authority_code: "926"
+    local_authority_name: "Norfolk"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://maps.norfolk.gov.uk/schoolcatchments/schoolsfuture.aspx"
+    download_url: "https://maps.norfolk.gov.uk/arcgis/rest/services/layers_ext/where_i_live/MapServer/24"
+    name_field: "Name1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - Norfolk's general open-data page (maps.norfolk.gov.uk/inspire/) states most Norfolk County Council datasets use a Public Sector End User Licence (INSPIRE), but this specific where_i_live service is not listed there, so that cannot be confirmed to apply to this layer specifically. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Primary school catchment polygons (301 features), found via the council's own school-finder tool's backend MapServer, not an open-data catalog listing."
+
+  - local_authority_code: "926"
+    local_authority_name: "Norfolk"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_junior"
+    source_url: "https://maps.norfolk.gov.uk/schoolcatchments/schoolsfuture.aspx"
+    download_url: "https://maps.norfolk.gov.uk/arcgis/rest/services/layers_ext/where_i_live/MapServer/22"
+    name_field: "Name1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - Norfolk's general open-data page (maps.norfolk.gov.uk/inspire/) states most Norfolk County Council datasets use a Public Sector End User Licence (INSPIRE), but this specific where_i_live service is not listed there, so that cannot be confirmed to apply to this layer specifically. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      45 junior-only catchment polygons (Norfolk splits some areas into
+      separate infant/junior schools rather than one all-through primary).
+      Still primary-phase for scoring purposes (area_type prefix
+      "primary" is what refresh-catchment-scores checks).
+
+  - local_authority_code: "926"
+    local_authority_name: "Norfolk"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.norfolk.gov.uk/schoolcatchments/schoolsfuture.aspx"
+    download_url: "https://maps.norfolk.gov.uk/arcgis/rest/services/layers_ext/where_i_live/MapServer/26"
+    name_field: "Name1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - Norfolk's general open-data page (maps.norfolk.gov.uk/inspire/) states most Norfolk County Council datasets use a Public Sector End User Licence (INSPIRE), but this specific where_i_live service is not listed there, so that cannot be confirmed to apply to this layer specifically. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Secondary school catchment polygons (47 features)."
+
+  # Buckinghamshire: a genuine 3-tier system (first/middle/upper) plus
+  # two selective grammar schools with their own priority-area layers -
+  # "5 Plus" (first-school entry, ages 4-9) is the closest fit to a
+  # standard primary_catchment; "7 Plus" (middle-school entry, ages 9-13)
+  # does not map cleanly to England's national primary/secondary split so
+  # is deliberately given a area_type that will not be scored
+  # (refresh-catchment-scores only scores "primary"/"secondary"-prefixed
+  # types); "Upper Catchment Areas" (ages 13-18) is the closest fit to
+  # secondary_catchment. The two grammar layers are priority admission
+  # areas for a single named selective school each, not a shared
+  # geographic catchment - kept "secondary"-prefixed since scoring them
+  # against that specific grammar school's own attainment is genuinely
+  # informative, not misleading.
+  - local_authority_code: "825"
+    local_authority_name: "Buckinghamshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://schools.buckinghamshire.gov.uk/school-admissions/nearest"
+    download_url: "https://maps.buckinghamshire.gov.uk/server/rest/services/BC/Schools_and_Gates_2026/MapServer/4"
+    name_field: "Admissions"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "\"5 Plus Catchment Areas\" - 155 first-school entry catchment polygons."
+
+  - local_authority_code: "825"
+    local_authority_name: "Buckinghamshire"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://schools.buckinghamshire.gov.uk/school-admissions/nearest"
+    download_url: "https://maps.buckinghamshire.gov.uk/server/rest/services/BC/Schools_and_Gates_2026/MapServer/5"
+    name_field: "Admissions"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "\"7 Plus Catchment Areas\" - 142 middle-school entry catchment polygons (ages 9-13)."
+
+  - local_authority_code: "825"
+    local_authority_name: "Buckinghamshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_selective_boys"
+    source_url: "https://schools.buckinghamshire.gov.uk/school-admissions/nearest"
+    download_url: "https://maps.buckinghamshire.gov.uk/server/rest/services/BC/Schools_and_Gates_2026/MapServer/6"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "9 boys' grammar school priority admission area polygons, e.g. Sir William Borlase's Grammar School."
+
+  - local_authority_code: "825"
+    local_authority_name: "Buckinghamshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_selective_girls"
+    source_url: "https://schools.buckinghamshire.gov.uk/school-admissions/nearest"
+    download_url: "https://maps.buckinghamshire.gov.uk/server/rest/services/BC/Schools_and_Gates_2026/MapServer/7"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "9 girls' grammar school priority admission area polygons."
+
+  - local_authority_code: "825"
+    local_authority_name: "Buckinghamshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://schools.buckinghamshire.gov.uk/school-admissions/nearest"
+    download_url: "https://maps.buckinghamshire.gov.uk/server/rest/services/BC/Schools_and_Gates_2026/MapServer/8"
+    name_field: "Admissions"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both empty on the ArcGIS item. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "\"Upper Catchment Areas\" - 22 upper-school entry catchment polygons (ages 13-18)."
+
+  - local_authority_code: "869"
+    local_authority_name: "West Berkshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.westberks.gov.uk/school-catchment-areas"
+    download_url: "https://gis.westberks.gov.uk/server/rest/services/Layers/PRIMARY_SCHOOL_DESIGNATED_AREAS/FeatureServer/2"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence metadata on the service and no matching data.gov.uk organisation entry found for this specific dataset. Service is publicly queryable with no API key or token required. LEA field on returned features (869) matches West Berkshire's own GIAS code, confirming provenance."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "68 primary school designated-area polygons."
+
+  - local_authority_code: "869"
+    local_authority_name: "West Berkshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.westberks.gov.uk/school-catchment-areas"
+    download_url: "https://gis.westberks.gov.uk/server/rest/services/Layers/SECONDARY_SCHOOL_CATCHMENT_AREAS/FeatureServer/4"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence metadata on the service and no matching data.gov.uk organisation entry found for this specific dataset. Service is publicly queryable with no API key or token required. LEA field on returned features (869) matches West Berkshire's own GIAS code, confirming provenance."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "12 secondary school catchment polygons."
+
+  - local_authority_code: "892"
+    local_authority_name: "Nottingham"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://geoportal-nottmcitycouncil.opendata.arcgis.com/datasets/1b27395594d54b3bb2e90b4f17660e43_65/about"
+    download_url: "https://maps164.nottinghamcity.gov.uk/server/rest/services/Core_services/Education_and_Learning/MapServer/17"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no CKAN/data.gov.uk package clearly matching this specific service was found on independent re-check (only generic-titled unrelated results came back). A sister ArcGIS Online item for the same dataset states OGL v3.0 in its own licenseInfo, but this newer maps164-hosted service was not independently confirmed to be licensed the same way."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "65 primary school catchment polygons, LA_NUM field confirms Nottingham City (892) and neighbouring Nottinghamshire (891) both appear (cross-border catchments)."
+
+  - local_authority_code: "892"
+    local_authority_name: "Nottingham"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://geoportal-nottmcitycouncil.opendata.arcgis.com/datasets/1b27395594d54b3bb2e90b4f17660e43_65/about"
+    download_url: "https://maps164.nottinghamcity.gov.uk/server/rest/services/Core_services/Education_and_Learning/MapServer/18"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no CKAN/data.gov.uk package clearly matching this specific service was found on independent re-check (only generic-titled unrelated results came back). A sister ArcGIS Online item for the same dataset states OGL v3.0 in its own licenseInfo, but this newer maps164-hosted service was not independently confirmed to be licensed the same way."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "10 secondary school catchment polygons."
+
+  # Bristol: runs "priority area" admissions (first/second priority) rather
+  # than a single catchment boundary - both kept "secondary"-prefixed since
+  # each still represents a real geographic admissions boundary for a named
+  # secondary school.
+  - local_authority_code: "801"
+    local_authority_name: "Bristol, City of"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://open-data-bristol-bcc.hub.arcgis.com/datasets/secondary-school-areas-of-second-priority"
+    download_url: "https://maps2.bristol.gov.uk/server2/rest/services/ext/ll_education/MapServer/3"
+    name_field: "SCHOOL_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "As stated verbatim in the item's own copyright metadata (a template placeholder left un-filled by the publisher, recorded honestly rather than cleaned up): \"Copyright: (c) Crown Copyright and database rights [insert year of supply] Ordnance Survey 100023406.\""
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "25 secondary school \"first priority\" area polygons."
+
+  - local_authority_code: "801"
+    local_authority_name: "Bristol, City of"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_second_priority"
+    source_url: "https://open-data-bristol-bcc.hub.arcgis.com/datasets/secondary-school-areas-of-second-priority"
+    download_url: "https://maps2.bristol.gov.uk/server2/rest/services/ext/ll_education/MapServer/8"
+    name_field: "SCHOOL_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "As stated verbatim in the item's own copyright metadata (a template placeholder left un-filled by the publisher, recorded honestly rather than cleaned up): \"Copyright: (c) Crown Copyright and database rights [insert year of supply] Ordnance Survey 100023406.\""
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "2 secondary school \"second priority\" area polygons."
+
+  - local_authority_code: "865"
+    local_authority_name: "Wiltshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://wiltshire-council-open-data-hub-wiltscouncil.hub.arcgis.com/"
+    download_url: "https://maps.wiltshire.gov.uk/arcgis/rest/services/OpenData/SchoolCatchmentAreas/FeatureServer/7"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (confirmed via data.gov.uk/CKAN: package \"Wiltshire Council - Primary School Catchment Areas\", organisation \"Wiltshire Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "195 primary school catchment polygons."
+
+  - local_authority_code: "865"
+    local_authority_name: "Wiltshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://wiltshire-council-open-data-hub-wiltscouncil.hub.arcgis.com/"
+    download_url: "https://maps.wiltshire.gov.uk/arcgis/rest/services/OpenData/SchoolCatchmentAreas/FeatureServer/6"
+    name_field: "Establishment_Name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (confirmed via data.gov.uk/CKAN: package \"Wiltshire Council - Secondary School Catchment Areas\", organisation \"Wiltshire Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "29 secondary school catchment polygons."
+
+  - local_authority_code: "929"
+    local_authority_name: "Northumberland"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/school-catchments-northumberland"
+    download_url: "https://services2.arcgis.com/LrUbY6lLLgV3tEa5/arcgis/rest/services/_First_and_Primary_School_Catchments_View/FeatureServer/0"
+    name_field: "SCHOOL_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package \"School Catchments\", organisation \"Northumberland County Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "\"First and Primary\" catchment polygons (117 features)."
+
+  - local_authority_code: "929"
+    local_authority_name: "Northumberland"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/school-catchments-northumberland"
+    download_url: "https://services2.arcgis.com/LrUbY6lLLgV3tEa5/arcgis/rest/services/High_and_Secondary_School_Catchments_View/FeatureServer/0"
+    name_field: "SCHOOL_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package \"School Catchments\", organisation \"Northumberland County Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "\"High and Secondary\" catchment polygons (15 features)."
+
+  - local_authority_code: "929"
+    local_authority_name: "Northumberland"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://www.data.gov.uk/dataset/school-catchments-northumberland"
+    download_url: "https://services2.arcgis.com/LrUbY6lLLgV3tEa5/arcgis/rest/services/Middle_School_Catchments_View_/FeatureServer/0"
+    name_field: "SCHOOL_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package \"School Catchments\", organisation \"Northumberland County Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "14 middle-school catchment polygons (part of Northumberland's 3-tier system in some areas); not scored (area_type does not start with \"primary\"/\"secondary\")."
+
+  # City of York: field name casing genuinely differs between the primary
+  # (SchName) and secondary (Schname) layers on the same MapServer -
+  # verified live, not a typo in this file.
+  - local_authority_code: "816"
+    local_authority_name: "York"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/primary-school-catchments"
+    download_url: "https://maps.york.gov.uk/arcgis/rest/services/Public/EducationLearning/MapServer/3"
+    name_field: "SchName"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (confirmed via data.gov.uk/CKAN: package \"Primary School Catchments\", organisation \"City of York Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "44 primary school catchment polygons."
+
+  - local_authority_code: "816"
+    local_authority_name: "York"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/secondary-school-catchments"
+    download_url: "https://maps.york.gov.uk/arcgis/rest/services/Public/EducationLearning/MapServer/4"
+    name_field: "Schname"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "Open Government Licence v3.0 (confirmed via data.gov.uk/CKAN: package \"Secondary School Catchments\", organisation \"City of York Council\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "12 secondary school catchment polygons."
+
+  # Cheshire East and Cheshire West and Chester: both councils' GeoServer
+  # workspaces (same host, different workspace name) serve byte-identical
+  # feature counts (229 primary, 37 secondary) and at least one spot-checked
+  # feature (Puss Bank School) is identical between them - almost certainly
+  # a shared legacy dataset inherited from before the 2009 Cheshire County
+  # Council split into these two unitaries, never fully separated by either
+  # successor. Both are still genuinely, independently live and queryable
+  # under each council's own workspace, so both are imported - flagged here
+  # so this duplication is never mistaken for an import bug later.
+  - local_authority_code: "895"
+    local_authority_name: "Cheshire East"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/primary-school-catchment-areas2"
+    download_url: "https://maps.cheshireeast.gov.uk/geoserver/CEOpenData/wfs"
+    wfs_type_name: "AU_S_PrimaryCatchments_POLY_CURRENT"
+    name_field: "school"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package \"Primary School Catchment Areas\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "229 primary school catchment polygons. See the note above this entry: byte-identical to Cheshire West and Chester's own copy of the same dataset."
+
+  - local_authority_code: "895"
+    local_authority_name: "Cheshire East"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/secondary-school-catchment-areas3"
+    download_url: "https://maps.cheshireeast.gov.uk/geoserver/CEOpenData/wfs"
+    wfs_type_name: "AU_S_SecondaryCatchments_POLY_CURRENT"
+    name_field: "school"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package matching \"secondary-school-catchment-areas3\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "37 secondary school catchment polygons. See the note above the primary entry: byte-identical to Cheshire West and Chester's own copy of the same dataset."
+
+  - local_authority_code: "896"
+    local_authority_name: "Cheshire West and Chester"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/primary-school-catchment-areas3"
+    download_url: "https://maps.cheshireeast.gov.uk/geoserver/CWaCOpenData/wfs"
+    wfs_type_name: "AU_S_PrimaryCatchments_POLY_CURRENT"
+    name_field: "SCHOOL"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package matching \"primary-school-catchment-areas3\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: >
+      229 primary school catchment polygons, hosted on Cheshire East's own
+      GeoServer host under a separate CWaCOpenData workspace. See the note
+      above the Cheshire East entries: byte-identical to Cheshire East's
+      own copy of the same dataset (shared pre-2009 legacy data), not a
+      duplicate-import bug in this file.
+
+  - local_authority_code: "896"
+    local_authority_name: "Cheshire West and Chester"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.data.gov.uk/dataset/secondary-school-catchment-areas4"
+    download_url: "https://maps.cheshireeast.gov.uk/geoserver/CWaCOpenData/wfs"
+    wfs_type_name: "AU_S_SecondaryCatchments_POLY_CURRENT"
+    name_field: "SCHOOL"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL) (confirmed via data.gov.uk/CKAN: package matching \"secondary-school-catchment-areas4\", license_id uk-ogl - independently verified by this project directly against the CKAN API, not just carried over from the initial search)."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: >
+      37 secondary school catchment polygons, hosted on Cheshire East's own
+      GeoServer host under a separate CWaCOpenData workspace. See the note
+      above the Cheshire East entries: byte-identical to Cheshire East's
+      own copy of the same dataset (shared pre-2009 legacy data), not a
+      duplicate-import bug in this file.
+
+  - local_authority_code: "882"
+    local_authority_name: "Southend-on-Sea"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://school-catchment-areas-southend.hub.arcgis.com/"
+    download_url: "https://services3.arcgis.com/GHL0TW95ivGM736Z/arcgis/rest/services/Primary_School_Catchments/FeatureServer/0"
+    name_field: "Catchment"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both null on the ArcGIS item, and no clearly-matching data.gov.uk organisation entry found on independent re-check. A separate, older WFS for the same council (essex.astuntechnology.com) currently fails server-side (\"permission denied for schema southend_schema\") and was not used."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "24 primary school catchment polygons."
+
+  - local_authority_code: "882"
+    local_authority_name: "Southend-on-Sea"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://school-catchment-areas-southend.hub.arcgis.com/"
+    download_url: "https://services3.arcgis.com/GHL0TW95ivGM736Z/arcgis/rest/services/Secondary_School_Catchments/FeatureServer/0"
+    name_field: "Catchment"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both null on the ArcGIS item, and no clearly-matching data.gov.uk organisation entry found on independent re-check. A separate, older WFS for the same council (essex.astuntechnology.com) currently fails server-side (\"permission denied for schema southend_schema\") and was not used."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "6 secondary school catchment polygons."
+
+# ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
 # next pilot expansion has a documented starting point rather than a fresh

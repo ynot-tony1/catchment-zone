@@ -42,6 +42,17 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "S12000026", name: "Scottish Borders", sourceTypeCount: 3 },
   { code: "S12000045", name: "East Dunbartonshire", sourceTypeCount: 4 },
   { code: "S12000010", name: "East Lothian", sourceTypeCount: 3 },
+  { code: "926", name: "Norfolk", sourceTypeCount: 3 },
+  { code: "825", name: "Buckinghamshire", sourceTypeCount: 5 },
+  { code: "869", name: "West Berkshire", sourceTypeCount: 2 },
+  { code: "892", name: "Nottingham", sourceTypeCount: 2 },
+  { code: "801", name: "Bristol, City of", sourceTypeCount: 2 },
+  { code: "865", name: "Wiltshire", sourceTypeCount: 2 },
+  { code: "929", name: "Northumberland", sourceTypeCount: 3 },
+  { code: "816", name: "York", sourceTypeCount: 2 },
+  { code: "895", name: "Cheshire East", sourceTypeCount: 2 },
+  { code: "896", name: "Cheshire West and Chester", sourceTypeCount: 2 },
+  { code: "882", name: "Southend-on-Sea", sourceTypeCount: 2 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
