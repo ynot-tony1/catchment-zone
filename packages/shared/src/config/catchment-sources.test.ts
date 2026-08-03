@@ -26,6 +26,10 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "S12000005", name: "Clackmannanshire", sourceTypeCount: 4 },
   { code: "S12000034", name: "Aberdeenshire", sourceTypeCount: 2 },
   { code: "S12000023", name: "Orkney Islands", sourceTypeCount: 1 },
+  { code: "S12000030", name: "Stirling", sourceTypeCount: 2 },
+  { code: "S12000035", name: "Argyll and Bute", sourceTypeCount: 4 },
+  { code: "S12000020", name: "Moray", sourceTypeCount: 3 },
+  { code: "S12000006", name: "Dumfries and Galloway", sourceTypeCount: 1 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {

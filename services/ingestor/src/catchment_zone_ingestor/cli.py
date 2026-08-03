@@ -814,7 +814,8 @@ def import_catchments(
                 elif source.get("format") == "shapefile_zip":
                     query_result = catchments_adapter.download_shapefile_zip_features(client, feature_url)
                 else:
-                    query_result = catchments_adapter.query_all_features(client, feature_url)
+                    arcgis_where = str(source["arcgis_where"]) if source.get("arcgis_where") else "1=1"
+                    query_result = catchments_adapter.query_all_features(client, feature_url, where=arcgis_where)
             except Exception as exc:
                 logger.error("could not query FeatureServer", extra={"url": feature_url, "error": str(exc)})
                 total_rejected += 1
@@ -860,6 +861,15 @@ def import_catchments(
                     # lowercase) uses this - distinct from Fife's uppercase
                     # SCHOOL_NAM above, verified live.
                     "school_nam",
+                    # Stirling's ArcGIS Online layers use this, verified live.
+                    "School_Name",
+                    # Argyll and Bute's Open_Data catchment layers use this
+                    # short field name (real school names without a
+                    # "Primary/Secondary School" suffix, e.g. "Tayvallich"),
+                    # verified live.
+                    "NM",
+                    # Moray's ArcGIS layers use this, verified live.
+                    "SCHOOL",
                 ],
                 detected_wkid=query_result.detected_wkid,
                 fallback_source_crs=str(source["coordinate_reference_system"]),

@@ -789,6 +789,188 @@ sources:
     enabled: true
     notes: "19 catchment polygons (mix of primary-only and combined primary/secondary school catchments)."
 
+  # Stirling: found via a web search for ArcGIS-hosted Welsh/Scottish
+  # catchment layers, not Spatial Hub Scotland's catalog (which does not
+  # list Stirling at all) - the first council in this registry found
+  # outside that catalog. All catchments are Non-Denominational (verified
+  # live: every feature's Type field), so plain primary/secondary types
+  # apply.
+  - local_authority_code: "S12000030"
+    local_authority_name: "Stirling"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=34c9fc5f8d5146d8aa15d3f6c94ec3ff"
+    download_url: "https://services-eu1.arcgis.com/cECIr59LclpO818r/arcgis/rest/services/open_data_primary_school_catchments/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "35 primary catchment polygons."
+
+  - local_authority_code: "S12000030"
+    local_authority_name: "Stirling"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=1573b1ccc6704279ad7b04df7c9ece96"
+    download_url: "https://services-eu1.arcgis.com/cECIr59LclpO818r/arcgis/rest/services/open_data_secondary_school_catchments/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "6 secondary catchment polygons."
+
+  # Argyll and Bute: real school-level denomination split (Non
+  # Denominational, Roman Catholic, and Gaelic for primary; Non
+  # Denominational and Roman Catholic for secondary) published as one
+  # combined layer per phase with a DENOM attribute, not as separate
+  # layers - the arcgis_where field filters to one denomination per
+  # catchment-sources.yml entry, added specifically to support this
+  # (query_all_features's where parameter). Gaelic Medium primary
+  # catchments are not imported, matching this registry's existing
+  # practice elsewhere (e.g. Highland) of not importing GME as its own
+  # admissions-relevant category. Uses the properly-licensed Open_Data
+  # ArcGIS service (Open_Data/MapServer), not the council's separate
+  # Education/MapServer, which has the same underlying data but no
+  # licenseInfo set at all.
+  - local_authority_code: "S12000035"
+    local_authority_name: "Argyll and Bute"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data-argyll-bute.opendata.arcgis.com/datasets/e25fab81a2c045ca85cccf6cdee98b0f"
+    download_url: "https://arcgis.argyll-bute.gov.uk/arcgis/rest/services/Open_Data/MapServer/24"
+    arcgis_where: "DENOM='Non Denominational'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational primary catchment polygons (of 79 total primary features across all denominations)."
+
+  - local_authority_code: "S12000035"
+    local_authority_name: "Argyll and Bute"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://data-argyll-bute.opendata.arcgis.com/datasets/e25fab81a2c045ca85cccf6cdee98b0f"
+    download_url: "https://arcgis.argyll-bute.gov.uk/arcgis/rest/services/Open_Data/MapServer/24"
+    arcgis_where: "DENOM='Roman Catholic'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Roman Catholic primary catchment polygons (of 79 total primary features across all denominations)."
+
+  - local_authority_code: "S12000035"
+    local_authority_name: "Argyll and Bute"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data-argyll-bute.opendata.arcgis.com/datasets/d344834454e54fc891966ce23c3cfa34"
+    download_url: "https://arcgis.argyll-bute.gov.uk/arcgis/rest/services/Open_Data/MapServer/25"
+    arcgis_where: "DENOM='Non Denominational'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational secondary catchment polygons (of 12 total secondary features across all denominations)."
+
+  - local_authority_code: "S12000035"
+    local_authority_name: "Argyll and Bute"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://data-argyll-bute.opendata.arcgis.com/datasets/d344834454e54fc891966ce23c3cfa34"
+    download_url: "https://arcgis.argyll-bute.gov.uk/arcgis/rest/services/Open_Data/MapServer/25"
+    arcgis_where: "DENOM='Roman Catholic'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Roman Catholic secondary catchment polygons (of 12 total secondary features across all denominations)."
+
+  # Moray: found the same way as Stirling (web search, not Spatial Hub
+  # Scotland's catalog). "Current" items selected deliberately over the
+  # same org's several superseded historical-year items (e.g. "Primary
+  # School Catchments 2016 - 2017"), verified live by title and modified
+  # date. No secondary denominational layer was found (verified: search
+  # for one within the same org returned nothing) - matches Angus's
+  # precedent of "no separate RC secondary layer found for this council".
+  - local_authority_code: "S12000020"
+    local_authority_name: "Moray"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=73871d46f492412c8f88fd6159553a20"
+    download_url: "https://mapping.moray.gov.uk/arcgis/rest/services/OpenData/OpenData/MapServer/1"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "41 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "S12000020"
+    local_authority_name: "Moray"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=bcf635b45e9044b0ab64343f503228d5"
+    download_url: "https://mapping.moray.gov.uk/arcgis/rest/services/OpenData/OpenData/MapServer/4"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "4 primary (denominational) catchment polygons."
+
+  - local_authority_code: "S12000020"
+    local_authority_name: "Moray"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.arcgis.com/home/item.html?id=1892c1ffa5094c479f8769b5563ac88c"
+    download_url: "https://mapping.moray.gov.uk/arcgis/rest/services/OpenData/OpenData/MapServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (verified live against the ArcGIS item's own licenseInfo field)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "8 secondary catchment polygons. No separate RC secondary layer found for Moray."
+
+  # Dumfries and Galloway: a single layer of 91 primary (non-
+  # denominational) catchment polygons - verified live that every
+  # feature's "name" field is a generic primary school name (e.g.
+  # "Troqueer School", not "X Academy"/"X High School"), and the layer
+  # carries rc_catchment/secondary_ as cross-reference TEXT attributes
+  # only, not separate RC/secondary polygon geometry, so only the
+  # non-denominational primary catchments themselves are imported here -
+  # inventing an RC or secondary polygon from a text cross-reference
+  # would not be honest. Licence confirmed via the council's own site-
+  # wide open-data statement (not the ArcGIS item's own metadata, which
+  # has no licenseInfo set): "All of the datasets published can be
+  # viewed, downloaded and re-used under the Open Government Licence."
+  - local_authority_code: "S12000006"
+    local_authority_name: "Dumfries and Galloway"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://dumfries-and-galloway-open-data-dumgal.hub.arcgis.com/datasets/f796ab8db70f4c938d208a27525f2b03_0"
+    download_url: "https://services-eu1.arcgis.com/VLS4YRHk16QbZQBX/arcgis/rest/services/School_Catchment_Areas/FeatureServer/0"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (per the council's own open-data page statement, not the ArcGIS item's metadata, which had no licenseInfo set)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "91 primary (non-denominational) catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the

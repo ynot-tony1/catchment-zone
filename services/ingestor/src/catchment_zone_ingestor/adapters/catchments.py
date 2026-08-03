@@ -70,10 +70,10 @@ class FeatureQueryResult:
     wait=wait_exponential(multiplier=1, min=1, max=15),
     retry=retry_if_exception_type(httpx.TransportError),
 )
-def _query_page(client: httpx.Client, feature_server_url: str, offset: int) -> dict[str, Any]:
+def _query_page(client: httpx.Client, feature_server_url: str, offset: int, where: str) -> dict[str, Any]:
     query_url = feature_server_url.rstrip("/") + "/query"
     params: dict[str, str | int] = {
-        "where": "1=1",
+        "where": where,
         "outFields": "*",
         "f": "geojson",
         "outSR": "4326",
@@ -88,17 +88,26 @@ def _query_page(client: httpx.Client, feature_server_url: str, offset: int) -> d
     return payload
 
 
-def query_all_features(client: httpx.Client, feature_server_url: str) -> FeatureQueryResult:
+def query_all_features(client: httpx.Client, feature_server_url: str, where: str = "1=1") -> FeatureQueryResult:
     """Page through an ArcGIS FeatureServer's /query endpoint and return all
     features as GeoJSON, requesting outSR=4326 (WGS84) directly from the
     server so no client-side reprojection is normally needed.
+
+    where defaults to "1=1" (every feature), but some sources publish
+    several denomination catchments (e.g. non-denominational, Roman
+    Catholic, Gaelic) as attribute values within one shared layer rather
+    than as separate layers/services - Argyll and Bute's combined
+    Primary/Secondary School Catchment Areas layers, verified live,
+    where a where clause like "DENOM='Roman Catholic'" is the only way
+    to import one denomination as its own catchment-sources.yml entry
+    with its own source_type.
     """
     all_features: list[dict[str, Any]] = []
     offset = 0
     detected_wkid: int | None = None
 
     while True:
-        payload = _query_page(client, feature_server_url, offset)
+        payload = _query_page(client, feature_server_url, offset, where)
         features = payload.get("features", [])
         crs = payload.get("crs") or {}
         wkid = _extract_wkid(crs)

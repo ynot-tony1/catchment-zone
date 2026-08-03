@@ -31,8 +31,10 @@ import json
 import logging
 from dataclasses import dataclass
 
+import psycopg
 from shapely.geometry import Point, shape
 from shapely.geometry.base import BaseGeometry
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from catchment_zone_ingestor import db
 
@@ -247,6 +249,30 @@ def compute_catchment_scores(
     return results
 
 
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type(psycopg.errors.SerializationFailure),
+)
+def _write_batch_with_retry(conn: db.ConnectionLike, batch: list[dict[str, object]]) -> None:
+    """Writes one batch inside its own short transaction, retrying just
+    that batch from scratch on a CockroachDB SERIALIZABLE retry error
+    (SQLSTATE 40001) - the same class of error, and the same per-batch-
+    transaction fix, as cli.py's _upsert_batch_with_retry."""
+    with db.transaction(conn), conn.cursor() as cur:
+        cur.executemany(
+            """
+            UPDATE catchment_areas
+            SET performance_percentile = %(performance_percentile)s,
+                performance_metric_code = %(performance_metric_code)s,
+                updated_at = now()
+            WHERE id = %(id)s
+            """,
+            batch,
+        )
+
+
 def write_catchment_scores(conn: db.ConnectionLike, scores: list[CatchmentScoreResult], batch_size: int) -> int:
     rows = [
         {"id": s.id, "performance_percentile": s.performance_percentile, "performance_metric_code": s.performance_metric_code}
@@ -254,16 +280,6 @@ def write_catchment_scores(conn: db.ConnectionLike, scores: list[CatchmentScoreR
     ]
     total = 0
     for batch in db.batched(rows, batch_size=batch_size):
-        with db.transaction(conn), conn.cursor() as cur:
-            cur.executemany(
-                """
-                UPDATE catchment_areas
-                SET performance_percentile = %(performance_percentile)s,
-                    performance_metric_code = %(performance_metric_code)s,
-                    updated_at = now()
-                WHERE id = %(id)s
-                """,
-                batch,
-            )
+        _write_batch_with_retry(conn, batch)
         total += len(batch)
     return total
