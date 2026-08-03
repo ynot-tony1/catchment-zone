@@ -444,6 +444,74 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   serves a Cloudflare JS challenge that blocks even a real Playwright
   browser context, not just curl.
 
+- **Found and fixed a real, previously-undetected reprojection bug that
+  was silently corrupting every shapefile-sourced catchment area in
+  production.** `reproject_if_needed` treated `detected_wkid is None` as
+  "assume already WGS84" unconditionally, rather than falling back to the
+  source's own declared `coordinate_reference_system` as its own
+  docstring claimed - true for ArcGIS/WFS-JSON sources (no crs block
+  really does mean WGS84 there) but wrong for `download_shapefile_zip_features`,
+  which always returns `detected_wkid=None` by design. Verified live: every
+  Aberdeenshire and Orkney Islands catchment area (199 rows total) had raw
+  British National Grid easting/northing sitting in the
+  `minimum_latitude`/`maximum_latitude`/`minimum_longitude`/`maximum_longitude`
+  columns (e.g. `1,048,779`, not a valid latitude) - invisible to `/map`'s
+  bbox filter and never matchable by `refresh-catchment-scores`'
+  point-in-polygon check, silently, since the day those two councils were
+  imported. Fixed the condition to check the source's declared CRS when
+  no crs block came back; added 4 regression tests exercising exactly
+  this branch (previously zero direct test coverage of
+  `reproject_if_needed` existed - the fixture-based build_catchment_areas
+  tests always passed `detected_wkid=4326` explicitly). Re-imported both
+  councils; deleted the 199 stale broken rows the old code had left
+  behind (re-import does not overwrite by area name, only by
+  `(source_id, geometry_checksum)`, so a fixed geometry lands as a new
+  row alongside the old broken one unless the old one is cleaned up).
+
+- **England expanded to 23 local authorities: Gateshead, North
+  Lincolnshire and North Northamptonshire added, all found via direct web
+  search rather than a research agent (agent-reported findings always
+  re-verified live before being written to config, per this session's
+  standing discipline).** Gateshead: self-hosted ArcGIS MapServer
+  (`gis.gateshead.gov.uk`), 47 primary + 6 secondary catchment polygons,
+  name field `SCHOOL_NAM`, primary catchments dated 2019 per their own
+  `YEAR_` field but still the council's live published data. North
+  Lincolnshire: Astun iShare, 63 primary + 13 secondary polygons - but
+  this particular iShare deployment rejects `outputFormat=application/json`
+  ("not a permitted output format for layer") and `srsName=EPSG:4326`
+  ("Invalid SRS") for this layer, returning only GML3 in native
+  EPSG:27700, unlike every other WFS source in this project so far -
+  required writing a new GML3 parser
+  (`query_all_wfs_gml_features`/`format: wfs_gml`, 5 new unit tests) since
+  the existing `wfs_geojson` adapter cannot read it. North
+  Northamptonshire: not borough-wide coverage - the council calls these
+  "Linked Areas" and publishes one small ArcGIS FeatureServer per
+  oversubscribed school, each a set of individual postcode-unit polygons
+  (not one polygon per school) rather than a single catchment boundary;
+  only 3 schools/clusters found published this way, imported under a new
+  `primary_catchment_partial` source_type specifically so it is never
+  read as full coverage the way plain `primary_catchment` would be. All
+  three dry-run verified at exactly 0 rejections before real import.
+  Ealing has real, licensed-looking data (data.gov.uk lists a WMS
+  GetCapabilities URL) but `inspire.misoportal.com` timed out on every
+  connection attempt (HTTP and HTTPS) from this session's environment,
+  matching an identical unreachability finding for a different council's
+  data earlier this session - recorded as a candidate, worth retrying
+  from a different network origin. A further systematic sweep of 12
+  never-before-checked English unitaries (Stockport, Kingston upon Hull,
+  North East Lincolnshire, Southampton, Leicester, Derby, Stoke-on-Trent,
+  Bournemouth/Christchurch/Poole, Isles of Scilly, Cumberland,
+  Westmorland and Furness) plus a deeper re-check of 6 more
+  (Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington,
+  Hartlepool, West Northamptonshire) found no further real sources -
+  each individually documented in the candidates section with its
+  specific technical reason (Cadcorp session-scoped proxies for
+  Derby/Stoke matching the already-documented Bridgend dead end; PDF-only
+  publication for Hull/NE Lincs/BCP; Cloudflare-blocked for
+  Stockton-on-Tees; zero-dataset ArcGIS Hub portals for the rest).
+  `refresh-catchment-scores` re-run after all of this: scored areas now
+  stand at 2,804 of 5,469 (up from 2,608 of 5,289).
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -1034,24 +1102,33 @@ false)` right before the foreign keys) still failed intermittently:
 
 ## Unfinished
 
-- **England and Wales now have real performance metrics; Scotland has
-  none, and confirmed not to have a viable public source right now** (see
-  "Completed and verified" above for both). Scotland's position could
-  change if the Improvement Service's Insight tool, or an equivalent, is
-  ever opened up as public data - worth rechecking periodically rather
-  than assumed permanently closed. The original LA-level EES publications
-  (school-capacity, pupil-absence x2, school-workforce) are still unusable
-  for `SchoolMetric` as designed (no per-school rows) and remain
-  resolved-but-not-imported by `import-statistics`; a schema change (e.g.
-  a local-authority-level metrics table) would be needed to use them at
-  all, and has not been attempted.
-- **Catchment area performance scoring covers Sheffield and Powys's
-  secondary catchments (135 of 2,122 areas) right now** - not a bug, a
-  direct consequence of current catchment coverage: Scotland has no
-  performance metrics at all, so none of its 19 councils' catchments
-  score, even though catchment coverage there is now the largest part
-  of the dataset. As catchment coverage or performance-metric coverage
-  grows, re-running `refresh-catchment-scores` will pick up
+- **England, Wales and Scotland all now have real performance metrics**
+  (see "Completed and verified" above) - this bullet is stale as of
+  earlier in the project; Scotland's SQA leaver-tariff data
+  (statistics.gov.scot) and England's A-level dataset were both found
+  later in the same session that first wrote this section. Wales
+  primary schools and Scotland primary/special schools remain uncovered
+  (no public per-school source exists for either, confirmed by direct
+  investigation, not assumed) - worth rechecking periodically rather
+  than assumed permanently closed, particularly Scotland's Insight tool.
+  The original LA-level EES publications (school-capacity, pupil-absence
+  x2, school-workforce) are still unusable for `SchoolMetric` as designed
+  (no per-school rows) and remain resolved-but-not-imported by
+  `import-statistics`; a schema change (e.g. a local-authority-level
+  metrics table) would be needed to use them at all, and has not been
+  attempted.
+- **Catchment area performance scoring covers 2,804 of 5,469 areas as of
+  the last `refresh-catchment-scores` run** (also stale from earlier in
+  the project; grew steadily as both catchment and performance-metric
+  coverage expanded across the same session). Every school with an
+  assessable cohort has its performance metric - verified directly
+  against production: England secondary 98.4% covered, Wales secondary
+  100%, England primary's apparent gap fully explained by infant/first
+  schools with no Year 6 cohort plus academies converted too recently to
+  have data published under their new URN yet. Scotland primary/special
+  and Wales primary/special remain unscored because no metric exists for
+  them at all (not a scoring-logic gap). As catchment coverage or
+  performance-metric coverage grows, re-running `refresh-catchment-scores` will pick up
   newly-scorable areas automatically with no code change needed - it
   was written generically against the nation/phase metric-candidate
   table, not hardcoded to any one council.
@@ -1065,17 +1142,22 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 21 local authorities out of ~200+ across Great
-  Britain** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow
-  City, Fife, North Lanarkshire, Highland, Dundee City, Perth and
-  Kinross, North Ayrshire, South Ayrshire, Angus, Clackmannanshire,
-  Aberdeenshire, Orkney Islands, Stirling, Argyll and Bute, Moray,
-  Dumfries and Galloway, Renfrewshire, East Renfrewshire/Scotland;
-  Powys, Pembrokeshire/Wales) - but every one of Scotland's 32 councils
-  and every one of Wales's 22 councils has now been individually
-  investigated, not just the ones that yielded real data, so this is
-  close to as complete as this project can currently make it without
-  new data being published. Spatial Hub Scotland's original catalog
+- **Catchment coverage is 53 local authorities out of ~200+ across Great
+  Britain as of the last count (see `PILOT_LOCAL_AUTHORITIES` in
+  `packages/shared/src/config/catchment-sources.test.ts` for the exact,
+  current, tested list rather than repeating it here - it grew steadily
+  across this session and this bullet is otherwise guaranteed to go
+  stale again): 28 Scotland, 23 England, 2 Wales.** Every one of
+  Scotland's 32 councils and every one of Wales's 22 councils has now
+  been individually investigated, not just the ones that yielded real
+  data, so both nations are close to as complete as this project can
+  currently make it without new data being published; England's
+  ~150-188 councils have not been exhaustively covered the same way -
+  each expansion so far covered a deliberately chosen batch, most
+  recently a systematic sweep of 12 previously-unchecked unitaries (see
+  "Completed and verified" above) - so unlike Scotland/Wales, "no
+  further coverage found" for England reflects the batches checked so
+  far, not an exhaustive negative. Spatial Hub Scotland's original catalog
   (13 of 13) is fully exhausted; 6 further Scottish councils were found
   individually via ArcGIS Online item-metadata verification instead
   (Stirling, Argyll and Bute, Moray, Dumfries and Galloway,

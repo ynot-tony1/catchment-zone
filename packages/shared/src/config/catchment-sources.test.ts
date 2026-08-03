@@ -61,6 +61,9 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "316", name: "Newham", sourceTypeCount: 2 },
   { code: "872", name: "Wokingham", sourceTypeCount: 2 },
   { code: "894", name: "Telford and Wrekin", sourceTypeCount: 2 },
+  { code: "390", name: "Gateshead", sourceTypeCount: 2 },
+  { code: "813", name: "North Lincolnshire", sourceTypeCount: 2 },
+  { code: "940", name: "North Northamptonshire", sourceTypeCount: 4 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {

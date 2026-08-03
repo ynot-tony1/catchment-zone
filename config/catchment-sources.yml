@@ -2519,6 +2519,155 @@ sources:
     enabled: true
     notes: '9 secondary school catchment polygons, e.g. "HLC Secondary School".'
 
+  # Gateshead: self-hosted ArcGIS MapServer (School_Catchments_MIL1),
+  # publicly queryable with no API key or token. Primary catchments dated
+  # 2019 (YEAR_ field on every feature) - older than most other sources
+  # in this file but still the council's own live published data, not
+  # superseded by anything newer found.
+  - local_authority_code: "390"
+    local_authority_name: "Gateshead"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://gis.gateshead.gov.uk/gatesheadmaps/scs/app.html"
+    download_url: "https://gis.gateshead.gov.uk/server/rest/services/School_Catchments_MIL1/MapServer/2"
+    name_field: "SCHOOL_NAM"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo/accessInformation set on the MapServer or its iteminfo endpoint. Self-hosted on the council's own gis.gateshead.gov.uk ArcGIS Server, publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '47 primary catchment polygons, e.g. "Barley Mow Primary". Dated 2019 (YEAR_ field).'
+
+  - local_authority_code: "390"
+    local_authority_name: "Gateshead"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://gis.gateshead.gov.uk/gatesheadmaps/scs/app.html"
+    download_url: "https://gis.gateshead.gov.uk/server/rest/services/School_Catchments_MIL1/MapServer/5"
+    name_field: "SCHOOL_NAM"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo/accessInformation set on the MapServer or its iteminfo endpoint. Self-hosted on the council's own gis.gateshead.gov.uk ArcGIS Server, publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '6 secondary catchment polygons, e.g. "Kingsmeadow Community Comprehensive School".'
+
+  # North Lincolnshire: Astun iShare platform, same GetOWS.ashx WFS proxy
+  # architecture already used for several other councils this session, but
+  # this server rejects outputFormat=application/json ("not a permitted
+  # output format for layer") and srsName=EPSG:4326 ("Invalid SRS") -
+  # GML3 in native EPSG:27700 is the only format it will actually return,
+  # which needed a new wfs_gml adapter (query_all_wfs_gml_features) rather
+  # than the existing wfs_geojson one. MAPSOURCE must be the full internal
+  # path "nlincs_mapsources/AllMaps" (from the map page's hidden
+  # txtMapSource field) - a bare "AllMaps" 500s.
+  - local_authority_code: "813"
+    local_authority_name: "North Lincolnshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://map.northlincs.gov.uk/"
+    download_url: "https://map.northlincs.gov.uk/GetOWS.ashx"
+    wfs_type_name: "Primary_Catchments"
+    wfs_extra_params:
+      MAPSOURCE: "nlincs_mapsources/AllMaps"
+    format: "wfs_gml"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence/copyright statement in the WFS GetCapabilities response (ows:Abstract just says 'NLINCS iShareMaps overlay WMS'), and no OGL statement found on the council's own catchment-map pages."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs_gml"
+    enabled: true
+    notes: '63 primary catchment polygons, name field "school" (e.g. "Willoughby Road Primary Academy"), phase field "sch_level".'
+
+  - local_authority_code: "813"
+    local_authority_name: "North Lincolnshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://map.northlincs.gov.uk/"
+    download_url: "https://map.northlincs.gov.uk/GetOWS.ashx"
+    wfs_type_name: "Secondary_Catchments"
+    wfs_extra_params:
+      MAPSOURCE: "nlincs_mapsources/AllMaps"
+    format: "wfs_gml"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licence/copyright statement in the WFS GetCapabilities response, and no OGL statement found on the council's own catchment-map pages."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs_gml"
+    enabled: true
+    notes: '13 secondary catchment polygons, name field "school", phase field "sch_level".'
+
+  # North Northamptonshire: not a borough-wide catchment map - the council
+  # calls these "Linked Areas" and publishes one small ArcGIS FeatureServer
+  # per oversubscribed school/cluster, each a set of individual postcode
+  # unit polygons (not one polygon per school) carrying which school(s)
+  # that postcode is linked to. Only 3 schools/clusters found published
+  # this way (of many more in the borough) - source_type is
+  # "primary_catchment_partial", distinct from the plain
+  # "primary_catchment" type used elsewhere in this file, specifically so
+  # this does not get read as full borough coverage. A fourth layer,
+  # Latimer_Postcode_Areas (405 features), was found but excluded: it has
+  # no school-name field at all (feeds a different prospectus map).
+  - local_authority_code: "940"
+    local_authority_name: "North Northamptonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://northnorthants.gov.uk/your-council/maps"
+    download_url: "https://services-eu1.arcgis.com/SuC1rPA4UP1jdgwy/arcgis/rest/services/Rushden_and_Higham_Ferrers_Linked_Areas/FeatureServer/5"
+    name_field: "School_Area"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - copyrightText is empty on the FeatureServer."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '38 postcode-unit polygons linked to "South End Infant School, South End Junior School" (a joint linked area, not two separate polygons).'
+
+  - local_authority_code: "940"
+    local_authority_name: "North Northamptonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://northnorthants.gov.uk/your-council/maps"
+    download_url: "https://services-eu1.arcgis.com/SuC1rPA4UP1jdgwy/arcgis/rest/services/Higham_Ferrers_Linked_Areas/FeatureServer/6"
+    name_field: "School_Area"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - copyrightText is empty on the FeatureServer."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '27 postcode-unit polygons linked to "Higham Ferrers Nursery & Infant School, Higham Ferrers Junior School".'
+
+  - local_authority_code: "940"
+    local_authority_name: "North Northamptonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://northnorthants.gov.uk/your-council/maps"
+    download_url: "https://services-eu1.arcgis.com/SuC1rPA4UP1jdgwy/arcgis/rest/services/South_End_Linked_Areas/FeatureServer/7"
+    name_field: "School_Area"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - copyrightText is empty on the FeatureServer."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '4 postcode-unit polygons linked to "South End Infant School, South End Junior School" - a second, smaller Linked Area layer for the same joint catchment as the Rushden_and_Higham_Ferrers layer above (verified live: same council, same school names, a separate published layer covering different postcodes, not a duplicate).'
+
+  - local_authority_code: "940"
+    local_authority_name: "North Northamptonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://northnorthants.gov.uk/your-council/maps"
+    download_url: "https://services-eu1.arcgis.com/SuC1rPA4UP1jdgwy/arcgis/rest/services/Whitefriars_Linked_Area/FeatureServer/8"
+    name_field: "School_Area"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - copyrightText is empty on the FeatureServer."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '7 postcode-unit polygons linked to "Whitefriars Primary School".'
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -2526,6 +2675,75 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Stockport"
+    reason_not_enabled: "Both ArcGIS Hub portal hostnames (stockport-council-opendata.hub.arcgis.com, stockport.opendata.arcgis.com) are live but return zero datasets via DCAT feed. The council's own catchment tool (stockport.gov.uk/find-your-catchment-area) is a server-side address-lookup form, not a map - no GIS markers in its HTML, no AGOL org search hits."
+  - local_authority_name: "Kingston upon Hull"
+    reason_not_enabled: >
+      Confirmed running Astun iShare (maps.hull.gov.uk;
+      atMapSettingsJS.aspx returns real wmsUrl/dataUrl config), the same
+      platform successfully used for North Lincolnshire above, but Hull's
+      own GetOWS.ashx returns a hard, unconditional HTTP 500 (generic IIS
+      error page) regardless of ~12 parameter combinations tried
+      (SERVICE/REQUEST/MAPSOURCE variants, with and without a session
+      cookie) - a materially different failure mode from North
+      Lincolnshire's identical platform (which worked once the correct
+      MAPSOURCE prefix was found), so this looks like a broken/
+      misconfigured deployment on Hull's side, not a guessable parameter
+      issue. GetData.aspx?service=MapSource&RequestType=JSON also always
+      500s. The council's actual public catchment publication is
+      PDF-only (hull.gov.uk/downloads/file/4889 and /4891).
+  - local_authority_name: "North East Lincolnshire"
+    reason_not_enabled: "Only official catchment artifact is a plain PDF list (not even a map): nelincs.gov.uk/assets/uploads/2024/08/School-catchment-list-2024-2025.pdf. Four candidate ArcGIS Hub hostnames all resolve but return zero datasets via DCAT feed. No evidence this council runs the same iShare platform as neighbouring North Lincolnshire."
+  - local_authority_name: "Southampton"
+    reason_not_enabled: "Council states explicitly that its catchment map is 'a digital map, not a paper map, and so is not available for inspection by the public,' and separately that no Southampton secondary school has a catchment area at all. southampton-opendata.hub.arcgis.com returns zero datasets via DCAT feed. www.southampton.gov.uk is behind an Incapsula bot-mitigation challenge from this environment, blocking direct page inspection."
+  - local_authority_name: "Leicester"
+    reason_not_enabled: "schoolinfo.leicester.gov.uk is a form-based address-to-school finder with no map/GIS markers. Leicester's real open-data portal (data.leicester.gov.uk, Opendatasoft, 393 datasets) was checked exhaustively - no catchment or school-boundary dataset exists. leicester-opendata.hub.arcgis.com DCAT feed also empty."
+  - local_authority_name: "Derby"
+    reason_not_enabled: >
+      Runs Cadcorp GeognoSIS WebMap (maps.derby.gov.uk/webmap/), the same
+      platform already documented as a dead end for Bridgend and
+      Stoke-on-Trent above - real named catchment data confirmed to
+      exist server-side (the map's info-click template config references
+      'secondary school catchment'/'primary school catchment' layers by
+      name), but only reachable through a session-scoped GeognoSISRest
+      layer behind proxy.axd with no public WFS endpoint discoverable
+      from static HTML/JS inspection (wfs.exe 404s). Worth a follow-up
+      pass with a real browser session (as was done for Bridgend) rather
+      than curl alone.
+  - local_authority_name: "Stoke-on-Trent"
+    reason_not_enabled: "Same Cadcorp GeognoSIS platform as Derby above (webmaplayers.stoke.gov.uk/webmaplayers8/), same session-scoped proxy.axd architecture with no public WFS/REST endpoint found. The council's own help text confirms a 'Primary School Catchment Areas and Schools' layer exists. High-school catchments don't exist at all per the council (non-catchment admissions)."
+  - local_authority_name: "Bournemouth, Christchurch and Poole"
+    reason_not_enabled: "BCP's own ArcGIS Online org (bcpcouncil.maps.arcgis.com) was searched org-scoped: zero catchment items, only two point layers of school locations. Both open-data hub hostnames return zero datasets via DCAT. The council instead publishes one PDF per school (e.g. .../Poole-High-School-catchment-area-and-map.pdf)."
+  - local_authority_name: "Isles of Scilly"
+    reason_not_enabled: "Structural, not a search failure: the islands have exactly one all-through school (Five Islands Academy) serving all five inhabited islands - with no second school to be zoned against, 'catchment area' as this project defines it does not meaningfully apply. No GIS/open-data presence found for the council at all."
+  - local_authority_name: "Cumberland"
+    reason_not_enabled: "Council's own catchment-areas page explains catchment is based on GIS-measured walking distance but contains no map link at all, directing residents to contact schools directly. Three candidate ArcGIS Hub hostnames (plus the former Cumbria county's) are all live but all return zero datasets via DCAT."
+  - local_authority_name: "Westmorland and Furness"
+    reason_not_enabled: "Same situation as Cumberland: text-only catchment-areas page with no map link. Both candidate open-data hub hostnames live but zero datasets via DCAT."
+  - local_authority_name: "Blackburn with Darwen"
+    reason_not_enabled: "No official ArcGIS org found (the one AGOL hit belongs to an unrelated personal/hobbyist account, not the council). No maps.blackburn.gov.uk host resolves. No CKAN catchment dataset. Council only publishes an unrelated planning-applications map."
+  - local_authority_name: "Blackpool"
+    reason_not_enabled: "Has a genuine ArcGIS Online org (blackpool.maps.arcgis.com), searched org-scoped: zero catchment items, only an 'Education Establishments' point layer (school locations, not boundaries)."
+  - local_authority_name: "Stockton-on-Tees"
+    reason_not_enabled: "www.stockton.gov.uk (including the specific school-admissions-zones page) is behind a Cloudflare 'Just a moment...' JS challenge on every page tested from this environment, the same category of block already documented for Brighton/Islington's WhatDoTheyKnow pages - an access barrier, not a confirmed data-absence finding. No independent AGOL org or CKAN dataset found either. Worth retrying from a different network origin."
+  - local_authority_name: "Darlington"
+    reason_not_enabled: "No AGOL org, no CKAN hit, no resolvable GIS subdomain found. Only third-party sources (School Guide, Locrating, catchment.school) surfaced."
+  - local_authority_name: "Hartlepool"
+    reason_not_enabled: "No AGOL presence, no CKAN hit, hartlepool.gov.uk/schools-education has no map/GIS markers."
+  - local_authority_name: "West Northamptonshire"
+    reason_not_enabled: "Unlike sibling North Northamptonshire above, no ArcGIS Online org found. maps.westnorthants.gov.uk resolves but serves a bare, unconfigured default IIS Windows Server landing page. Both candidate open-data hub hostnames return zero datasets. No map markers on the council's own school-finder page."
+  - local_authority_name: "Ealing"
+    reason_not_enabled: >
+      Real data confirmed to exist: data.gov.uk lists "School Catchment
+      Priority Areas in Ealing" with a working-looking WMS GetCapabilities
+      URL (http://inspire.misoportal.com/geoserver/london_borough_of_ealing_school_catchment_priority_areas_polygon/wms),
+      last updated March 2015. inspire.misoportal.com could not be
+      reached at all from this session's environment (connection times
+      out on both HTTP and HTTPS, port 80 and 443) - the same host
+      previously found unreachable for a different council's data in an
+      earlier pass this session. Worth retrying from a different network
+      origin; a GeoServer host like this would very likely also expose a
+      WFS GetFeature endpoint at the same path once reachable.
   - local_authority_name: "Buckinghamshire"
     reason_not_enabled: "Identified an ArcGIS MapServer (Schools_and_Gates) but licence and exact catchment vs. walking-zone semantics not yet verified."
   - local_authority_name: "School Catchments - Scotland (national aggregate, Improvement Service)"

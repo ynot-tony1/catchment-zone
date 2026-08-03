@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import io
 import logging
+import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
 from typing import Any
@@ -70,7 +71,9 @@ class FeatureQueryResult:
     wait=wait_exponential(multiplier=1, min=1, max=15),
     retry=retry_if_exception_type(httpx.TransportError),
 )
-def _query_page(client: httpx.Client, feature_server_url: str, offset: int, where: str) -> dict[str, Any]:
+def _query_page(
+    client: httpx.Client, feature_server_url: str, offset: int, where: str
+) -> dict[str, Any]:
     query_url = feature_server_url.rstrip("/") + "/query"
     params: dict[str, str | int] = {
         "where": where,
@@ -84,11 +87,15 @@ def _query_page(client: httpx.Client, feature_server_url: str, offset: int, wher
     response.raise_for_status()
     payload: dict[str, Any] = response.json()
     if "error" in payload:
-        raise CatchmentSourceError(f"ArcGIS query error for {feature_server_url}: {payload['error']}")
+        raise CatchmentSourceError(
+            f"ArcGIS query error for {feature_server_url}: {payload['error']}"
+        )
     return payload
 
 
-def query_all_features(client: httpx.Client, feature_server_url: str, where: str = "1=1") -> FeatureQueryResult:
+def query_all_features(
+    client: httpx.Client, feature_server_url: str, where: str = "1=1"
+) -> FeatureQueryResult:
     """Page through an ArcGIS FeatureServer's /query endpoint and return all
     features as GeoJSON, requesting outSR=4326 (WGS84) directly from the
     server so no client-side reprojection is normally needed.
@@ -140,7 +147,11 @@ _GEOSERVER_MISSING_PRIMARY_KEY_MARKER = "natural order without a primary key"
     retry=retry_if_exception_type(httpx.TransportError),
 )
 def _query_wfs_page(
-    client: httpx.Client, service_url: str, type_name: str, start_index: int, sort_by: str | None = None
+    client: httpx.Client,
+    service_url: str,
+    type_name: str,
+    start_index: int,
+    sort_by: str | None = None,
 ) -> dict[str, Any]:
     params: dict[str, str | int] = {
         "service": "WFS",
@@ -162,16 +173,24 @@ def _query_wfs_page(
         response = client.get(service_url, params=params)
         response.raise_for_status()
     except httpx.HTTPStatusError as exc:
-        if sort_by is None and exc.response.status_code == 400 and _GEOSERVER_MISSING_PRIMARY_KEY_MARKER in exc.response.text:
+        if (
+            sort_by is None
+            and exc.response.status_code == 400
+            and _GEOSERVER_MISSING_PRIMARY_KEY_MARKER in exc.response.text
+        ):
             return _query_wfs_page(client, service_url, type_name, start_index, sort_by="id")
         raise
     payload: dict[str, Any] = response.json()
     if payload.get("type") != "FeatureCollection":
-        raise CatchmentSourceError(f"unexpected WFS response shape for {service_url}: {payload!r}"[:500])
+        raise CatchmentSourceError(
+            f"unexpected WFS response shape for {service_url}: {payload!r}"[:500]
+        )
     return payload
 
 
-def query_all_wfs_features(client: httpx.Client, service_url: str, type_name: str) -> FeatureQueryResult:
+def query_all_wfs_features(
+    client: httpx.Client, service_url: str, type_name: str
+) -> FeatureQueryResult:
     """Page through a generic OGC WFS 2.0 GetFeature endpoint and return all
     features as GeoJSON, requesting srsName=EPSG:4326 directly from the
     server so no client-side reprojection is normally needed.
@@ -226,7 +245,9 @@ def download_shapefile_zip_features(client: httpx.Client, zip_url: str) -> Featu
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         shp_names = [name for name in archive.namelist() if name.lower().endswith(".shp")]
         if len(shp_names) != 1:
-            raise CatchmentSourceError(f"expected exactly one .shp file in {zip_url}, found {shp_names!r}")
+            raise CatchmentSourceError(
+                f"expected exactly one .shp file in {zip_url}, found {shp_names!r}"
+            )
         base_name = shp_names[0][: -len(".shp")]
 
         def _member(extension: str) -> io.BytesIO:
@@ -234,11 +255,124 @@ def download_shapefile_zip_features(client: httpx.Client, zip_url: str) -> Featu
 
         reader = shapefile.Reader(shp=_member(".shp"), dbf=_member(".dbf"), shx=_member(".shx"))
         features = [
-            {"type": "Feature", "properties": shape_record.record.as_dict(), "geometry": shape_record.shape.__geo_interface__}
+            {
+                "type": "Feature",
+                "properties": shape_record.record.as_dict(),
+                "geometry": shape_record.shape.__geo_interface__,
+            }
             for shape_record in reader.iterShapeRecords()
         ]
 
     return FeatureQueryResult(features=features, detected_wkid=None)
+
+
+_GML_NS = "{http://www.opengis.net/gml}"
+_MAPSERVER_NS = "{http://mapserver.gis.umn.edu/mapserver}"
+
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=15),
+    retry=retry_if_exception_type(httpx.TransportError),
+)
+def query_all_wfs_gml_features(
+    client: httpx.Client,
+    service_url: str,
+    type_name: str,
+    extra_params: dict[str, str] | None = None,
+) -> FeatureQueryResult:
+    """Fetch and parse a WFS 1.1.0 GetFeature response encoded as GML3,
+    for servers that never return GeoJSON.
+
+    Needed for UMN MapServer backends fronted by Astun iShare's
+    GetOWS.ashx proxy (e.g. North Lincolnshire): verified live that
+    requesting `outputFormat=application/json` gets an explicit
+    `msWFSGetFeature(): ... is not a permitted output format for layer`
+    exception, and `srsName=EPSG:4326` gets `Invalid SRS` - GML3 in the
+    server's native CRS is the only format actually available, unlike
+    query_all_wfs_features above (WFS 2.0, GeoJSON). Coordinates are left
+    in that native CRS (declared per-source as coordinate_reference_system
+    in catchment-sources.yml) - detected_wkid is always None here, the
+    same pattern download_shapefile_zip_features uses.
+    """
+    params: dict[str, str] = {
+        "SERVICE": "WFS",
+        "VERSION": "1.1.0",
+        "REQUEST": "GetFeature",
+        "TYPENAME": type_name,
+    }
+    if extra_params:
+        params.update(extra_params)
+
+    response = client.get(service_url, params=params)
+    response.raise_for_status()
+    root = ET.fromstring(response.content)
+
+    features = [
+        _gml_feature_member_to_geojson(member, type_name)
+        for member in root.findall(f"{_GML_NS}featureMember")
+    ]
+    return FeatureQueryResult(features=features, detected_wkid=None)
+
+
+def _gml_feature_member_to_geojson(member: ET.Element, type_name: str) -> dict[str, Any]:
+    feature_element = member.find(f"{_MAPSERVER_NS}{type_name}")
+    if feature_element is None:
+        # Fall back to whatever the single child actually is, in case the
+        # server's namespace or element name doesn't match type_name
+        # exactly (not observed against North Lincolnshire, but cheap
+        # insurance against a silent empty-features result).
+        feature_element = next(iter(member))
+
+    properties: dict[str, Any] = {}
+    geometry: dict[str, Any] | None = None
+    for child in feature_element:
+        tag = child.tag.split("}")[-1]
+        if tag == "msGeometry":
+            geometry = _parse_gml_geometry(child)
+        else:
+            properties[tag] = child.text
+
+    if geometry is None:
+        raise CatchmentSourceError(f"no msGeometry found on a {type_name} feature")
+    return {"type": "Feature", "properties": properties, "geometry": geometry}
+
+
+def _parse_gml_geometry(geometry_element: ET.Element) -> dict[str, Any]:
+    """Handles both a bare gml:Polygon and a gml:MultiSurface wrapping one
+    or more gml:surfaceMember/gml:Polygon parts (verified live: North
+    Lincolnshire's primary catchments include genuine multi-part
+    boundaries, e.g. a school with a detached satellite zone)."""
+    polygons = [
+        _parse_gml_polygon(polygon_element)
+        for polygon_element in geometry_element.iter(f"{_GML_NS}Polygon")
+    ]
+    if not polygons:
+        raise CatchmentSourceError("no gml:Polygon found in msGeometry")
+    if len(polygons) == 1:
+        return {"type": "Polygon", "coordinates": polygons[0]}
+    return {"type": "MultiPolygon", "coordinates": polygons}
+
+
+def _parse_gml_polygon(polygon_element: ET.Element) -> list[list[list[float]]]:
+    rings: list[list[list[float]]] = []
+    exterior = polygon_element.find(f"{_GML_NS}exterior")
+    if exterior is not None:
+        rings.append(_parse_gml_ring(exterior))
+    for interior in polygon_element.findall(f"{_GML_NS}interior"):
+        rings.append(_parse_gml_ring(interior))
+    if not rings:
+        raise CatchmentSourceError("gml:Polygon has no exterior ring")
+    return rings
+
+
+def _parse_gml_ring(ring_container: ET.Element) -> list[list[float]]:
+    pos_list_element = ring_container.find(f".//{_GML_NS}posList")
+    if pos_list_element is None or not pos_list_element.text:
+        raise CatchmentSourceError("gml ring has no posList")
+    values = [float(v) for v in pos_list_element.text.split()]
+    return [[values[i], values[i + 1]] for i in range(0, len(values), 2)]
 
 
 def _extract_wkid(crs: dict[str, Any]) -> int | None:
@@ -252,21 +386,31 @@ def _extract_wkid(crs: dict[str, Any]) -> int | None:
     return None
 
 
-def reproject_if_needed(geometry: BaseGeometry, detected_wkid: int | None, fallback_source_crs: str) -> BaseGeometry:
+def reproject_if_needed(
+    geometry: BaseGeometry, detected_wkid: int | None, fallback_source_crs: str
+) -> BaseGeometry:
     """Reproject geometry to WGS84 if the server did not already return
     EPSG:4326 despite the outSR=4326 request. Uses detected_wkid from the
     response's crs block when present, otherwise falls back to the CRS
     declared for this source in catchment-sources.yml (e.g. EPSG:27700 for
     Sheffield's native British National Grid data).
     """
-    if detected_wkid in (4326, None):
-        # Either confirmed already WGS84, or no CRS was reported at all, which
-        # for an f=geojson ArcGIS response means the server's default of
-        # WGS84 applies (GeoJSON's implicit CRS).
-        if detected_wkid == 4326:
-            return geometry
-        if detected_wkid is None:
-            return geometry
+    if detected_wkid == 4326:
+        return geometry
+    if detected_wkid is None and fallback_source_crs == "EPSG:4326":
+        # No CRS was reported in the response at all, which for an
+        # f=geojson ArcGIS response normally means the server's default of
+        # WGS84 applies (GeoJSON's implicit CRS) - but only actually true
+        # when the source's own declared CRS agrees. Shapefile sources
+        # (detected_wkid is always None, see download_shapefile_zip_features)
+        # declare their real native CRS (e.g. EPSG:27700) here instead, and
+        # must still be reprojected - verified live: Aberdeenshire and
+        # Orkney Islands' shapefile-sourced catchments were being stored
+        # with raw British National Grid easting/northing in the
+        # latitude/longitude columns before this fix, silently invisible
+        # to the map's bbox filter and to refresh-catchment-scores'
+        # point-in-polygon match.
+        return geometry
 
     source_epsg = fallback_source_crs.split(":")[-1]
     transformer = Transformer.from_crs(f"EPSG:{source_epsg}", WGS84, always_xy=True)
@@ -325,7 +469,9 @@ def build_catchment_areas(
     """
     from catchment_zone_ingestor.geometry import DEFAULT_SIMPLIFY_TOLERANCE_DEGREES
 
-    tolerance = simplify_tolerance if simplify_tolerance is not None else DEFAULT_SIMPLIFY_TOLERANCE_DEGREES
+    tolerance = (
+        simplify_tolerance if simplify_tolerance is not None else DEFAULT_SIMPLIFY_TOLERANCE_DEGREES
+    )
     result = CatchmentBuildResult(areas=[])
 
     for index, feature in enumerate(features):

@@ -61,7 +61,9 @@ def _fail(message: str, source: str) -> None:
 def _http_client(settings: Settings) -> httpx.Client:
     return httpx.Client(
         timeout=settings.http_timeout_seconds,
-        headers={"User-Agent": "catchment-zone-ingestor/0.1 (public-data ingestion; contact via repo)"},
+        headers={
+            "User-Agent": "catchment-zone-ingestor/0.1 (public-data ingestion; contact via repo)"
+        },
     )
 
 
@@ -80,7 +82,10 @@ def _connect_or_none(settings: Settings, *, dry_run: bool) -> db.ConnectionLike 
         # an unchecked assumption.
         return cast("db.ConnectionLike", db.connect(settings.ingest_database_url))
     except Exception as exc:
-        logger.warning("could not connect to database, continuing without persistence", extra={"error": str(exc)})
+        logger.warning(
+            "could not connect to database, continuing without persistence",
+            extra={"error": str(exc)},
+        )
         return None
 
 
@@ -145,7 +150,9 @@ class _RunTracker:
 
 
 @contextmanager
-def _tracked_run(conn: db.ConnectionLike | None, source: str, dry_run: bool) -> Iterator[_RunTracker]:
+def _tracked_run(
+    conn: db.ConnectionLike | None, source: str, dry_run: bool
+) -> Iterator[_RunTracker]:
     """Records an ingestion_runs row around a command's real work, so
     /status's "recent ingestion runs" reflects what actually happened.
 
@@ -175,14 +182,24 @@ def _tracked_run(conn: db.ConnectionLike | None, source: str, dry_run: bool) -> 
         yield tracker
     except Exception as exc:
         pipeline.complete_ingestion_run(
-            conn, run_id, IngestionStatus.FAILED, tracker.counts, started_monotonic, error_summary=str(exc)[:1000]
+            conn,
+            run_id,
+            IngestionStatus.FAILED,
+            tracker.counts,
+            started_monotonic,
+            error_summary=str(exc)[:1000],
         )
         conn.commit()
         raise
     else:
         error_summary = f"checksum:{tracker.checksum}" if tracker.checksum else None
         pipeline.complete_ingestion_run(
-            conn, run_id, IngestionStatus.SUCCEEDED, tracker.counts, started_monotonic, error_summary=error_summary
+            conn,
+            run_id,
+            IngestionStatus.SUCCEEDED,
+            tracker.counts,
+            started_monotonic,
+            error_summary=error_summary,
         )
         conn.commit()
 
@@ -201,12 +218,17 @@ def discover_gias() -> None:
             establishment_url = gias_adapter.discover_establishment_download_url(
                 client, settings.gias_download_override_url
             )
-            trust_url = gias_adapter.discover_trust_download_url(client, settings.gias_trust_download_override_url)
+            trust_url = gias_adapter.discover_trust_download_url(
+                client, settings.gias_trust_download_override_url
+            )
     except Exception as exc:
         _fail(f"GIAS discovery failed: {exc}", source="gias")
         return
 
-    logger.info("discovered GIAS download URLs", extra={"establishment_url": establishment_url, "trust_url": trust_url})
+    logger.info(
+        "discovered GIAS download URLs",
+        extra={"establishment_url": establishment_url, "trust_url": trust_url},
+    )
     typer.echo(f"establishment: {establishment_url}")
     typer.echo(f"trust: {trust_url}")
 
@@ -218,9 +240,16 @@ def discover_gias() -> None:
 
 @app.command("import-gias")
 def import_gias(
-    row_limit: Annotated[int | None, typer.Option(help="Only process the first N data rows (testing/debugging).")] = None,
-    force: Annotated[bool, typer.Option(help="Import even if the checksum matches the last successful run.")] = False,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Parse and validate only; do not write to the database.")] = False,
+    row_limit: Annotated[
+        int | None, typer.Option(help="Only process the first N data rows (testing/debugging).")
+    ] = None,
+    force: Annotated[
+        bool, typer.Option(help="Import even if the checksum matches the last successful run.")
+    ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Parse and validate only; do not write to the database."),
+    ] = False,
 ) -> None:
     """Download and import the current GIAS establishment extract."""
     settings = get_settings()
@@ -229,7 +258,9 @@ def import_gias(
 
     try:
         with _http_client(settings) as client:
-            url = gias_adapter.discover_establishment_download_url(client, settings.gias_download_override_url)
+            url = gias_adapter.discover_establishment_download_url(
+                client, settings.gias_download_override_url
+            )
             content, checksum = gias_adapter.download_extract(client, url)
 
         if not force and conn is not None:
@@ -237,7 +268,10 @@ def import_gias(
 
             last_checksum = get_last_successful_checksum(conn, "gias_establishments")
             if last_checksum == checksum:
-                logger.info("GIAS extract unchanged since last successful run, skipping", extra={"checksum": checksum})
+                logger.info(
+                    "GIAS extract unchanged since last successful run, skipping",
+                    extra={"checksum": checksum},
+                )
                 typer.echo("skipped: checksum unchanged")
                 return
 
@@ -257,7 +291,10 @@ def import_gias(
             return
 
         if conn is None:
-            _fail("no database connection available and --dry-run was not set", source="gias_establishments")
+            _fail(
+                "no database connection available and --dry-run was not set",
+                source="gias_establishments",
+            )
             return
 
         with _tracked_run(conn, "gias_establishments", dry_run) as tracker:
@@ -269,9 +306,15 @@ def import_gias(
             la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
             rows = [s.model_dump(mode="json") for s in result.schools]
             with db.transaction(conn):
-                la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+                la_upserted = db.upsert_many(
+                    conn, "local_authorities", iter(la_rows), conflict_columns=["code"]
+                )
                 inserted = db.upsert_many(
-                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                    conn,
+                    "schools",
+                    iter(rows),
+                    conflict_columns=["urn"],
+                    batch_size=settings.batch_size,
                 )
             tracker.counts.rows_processed = result.rows_processed
             tracker.counts.rows_inserted = inserted
@@ -279,9 +322,12 @@ def import_gias(
             tracker.checksum = checksum
 
         logger.info(
-            "imported GIAS establishments", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
+            "imported GIAS establishments",
+            extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted},
         )
-        typer.echo(f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)")
+        typer.echo(
+            f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)"
+        )
     except typer.Exit:
         raise
     except Exception as exc:
@@ -295,8 +341,13 @@ def import_gias(
 
 @app.command("import-trusts")
 def import_trusts(
-    force: Annotated[bool, typer.Option(help="Import even if the checksum matches the last successful run.")] = False,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Parse and validate only; do not write to the database.")] = False,
+    force: Annotated[
+        bool, typer.Option(help="Import even if the checksum matches the last successful run.")
+    ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Parse and validate only; do not write to the database."),
+    ] = False,
 ) -> None:
     """Download and import the current GIAS academy trust / group extract."""
     settings = get_settings()
@@ -305,7 +356,9 @@ def import_trusts(
 
     try:
         with _http_client(settings) as client:
-            url = gias_adapter.discover_trust_download_url(client, settings.gias_trust_download_override_url)
+            url = gias_adapter.discover_trust_download_url(
+                client, settings.gias_trust_download_override_url
+            )
             content, checksum = gias_adapter.download_extract(client, url)
 
         if not force and conn is not None:
@@ -324,18 +377,26 @@ def import_trusts(
         )
 
         if dry_run:
-            typer.echo(f"dry-run: {len(result.trusts)} valid trusts, {result.rows_rejected} rejected rows")
+            typer.echo(
+                f"dry-run: {len(result.trusts)} valid trusts, {result.rows_rejected} rejected rows"
+            )
             return
 
         if conn is None:
-            _fail("no database connection available and --dry-run was not set", source="gias_trusts")
+            _fail(
+                "no database connection available and --dry-run was not set", source="gias_trusts"
+            )
             return
 
         rows = [t.model_dump(mode="json") for t in result.trusts]
         with _tracked_run(conn, "gias_trusts", dry_run) as tracker:
             with db.transaction(conn):
                 inserted = db.upsert_many(
-                    conn, "academy_trusts", iter(rows), conflict_columns=["trust_id"], batch_size=settings.batch_size
+                    conn,
+                    "academy_trusts",
+                    iter(rows),
+                    conflict_columns=["trust_id"],
+                    batch_size=settings.batch_size,
                 )
             tracker.counts.rows_processed = result.rows_processed
             tracker.counts.rows_inserted = inserted
@@ -355,8 +416,13 @@ def import_trusts(
 
 @app.command("import-scotland")
 def import_scotland(
-    row_limit: Annotated[int | None, typer.Option(help="Only process the first N features (testing/debugging).")] = None,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and validate only; do not write to the database.")] = False,
+    row_limit: Annotated[
+        int | None, typer.Option(help="Only process the first N features (testing/debugging).")
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Fetch and validate only; do not write to the database."),
+    ] = False,
 ) -> None:
     """Import Scotland's school register from the live ScottishSchoolRoll ArcGIS service.
 
@@ -378,7 +444,9 @@ def import_scotland(
             extra={"rows_processed": result.rows_processed, "rows_rejected": result.rows_rejected},
         )
         if result.rejection_samples:
-            logger.warning("sample rejected Scotland rows", extra={"samples": result.rejection_samples})
+            logger.warning(
+                "sample rejected Scotland rows", extra={"samples": result.rejection_samples}
+            )
 
         if dry_run:
             typer.echo(
@@ -388,25 +456,37 @@ def import_scotland(
             return
 
         if conn is None:
-            _fail("no database connection available and --dry-run was not set", source="scotland_schools")
+            _fail(
+                "no database connection available and --dry-run was not set",
+                source="scotland_schools",
+            )
             return
 
         la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
         rows = [s.model_dump(mode="json") for s in result.schools]
         with _tracked_run(conn, "scotland_schools", dry_run) as tracker:
             with db.transaction(conn):
-                la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+                la_upserted = db.upsert_many(
+                    conn, "local_authorities", iter(la_rows), conflict_columns=["code"]
+                )
                 inserted = db.upsert_many(
-                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                    conn,
+                    "schools",
+                    iter(rows),
+                    conflict_columns=["urn"],
+                    batch_size=settings.batch_size,
                 )
             tracker.counts.rows_processed = result.rows_processed
             tracker.counts.rows_inserted = inserted
             tracker.counts.rows_rejected = result.rows_rejected
 
         logger.info(
-            "imported Scotland schools", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
+            "imported Scotland schools",
+            extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted},
         )
-        typer.echo(f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)")
+        typer.echo(
+            f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)"
+        )
     except typer.Exit:
         raise
     except Exception as exc:
@@ -420,8 +500,13 @@ def import_scotland(
 
 @app.command("import-wales")
 def import_wales(
-    row_limit: Annotated[int | None, typer.Option(help="Only process the first N features (testing/debugging).")] = None,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and validate only; do not write to the database.")] = False,
+    row_limit: Annotated[
+        int | None, typer.Option(help="Only process the first N features (testing/debugging).")
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Fetch and validate only; do not write to the database."),
+    ] = False,
 ) -> None:
     """Import Wales's school register from the live DataMapWales WFS layer.
 
@@ -443,7 +528,9 @@ def import_wales(
             extra={"rows_processed": result.rows_processed, "rows_rejected": result.rows_rejected},
         )
         if result.rejection_samples:
-            logger.warning("sample rejected Wales rows", extra={"samples": result.rejection_samples})
+            logger.warning(
+                "sample rejected Wales rows", extra={"samples": result.rejection_samples}
+            )
 
         if dry_run:
             typer.echo(
@@ -453,25 +540,36 @@ def import_wales(
             return
 
         if conn is None:
-            _fail("no database connection available and --dry-run was not set", source="wales_schools")
+            _fail(
+                "no database connection available and --dry-run was not set", source="wales_schools"
+            )
             return
 
         la_rows = [la.model_dump(mode="json") for la in result.local_authorities]
         rows = [s.model_dump(mode="json") for s in result.schools]
         with _tracked_run(conn, "wales_schools", dry_run) as tracker:
             with db.transaction(conn):
-                la_upserted = db.upsert_many(conn, "local_authorities", iter(la_rows), conflict_columns=["code"])
+                la_upserted = db.upsert_many(
+                    conn, "local_authorities", iter(la_rows), conflict_columns=["code"]
+                )
                 inserted = db.upsert_many(
-                    conn, "schools", iter(rows), conflict_columns=["urn"], batch_size=settings.batch_size
+                    conn,
+                    "schools",
+                    iter(rows),
+                    conflict_columns=["urn"],
+                    batch_size=settings.batch_size,
                 )
             tracker.counts.rows_processed = result.rows_processed
             tracker.counts.rows_inserted = inserted
             tracker.counts.rows_rejected = result.rows_rejected
 
         logger.info(
-            "imported Wales schools", extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted}
+            "imported Wales schools",
+            extra={"rows_upserted": inserted, "local_authorities_upserted": la_upserted},
         )
-        typer.echo(f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)")
+        typer.echo(
+            f"imported {inserted} schools, {la_upserted} local authorities ({result.rows_rejected} rows rejected)"
+        )
     except typer.Exit:
         raise
     except Exception as exc:
@@ -491,7 +589,9 @@ def _load_statistics_config(settings: Settings) -> dict[str, Any]:
 
 @app.command("import-statistics")
 def import_statistics(
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Resolve releases only; do not write to the database.")] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Resolve releases only; do not write to the database.")
+    ] = False,
 ) -> None:
     """Import SchoolMetric rows for the DfE publications listed in config/statistics-sources.yml."""
     settings = get_settings()
@@ -512,7 +612,10 @@ def import_statistics(
                 release = statistics_adapter.resolve_current_release(client, base_url, slug)
             except Exception as exc:
                 total_failed += 1
-                logger.warning("could not resolve release for publication", extra={"slug": slug, "error": str(exc)})
+                logger.warning(
+                    "could not resolve release for publication",
+                    extra={"slug": slug, "error": str(exc)},
+                )
                 continue
             total_resolved += 1
             logger.info(
@@ -541,7 +644,10 @@ def import_statistics(
 
 @app.command("import-performance")
 def import_performance(
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Parse and validate only; do not write to the database.")] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Parse and validate only; do not write to the database."),
+    ] = False,
 ) -> None:
     """Import SchoolMetric rows for the school performance tables listed
     under performance_datasets in config/statistics-sources.yml (GCSE/
@@ -581,8 +687,14 @@ def import_performance(
             title = str(dataset_config["dataset_title"])
             try:
                 release = statistics_adapter.find_dataset_id_by_title(client, base_url, slug, title)
-                rows = statistics_adapter.fetch_dataset_csv_rows(client, base_url, release.dataset_id)
-                metrics = list(statistics_adapter.map_performance_rows_to_metrics(rows, dataset_config, release))
+                rows = statistics_adapter.fetch_dataset_csv_rows(
+                    client, base_url, release.dataset_id
+                )
+                metrics = list(
+                    statistics_adapter.map_performance_rows_to_metrics(
+                        rows, dataset_config, release
+                    )
+                )
             except Exception as exc:
                 total_failed_datasets += 1
                 logger.warning(
@@ -598,7 +710,11 @@ def import_performance(
 
             logger.info(
                 "parsed performance dataset",
-                extra={"publication_slug": slug, "dataset_title": title, "metric_rows": len(metrics)},
+                extra={
+                    "publication_slug": slug,
+                    "dataset_title": title,
+                    "metric_rows": len(metrics),
+                },
             )
 
             if dry_run or conn is None:
@@ -636,8 +752,12 @@ def import_performance(
 
 @app.command("import-wales-performance")
 def import_wales_performance(
-    row_limit: Annotated[int | None, typer.Option(help="Only fetch the first N schools (testing/debugging).")] = None,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and parse only; do not write to the database.")] = False,
+    row_limit: Annotated[
+        int | None, typer.Option(help="Only fetch the first N schools (testing/debugging).")
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Fetch and parse only; do not write to the database.")
+    ] = False,
 ) -> None:
     """Import key stage 4 SchoolMetric rows for Welsh secondary schools from
     mylocalschool.gov.wales (no bulk API exists; one page per school - see
@@ -653,7 +773,10 @@ def import_wales_performance(
     # skips the write at the end.
     conn = _connect_or_none(settings, dry_run=False)
     if conn is None:
-        _fail("a database connection is required to list Welsh secondary schools", source="wales_performance")
+        _fail(
+            "a database connection is required to list Welsh secondary schools",
+            source="wales_performance",
+        )
         return
 
     with conn.cursor() as cur:
@@ -677,7 +800,10 @@ def import_wales_performance(
         },
     )
     if fetch_result.failure_samples:
-        logger.warning("sample failed Wales school performance fetches", extra={"samples": fetch_result.failure_samples})
+        logger.warning(
+            "sample failed Wales school performance fetches",
+            extra={"samples": fetch_result.failure_samples},
+        )
 
     if dry_run:
         typer.echo(
@@ -711,7 +837,9 @@ def import_wales_performance(
 
 @app.command("import-scotland-performance")
 def import_scotland_performance(
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Fetch and parse only; do not write to the database.")] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Fetch and parse only; do not write to the database.")
+    ] = False,
 ) -> None:
     """Import SQA leaver tariff-score SchoolMetric rows for Scottish secondary
     schools from statistics.gov.scot's "Attainment for All" dataset - see
@@ -726,7 +854,10 @@ def import_scotland_performance(
     # only skips the write at the end.
     conn = _connect_or_none(settings, dry_run=False)
     if conn is None:
-        _fail("a database connection is required to list known Scotland school URNs", source="scotland_performance")
+        _fail(
+            "a database connection is required to list known Scotland school URNs",
+            source="scotland_performance",
+        )
         return
 
     with conn.cursor() as cur:
@@ -745,7 +876,10 @@ def import_scotland_performance(
         },
     )
     if fetch_result.skipped_urn_samples:
-        logger.warning("sample Scotland attainment rows with no matching school", extra={"samples": fetch_result.skipped_urn_samples})
+        logger.warning(
+            "sample Scotland attainment rows with no matching school",
+            extra={"samples": fetch_result.skipped_urn_samples},
+        )
 
     if dry_run:
         typer.echo(
@@ -832,10 +966,12 @@ def _resolve_catchment_source_id(conn: db.ConnectionLike | None, source: dict[st
 @app.command("import-catchments")
 def import_catchments(
     local_authority: Annotated[
-        str | None, typer.Option("--local-authority", help="Only import this local authority code or name.")
+        str | None,
+        typer.Option("--local-authority", help="Only import this local authority code or name."),
     ] = None,
     academic_year: Annotated[
-        str | None, typer.Option("--academic-year", help="Only import sources for this academic year.")
+        str | None,
+        typer.Option("--academic-year", help="Only import sources for this academic year."),
     ] = None,
     geometry_validation_only: Annotated[
         bool,
@@ -856,7 +992,8 @@ def import_catchments(
         sources = [
             s
             for s in sources
-            if s.get("local_authority_code") == local_authority or s.get("local_authority_name") == local_authority
+            if s.get("local_authority_code") == local_authority
+            or s.get("local_authority_name") == local_authority
         ]
     if academic_year:
         sources = [s for s in sources if s.get("academic_year") == academic_year]
@@ -871,7 +1008,9 @@ def import_catchments(
     with _http_client(settings) as client:
         for source in sources:
             if not source.get("licence"):
-                logger.error("refusing to import source with no licence recorded", extra={"source": source})
+                logger.error(
+                    "refusing to import source with no licence recorded", extra={"source": source}
+                )
                 total_rejected += 1
                 continue
 
@@ -879,14 +1018,35 @@ def import_catchments(
             try:
                 if source.get("format") == "wfs_geojson":
                     type_name = str(source["wfs_type_name"])
-                    query_result = catchments_adapter.query_all_wfs_features(client, feature_url, type_name)
+                    query_result = catchments_adapter.query_all_wfs_features(
+                        client, feature_url, type_name
+                    )
+                elif source.get("format") == "wfs_gml":
+                    type_name = str(source["wfs_type_name"])
+                    raw_extra_params = source.get("wfs_extra_params")
+                    extra_params = (
+                        {str(k): str(v) for k, v in raw_extra_params.items()}
+                        if isinstance(raw_extra_params, dict)
+                        else None
+                    )
+                    query_result = catchments_adapter.query_all_wfs_gml_features(
+                        client, feature_url, type_name, extra_params=extra_params
+                    )
                 elif source.get("format") == "shapefile_zip":
-                    query_result = catchments_adapter.download_shapefile_zip_features(client, feature_url)
+                    query_result = catchments_adapter.download_shapefile_zip_features(
+                        client, feature_url
+                    )
                 else:
-                    arcgis_where = str(source["arcgis_where"]) if source.get("arcgis_where") else "1=1"
-                    query_result = catchments_adapter.query_all_features(client, feature_url, where=arcgis_where)
+                    arcgis_where = (
+                        str(source["arcgis_where"]) if source.get("arcgis_where") else "1=1"
+                    )
+                    query_result = catchments_adapter.query_all_features(
+                        client, feature_url, where=arcgis_where
+                    )
             except Exception as exc:
-                logger.error("could not query FeatureServer", extra={"url": feature_url, "error": str(exc)})
+                logger.error(
+                    "could not query FeatureServer", extra={"url": feature_url, "error": str(exc)}
+                )
                 total_rejected += 1
                 continue
 
@@ -1014,7 +1174,8 @@ def import_catchments(
                         update_columns=[
                             c
                             for c in source_row
-                            if c not in ("id", "local_authority_code", "academic_year", "source_type")
+                            if c
+                            not in ("id", "local_authority_code", "academic_year", "source_type")
                         ],
                         batch_size=settings.batch_size,
                     )
@@ -1054,7 +1215,9 @@ def import_catchments(
 
 @app.command("import-admissions")
 def import_admissions(
-    source_file: Annotated[Path, typer.Option("--source-file", help="Path to a CSV or YAML admissions metadata file.")],
+    source_file: Annotated[
+        Path, typer.Option("--source-file", help="Path to a CSV or YAML admissions metadata file.")
+    ],
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Import admission arrangement metadata from a hand-maintained CSV or YAML file."""
@@ -1077,11 +1240,14 @@ def import_admissions(
         return
 
     logger.info(
-        "parsed admissions source", extra={"rows_processed": result.rows_processed, "rows_rejected": result.rows_rejected}
+        "parsed admissions source",
+        extra={"rows_processed": result.rows_processed, "rows_rejected": result.rows_rejected},
     )
 
     if dry_run:
-        typer.echo(f"dry-run: {len(result.arrangements)} valid arrangements, {result.rows_rejected} rejected")
+        typer.echo(
+            f"dry-run: {len(result.arrangements)} valid arrangements, {result.rows_rejected} rejected"
+        )
         return
 
     if conn is None:
@@ -1107,7 +1273,9 @@ def import_admissions(
 
 @app.command("refresh-catchment-scores")
 def refresh_catchment_scores(
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Compute only; do not write to the database.")] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Compute only; do not write to the database.")
+    ] = False,
 ) -> None:
     """Recomputes every catchment area's performance_percentile: the
     served school's percentile rank on whichever metric applies to the
@@ -1121,7 +1289,10 @@ def refresh_catchment_scores(
     set_run_context(source="catchment_scores")
     conn = _connect_or_none(settings, dry_run=False)
     if conn is None:
-        _fail("a database connection is required to compute catchment scores", source="catchment_scores")
+        _fail(
+            "a database connection is required to compute catchment scores",
+            source="catchment_scores",
+        )
         return
 
     schools = catchment_scores_adapter.load_schools_with_coordinates(conn)
@@ -1129,11 +1300,15 @@ def refresh_catchment_scores(
 
     metric_codes = catchment_scores_adapter.all_configured_metric_codes()
     percentiles_by_metric = {
-        code: catchment_scores_adapter.compute_percentiles(catchment_scores_adapter.load_latest_metric_values(conn, code))
+        code: catchment_scores_adapter.compute_percentiles(
+            catchment_scores_adapter.load_latest_metric_values(conn, code)
+        )
         for code in metric_codes
     }
 
-    scores = catchment_scores_adapter.compute_catchment_scores(areas, schools, percentiles_by_metric)
+    scores = catchment_scores_adapter.compute_catchment_scores(
+        areas, schools, percentiles_by_metric
+    )
     scored_count = sum(1 for s in scores if s.performance_percentile is not None)
 
     logger.info(
@@ -1185,10 +1360,15 @@ def refresh_metrics() -> None:
 
     missing = referenced_codes - known_codes
     if missing:
-        _fail(f"metric codes referenced by statistics-sources.yml are missing from metric-definitions.yml: {sorted(missing)}", source="refresh_metrics")
+        _fail(
+            f"metric codes referenced by statistics-sources.yml are missing from metric-definitions.yml: {sorted(missing)}",
+            source="refresh_metrics",
+        )
         return
 
-    typer.echo(f"ok: {len(known_codes)} metric definitions cover all {len(referenced_codes)} referenced codes")
+    typer.echo(
+        f"ok: {len(known_codes)} metric definitions cover all {len(referenced_codes)} referenced codes"
+    )
 
 
 @app.command("verify")
@@ -1201,9 +1381,13 @@ def verify() -> None:
         sources = _load_catchment_sources(settings)
         for source in sources:
             if not source.get("licence"):
-                problems.append(f"catchment source for {source.get('local_authority_name')} has no licence recorded")
+                problems.append(
+                    f"catchment source for {source.get('local_authority_name')} has no licence recorded"
+                )
             if source.get("coordinate_reference_system") is None:
-                problems.append(f"catchment source for {source.get('local_authority_name')} has no CRS recorded")
+                problems.append(
+                    f"catchment source for {source.get('local_authority_name')} has no CRS recorded"
+                )
     except Exception as exc:
         problems.append(f"could not load catchment-sources.yml: {exc}")
 
@@ -1287,7 +1471,8 @@ _PIPELINE_STEPS = (
 def run_full_pipeline(
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
     admissions_source_file: Annotated[
-        Path | None, typer.Option("--admissions-source-file", help="Required unless --skip-admissions is set.")
+        Path | None,
+        typer.Option("--admissions-source-file", help="Required unless --skip-admissions is set."),
     ] = None,
     skip_admissions: Annotated[bool, typer.Option("--skip-admissions")] = False,
 ) -> None:
@@ -1314,12 +1499,26 @@ def run_full_pipeline(
     _run("import-trusts", lambda: import_trusts(force=False, dry_run=dry_run))
     _run("import-statistics", lambda: import_statistics(dry_run=dry_run))
     _run("import-performance", lambda: import_performance(dry_run=dry_run))
-    _run("import-wales-performance", lambda: import_wales_performance(row_limit=None, dry_run=dry_run))
+    _run(
+        "import-wales-performance",
+        lambda: import_wales_performance(row_limit=None, dry_run=dry_run),
+    )
     _run("import-scotland-performance", lambda: import_scotland_performance(dry_run=dry_run))
-    _run("import-catchments", lambda: import_catchments(local_authority=None, academic_year=None, geometry_validation_only=False, dry_run=dry_run))
+    _run(
+        "import-catchments",
+        lambda: import_catchments(
+            local_authority=None,
+            academic_year=None,
+            geometry_validation_only=False,
+            dry_run=dry_run,
+        ),
+    )
 
     if not skip_admissions and admissions_source_file is not None:
-        _run("import-admissions", lambda: import_admissions(source_file=admissions_source_file, dry_run=dry_run))
+        _run(
+            "import-admissions",
+            lambda: import_admissions(source_file=admissions_source_file, dry_run=dry_run),
+        )
     elif not skip_admissions:
         logger.info("no --admissions-source-file given; skipping import-admissions for this run")
 
