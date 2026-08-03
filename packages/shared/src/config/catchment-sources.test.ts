@@ -38,6 +38,10 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "S12000040", name: "West Lothian", sourceTypeCount: 4 },
   { code: "S12000029", name: "South Lanarkshire", sourceTypeCount: 4 },
   { code: "S12000039", name: "West Dunbartonshire", sourceTypeCount: 4 },
+  { code: "S12000014", name: "Falkirk", sourceTypeCount: 4 },
+  { code: "S12000026", name: "Scottish Borders", sourceTypeCount: 3 },
+  { code: "S12000045", name: "East Dunbartonshire", sourceTypeCount: 4 },
+  { code: "S12000010", name: "East Lothian", sourceTypeCount: 3 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {

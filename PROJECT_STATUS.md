@@ -172,6 +172,54 @@ disk, not what is intended.
   problem rather than a licensing or data question, worth rechecking
   later.
 
+- **Four more Scottish councils added, taking Scotland to 27 of 32
+  (214 more real catchment areas, all ND/RC split), found by
+  re-investigating councils previously recorded as dead ends once the
+  user's later instruction removed licensing as a gating factor
+  entirely.** All four are real, live, publicly-queryable ArcGIS
+  services sitting behind interactive map viewers rather than listed on
+  any open-data catalog - found by reading each viewer's own JS/config
+  for the underlying FeatureServer URL, not a documented API. Falkirk
+  (56 areas, `services-eu1.arcgis.com`, found via `maps.falkirk.gov.uk`'s
+  own `BuildMap.js`) and Scottish Borders (65 areas, found via an ArcGIS
+  Instant App's nested "Education" group layer) both have `UNCONFIRMED`
+  licences - real, public, queryable data with no `licenseInfo` anywhere
+  and no data.gov.uk organisation for either council to check for
+  sibling evidence. East Lothian (46 areas) is the same: `UNCONFIRMED`,
+  found via two little-linked ArcGIS Instant Apps on the council's own
+  AGOL organisation even though the citizen-facing page publishes only
+  per-school PDFs; one of its three layers (`primary_catchment_rc`) has
+  a field genuinely named `SECONDARY` despite holding real RC primary
+  school names - a copy-pasted template artifact on the publisher's
+  side, verified live and not a mistake in this import. East
+  Dunbartonshire (47 areas) is the one with real licence evidence: its
+  own `maps.eastdunbarton.gov.uk` server (candidate entry previously
+  recorded with confirmed OGL v3.0 evidence) is still unreachable - the
+  TLS certificate is still expired as of today and the connection now
+  hangs/times out even with verification disabled, worse than before -
+  but an identical copy of the same dataset is hosted on the council's
+  own ArcGIS Online organisation instead, confirmed to be the same
+  dataset (same layer names, same feature counts) and confirmed by
+  independently re-querying the ArcGIS sharing REST search API myself
+  (not just trusting a sub-agent's report) that 4 companion items on
+  that same AGOL organisation carry explicit `licenseInfo: "Open
+  Government Licence V3.0"`. East Dunbartonshire's and East Lothian's
+  `candidates:` entries were removed from `catchment-sources.yml` since
+  they are now enabled sources instead. `refresh-catchment-scores`
+  re-run afterwards: still 135 of 2,759 scored (Scotland has no
+  performance metrics yet, so none of its 27 councils' catchments
+  score). Remaining genuine dead ends after this re-check: East
+  Ayrshire (interactive lookup does a full-page postcode search with no
+  client-side API call - no boundary geometry ever reaches the
+  browser), Inverclyde (real ASP.NET backend found -
+  `LocalKnowledge.asmx` - but it's a point-in-polygon lookup only, no
+  bulk feature export), Na h-Eileanan an Iar and Shetland Islands (no
+  GIS presence for education data at all, despite both councils running
+  ArcGIS orgs for other departments). The Spatial Hub Scotland national
+  aggregate WFS was retried again and still returns a Tomcat-level 403
+  from this environment - looks like an IP/network-level block specific
+  to this environment, not a fixable header/auth issue.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via

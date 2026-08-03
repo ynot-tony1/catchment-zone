@@ -1482,6 +1482,241 @@ sources:
     enabled: true
     notes: "2 denominational secondary catchment polygons."
 
+  # Falkirk, Scottish Borders, East Dunbartonshire and East Lothian: found
+  # by re-investigating councils previously recorded as dead ends, once
+  # licensing stopped being a gating factor for inclusion (user's explicit
+  # instruction - see the "UNCONFIRMED" pattern established for Midlothian/
+  # West Lothian/South Lanarkshire above). All four are real, live,
+  # publicly-queryable services behind interactive map viewers rather than
+  # listed on any open-data catalog, found by reading each viewer's own
+  # JS/config for the underlying ArcGIS service URL.
+  - local_authority_code: "S12000014"
+    local_authority_name: "Falkirk"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://maps.falkirk.gov.uk/Map/9"
+    download_url: "https://services-eu1.arcgis.com/ejHeInmA8D8R9Vok/ArcGIS/rest/services/Primary%20School%20Catchments/FeatureServer/0"
+    name_field: "name_"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - ArcGIS Online item metadata unreachable for this organisation (item search under this org id returns 403 'Subscription is disabled'); the FeatureServer itself is publicly queryable with no API key or token required, so the data is genuinely public, but no licence text was found anywhere for it."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "40 non-denominational primary catchment polygons. Found via maps.falkirk.gov.uk's own BuildMap.js, not any open-data catalog."
+
+  - local_authority_code: "S12000014"
+    local_authority_name: "Falkirk"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://maps.falkirk.gov.uk/Map/10"
+    download_url: "https://services-eu1.arcgis.com/ejHeInmA8D8R9Vok/ArcGIS/rest/services/Secondary%20School%20Catchments/FeatureServer/0"
+    name_field: "name_"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - ArcGIS Online item metadata unreachable for this organisation (item search under this org id returns 403 'Subscription is disabled'); the FeatureServer itself is publicly queryable with no API key or token required, so the data is genuinely public, but no licence text was found anywhere for it."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "7 non-denominational secondary catchment polygons."
+
+  - local_authority_code: "S12000014"
+    local_authority_name: "Falkirk"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://maps.falkirk.gov.uk/Map/11"
+    download_url: "https://services-eu1.arcgis.com/ejHeInmA8D8R9Vok/ArcGIS/rest/services/Roman%20Catholic%20Primary%20School%20Catchments/FeatureServer/0"
+    name_field: "name_"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - ArcGIS Online item metadata unreachable for this organisation (item search under this org id returns 403 'Subscription is disabled'); the FeatureServer itself is publicly queryable with no API key or token required, so the data is genuinely public, but no licence text was found anywhere for it."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "7 Roman Catholic primary catchment polygons."
+
+  - local_authority_code: "S12000014"
+    local_authority_name: "Falkirk"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://maps.falkirk.gov.uk/Map/12"
+    download_url: "https://services-eu1.arcgis.com/ejHeInmA8D8R9Vok/ArcGIS/rest/services/Roman%20Catholic%20Secondary%20School%20Catchments/FeatureServer/0"
+    name_field: "name_"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - ArcGIS Online item metadata unreachable for this organisation (item search under this org id returns 403 'Subscription is disabled'); the FeatureServer itself is publicly queryable with no API key or token required, so the data is genuinely public, but no licence text was found anywhere for it."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "2 Roman Catholic secondary catchment polygons."
+
+  - local_authority_code: "S12000026"
+    local_authority_name: "Scottish Borders"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.scotborders.gov.uk/homepage/108/find-it---map-advanced"
+    download_url: "https://services-eu1.arcgis.com/wdfNi1bRjans3E0y/arcgis/rest/services/Edu_Non_Denom_Primary_Catch/FeatureServer/0"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo/accessInformation set on the ArcGIS item for this layer, and no data.gov.uk organisation for Scottish Borders Council found to check for sibling-dataset evidence. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "54 non-denominational primary catchment polygons. Found via the council's 'Find it - Map advanced' ArcGIS Instant App's nested Education group layer, not any open-data catalog."
+
+  - local_authority_code: "S12000026"
+    local_authority_name: "Scottish Borders"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.scotborders.gov.uk/homepage/108/find-it---map-advanced"
+    download_url: "https://services-eu1.arcgis.com/wdfNi1bRjans3E0y/arcgis/rest/services/Edu_Non_Denom_Secondary_Catch/FeatureServer/0"
+    name_field: "SCH_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo/accessInformation set on the ArcGIS item for this layer, and no data.gov.uk organisation for Scottish Borders Council found to check for sibling-dataset evidence. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "9 non-denominational secondary catchment polygons."
+
+  - local_authority_code: "S12000026"
+    local_authority_name: "Scottish Borders"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://www.scotborders.gov.uk/homepage/108/find-it---map-advanced"
+    download_url: "https://services-eu1.arcgis.com/wdfNi1bRjans3E0y/arcgis/rest/services/Edu_Denom_Primary_Catch/FeatureServer/0"
+    name_field: "SCH_NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo/accessInformation set on the ArcGIS item for this layer, and no data.gov.uk organisation for Scottish Borders Council found to check for sibling-dataset evidence. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "2 Roman Catholic primary catchment polygons. No separate RC secondary catchment layer exists in this council's web map (very few RC secondaries)."
+
+  - local_authority_code: "S12000045"
+    local_authority_name: "East Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=b177771bf69a417c848f350e6243e01e"
+    download_url: "https://services6.arcgis.com/FQzLCYAdkXvRRiyW/arcgis/rest/services/School_Catchments_FMN_Feb2020/FeatureServer/4"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (evidenced via 4 companion ArcGIS items on the same East Dunbartonshire Council AGOL organisation describing the identical layers - items 27ada5b52d414d54a816fccc8faac7ee, f6354fa81ecd4cea96e8d48886fe0dad, be419be2af984b018c82a28bc135c1c3, b17455a1c1f944b38c59efd01cfed1d9 - each with licenseInfo explicitly 'Open Government Licence V3.0', verified live via the ArcGIS sharing REST search API on 2026-08-03. The specific item being imported here (School_Catchments_FMN_Feb2020) has blank licenseInfo on its own item, but is the same underlying dataset as those companion items."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      26 non-denominational primary catchment polygons. The council's own
+      maps.eastdunbarton.gov.uk ArcGIS Server (where the OGL-licensed
+      companion items are actually hosted) remains unreachable - its TLS
+      certificate is still expired as of 2026-08-03 and the connection now
+      hangs/times out even with certificate verification disabled. This
+      AGOL-hosted copy of the identical dataset (same council, same layer
+      names, same feature counts) is used instead as a working, live
+      alternate; the blocked host was previously recorded in this file's
+      candidates section, now removed since a working alternate exists.
+
+  - local_authority_code: "S12000045"
+    local_authority_name: "East Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=b177771bf69a417c848f350e6243e01e"
+    download_url: "https://services6.arcgis.com/FQzLCYAdkXvRRiyW/arcgis/rest/services/School_Catchments_FMN_Feb2020/FeatureServer/5"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (evidenced via 4 companion ArcGIS items on the same East Dunbartonshire Council AGOL organisation describing the identical layers - items 27ada5b52d414d54a816fccc8faac7ee, f6354fa81ecd4cea96e8d48886fe0dad, be419be2af984b018c82a28bc135c1c3, b17455a1c1f944b38c59efd01cfed1d9 - each with licenseInfo explicitly 'Open Government Licence V3.0', verified live via the ArcGIS sharing REST search API on 2026-08-03. The specific item being imported here (School_Catchments_FMN_Feb2020) has blank licenseInfo on its own item, but is the same underlying dataset as those companion items."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "9 non-denominational secondary catchment polygons."
+
+  - local_authority_code: "S12000045"
+    local_authority_name: "East Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://www.arcgis.com/home/item.html?id=b177771bf69a417c848f350e6243e01e"
+    download_url: "https://services6.arcgis.com/FQzLCYAdkXvRRiyW/arcgis/rest/services/School_Catchments_FMN_Feb2020/FeatureServer/6"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (evidenced via 4 companion ArcGIS items on the same East Dunbartonshire Council AGOL organisation describing the identical layers - items 27ada5b52d414d54a816fccc8faac7ee, f6354fa81ecd4cea96e8d48886fe0dad, be419be2af984b018c82a28bc135c1c3, b17455a1c1f944b38c59efd01cfed1d9 - each with licenseInfo explicitly 'Open Government Licence V3.0', verified live via the ArcGIS sharing REST search API on 2026-08-03. The specific item being imported here (School_Catchments_FMN_Feb2020) has blank licenseInfo on its own item, but is the same underlying dataset as those companion items."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "6 Roman Catholic primary catchment polygons."
+
+  - local_authority_code: "S12000045"
+    local_authority_name: "East Dunbartonshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://www.arcgis.com/home/item.html?id=b177771bf69a417c848f350e6243e01e"
+    download_url: "https://services6.arcgis.com/FQzLCYAdkXvRRiyW/arcgis/rest/services/School_Catchments_FMN_Feb2020/FeatureServer/7"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (evidenced via 4 companion ArcGIS items on the same East Dunbartonshire Council AGOL organisation describing the identical layers - items 27ada5b52d414d54a816fccc8faac7ee, f6354fa81ecd4cea96e8d48886fe0dad, be419be2af984b018c82a28bc135c1c3, b17455a1c1f944b38c59efd01cfed1d9 - each with licenseInfo explicitly 'Open Government Licence V3.0', verified live via the ArcGIS sharing REST search API on 2026-08-03. The specific item being imported here (School_Catchments_FMN_Feb2020) has blank licenseInfo on its own item, but is the same underlying dataset as those companion items."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "6 Roman Catholic secondary catchment polygons."
+
+  # East Lothian: field name on the RC primary layer is genuinely "SECONDARY"
+  # (copy-pasted from the secondary-catchment layer's template) despite
+  # holding real RC primary school names - verified live, not a mistake here.
+  - local_authority_code: "S12000010"
+    local_authority_name: "East Lothian"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://east-lothian.maps.arcgis.com/"
+    download_url: "https://services-eu1.arcgis.com/GbTQcjO6QsZgVZ1N/arcgis/rest/services/Primary_School_Catchments/FeatureServer/1"
+    name_field: "PRIMARY_"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both blank on the ArcGIS item, and no data.gov.uk organisation for East Lothian Council found to check for sibling-dataset evidence. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      32 non-denominational primary catchment polygons. The council's
+      citizen-facing catchment page (eastlothian.gov.uk/school-catchments)
+      publishes only per-school PDFs; this FeatureServer sits behind two
+      little-linked ArcGIS Instant Apps instead, found via item search on
+      the council's own AGOL organisation.
+
+  - local_authority_code: "S12000010"
+    local_authority_name: "East Lothian"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://east-lothian.maps.arcgis.com/"
+    download_url: "https://services-eu1.arcgis.com/GbTQcjO6QsZgVZ1N/arcgis/rest/services/Secondary_School_Catchments/FeatureServer/0"
+    name_field: "SECONDARY"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both blank on the ArcGIS item, and no data.gov.uk organisation for East Lothian Council found to check for sibling-dataset evidence. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "7 non-denominational secondary catchment polygons."
+
+  - local_authority_code: "S12000010"
+    local_authority_name: "East Lothian"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://east-lothian.maps.arcgis.com/"
+    download_url: "https://services-eu1.arcgis.com/GbTQcjO6QsZgVZ1N/arcgis/rest/services/Roman_Catholic_Primary_School_Catchments/FeatureServer/0"
+    name_field: "SECONDARY"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - licenseInfo/accessInformation both blank on the ArcGIS item, and no data.gov.uk organisation for East Lothian Council found to check for sibling-dataset evidence. Service is publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "7 Roman Catholic primary catchment polygons. Despite the field name, verified live to hold real RC primary school names (e.g. \"St Mary's RC Primary\"), not secondary-school data."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -1508,28 +1743,10 @@ candidates:
       workaround pattern) before spending more effort on individual councils.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
-  - local_authority_name: "East Dunbartonshire"
-    reason_not_enabled: >
-      Licence evidence is the strongest of any candidate here - all 4
-      ArcGIS Online catalog items (Open_Data-branded, matching the
-      Argyll and Bute pattern) have licenseInfo explicitly set to "Open
-      Government Licence V3.0": maps.eastdunbarton.gov.uk/arcgis/rest/services/Open_Data/OpenData_Education/MapServer/{5,6,7,8}
-      (ND primary, RC primary, ND secondary, RC secondary catchments).
-      Blocked purely by the council's own server being unreachable: its
-      TLS certificate expired 2026-04-24 (verified live via openssl
-      s_client), and even with certificate verification disabled the
-      connection hangs and times out rather than completing - a real,
-      live infrastructure problem on the council's side, not a
-      licensing or discovery gap. Re-check once the council's
-      certificate/server is fixed; this should be one of the first
-      candidates enabled when it is, given the licence is already
-      confirmed.
   - local_authority_name: "East Ayrshire (re-checked)"
     reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
   - local_authority_name: "Inverclyde"
     reason_not_enabled: "Proprietary 'My Inverclyde' viewer (ASP.NET NoticeBoard8 platform using the Google Maps JS API, not ArcGIS/GeoServer) plus a static PDF (inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf) - no structured/bulk-queryable data found."
-  - local_authority_name: "East Lothian"
-    reason_not_enabled: "Only individually downloadable per-school PDF catchment maps found (eastlothian.gov.uk/school-catchments) - no interactive map, no GIS portal, no ArcGIS/WFS presence."
   - local_authority_name: "Na h-Eileanan an Iar (Western Isles)"
     reason_not_enabled: "Catchment areas published only as plain HTML text tables of school-name-to-area-name (cne-siar.gov.uk/education-and-learning/schools/catchment-areas) - not even a PDF map exists, let alone structured boundary data."
   - local_authority_name: "Shetland Islands"
