@@ -1019,6 +1019,41 @@ sources:
     enabled: true
     notes: "13 secondary catchment polygons."
 
+  # Pembrokeshire: the second Wales catchment source in this registry,
+  # found via the same "inspire.<council>.gov.uk/geoserver" GeoServer
+  # pattern as Powys, though this appears to be a one-off naming choice
+  # rather than a shared Welsh-council platform - tried against all
+  # other unchecked Welsh councils with no other hits. Real polygons
+  # with real school names on both the Welsh (Ysgol) and English
+  # (School) name fields, sampled live and non-null across every
+  # feature checked. No secondary-school catchment layer exists on this
+  # server (only a school-campus point layer, not catchment polygons),
+  # so only primary is covered here.
+  # Licence: unlike Powys's sibling-dataset inference, this source has
+  # its own explicit licence statement directly on data.gov.uk (not
+  # inferred): "Data subject to Ordnance Survey INSPIRE licence ...
+  # and/or Ordnance Survey OpenData licence ..." - a real, named, open
+  # licence permitting free reuse (distinct from OGL, but of the same
+  # kind), attached to this exact WFS service record, not a sibling.
+  # Corroborated loosely (not strongly) by 4 of Pembrokeshire's other 8
+  # data.gov.uk datasets being separately OGL-licensed; the rest,
+  # including this WFS service's own package, have blank licence_id
+  # fields on data.gov.uk rather than a conflicting one.
+  - local_authority_code: "W-668"
+    local_authority_name: "Pembrokeshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://ckan.publishing.service.gov.uk/api/3/action/package_show?id=pembrokeshire-county-council-wfs-service"
+    download_url: "https://inspire.pembrokeshire.gov.uk/geoserver/wfs"
+    wfs_type_name: "PCC:PrimarySchoolCatchment"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Ordnance Survey INSPIRE licence and/or Ordnance Survey OpenData licence (per Pembrokeshire County Council's own WFS service licence statement on data.gov.uk)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "63 primary catchment polygons. No secondary catchment layer found on this server."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
