@@ -2485,6 +2485,40 @@ sources:
       boundary (verified live), deduplicated the same way as the primary
       layer above. Same service, split by FEATURE_TYPE.
 
+  # Telford and Wrekin: the FeatureServer also has Non-Catchment and
+  # Grammar variants (layers 3/5/6/11) - only the two standard
+  # "In Catchment" Primary/Secondary layers are imported, matching this
+  # project's existing convention.
+  - local_authority_code: "894"
+    local_authority_name: "Telford and Wrekin"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://experience.arcgis.com/experience/3f98912c9da44d8c919f50c1525ac813"
+    download_url: "https://maps.telford.gov.uk/arcgis/rest/services/AGSOnLine/School_Catchments2023/FeatureServer/2"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo/copyrightText on the FeatureServer or either hosting ArcGIS Online item. Self-hosted on the council's own maps.telford.gov.uk ArcGIS Server, publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '51 primary school catchment polygons, e.g. "Windmill Primary School".'
+
+  - local_authority_code: "894"
+    local_authority_name: "Telford and Wrekin"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://experience.arcgis.com/experience/3f98912c9da44d8c919f50c1525ac813"
+    download_url: "https://maps.telford.gov.uk/arcgis/rest/services/AGSOnLine/School_Catchments2023/FeatureServer/1"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo/copyrightText on the FeatureServer or either hosting ArcGIS Online item. Self-hosted on the council's own maps.telford.gov.uk ArcGIS Server, publicly queryable with no API key or token required."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '9 secondary school catchment polygons, e.g. "HLC Secondary School".'
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -2613,23 +2647,46 @@ candidates:
       like primaryschools/secondaryschools/schools_primary exist). A
       clean, different kind of dead end: the platform works fully here,
       the data itself was never published on it.
-  - local_authority_name: "Wandsworth, Brighton and Hove, Islington, Greenwich, Kensington and Chelsea, Merton, Sutton, Westminster, Hammersmith and Fulham, Waltham Forest, Barking and Dagenham (England)"
+  - local_authority_name: "Wandsworth, Greenwich (England)"
     reason_not_enabled: >
-      Not conclusively resolved, worth a dedicated follow-up rather than
-      a fresh full search. Wandsworth runs a proprietary "Aurora"
-      platform (Aurora.svc, SharpKit-compiled JS), not iShare/ArcGIS - no
-      endpoint isolated yet. Brighton and Hove and Islington both have
-      real WhatDoTheyKnow FOI threads confirming shapefiles exist, but
-      the site now serves a Cloudflare JS challenge (not just a 403) to
-      automated requests - needs a real browser session, not curl/
-      WebFetch. Greenwich has a page literally named
-      "greenwich-schools-catchment-radius" (JS-rendered, likely a
-      distance/radius tool rather than true catchment polygons, not
-      confirmed either way). Kensington and Chelsea has only a static
-      PDF priority-area document found so far. Merton, Sutton and
-      Westminster returned nothing via CKAN/ArcGIS Online/direct site
-      checks (one promising Westminster AGOL hit turned out to be a
-      false positive belonging to Wokingham's app). Hammersmith and
-      Fulham, Waltham Forest and Barking and Dagenham were not deeply
-      checked at all (only a quick CKAN/AGOL pass, no council-portal
-      deep-dive) - the least-investigated group here.
+      Both conclusively resolved via Playwright (full network capture,
+      not guessed URLs). Wandsworth's proprietary "Aurora" platform
+      (maps.wandsworth.gov.uk) only serves two point layers ("Primary
+      and Nursery Schools", "Secondary and Special Schools") in its
+      public layer catalog - no catchment/priority-area polygon layer
+      exists; corroborated by the council's own admissions policy, which
+      describes its 5 community primaries' priority areas only in text/
+      PDF form. Greenwich's "greenwich-schools-catchment-radius" page is
+      confirmed to be a Leaflet radius calculator drawing circles from
+      each school's last-distance-offered figure (e.g. "Harris Academy
+      Greenwich - Band 1: 874m") - genuinely distance-based, not
+      catchment-zone, admission.
+  - local_authority_name: "Brighton and Hove, Islington (England)"
+    reason_not_enabled: 'Real catchment shapefiles confirmed to exist via WhatDoTheyKnow FOI threads for both councils, but WhatDoTheyKnow now serves a Cloudflare JS challenge ("Just a moment...") to automated requests, confirmed even with a real Playwright Chromium browser context (not just curl/WebFetch, which fail sooner with a plain 403) - genuinely blocked from this environment, not a data-non-existence dead end.'
+  - local_authority_name: "Kensington and Chelsea, Merton, Sutton, Westminster, Hammersmith and Fulham, Waltham Forest, Barking and Dagenham (England)"
+    reason_not_enabled: "Checked via CKAN (0 results each), ArcGIS Online org-scoped search (0 results each, RBKC/Merton/LBBD/LBHF all have real AGOL orgs but no catchment item; Hammersmith and Fulham's ArcGIS Hub DCAT feed returns 0 datasets), and general web search (only third-party sites like Locrating/School Guide, no official GIS source). No catchment layer found for any of the seven."
+  - local_authority_name: "Rutland, Halton, Warrington, Middlesbrough, Redcar and Cleveland (England)"
+    reason_not_enabled: 'Rutland''s catchment page links only to 3 PDF maps. Halton and Warrington''s admissions pages reference PDF booklets only, no GIS/catchment map found on either council''s mapping portal. Middlesbrough''s one catchment-related ArcGIS item (owner Open_Data3, OGL-licensed) is a PDF ("Secondary School Catchment 2021"), not machine-readable. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. All PDF-only or no-data dead ends, not licensing gaps.'
+  - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
+    reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
+  - local_authority_name: "Herefordshire (England)"
+    reason_not_enabled: >
+      Real, live, OGL v2-licensed data confirmed
+      (restservices.herefordshire.gov.uk/opendata/services/schoolservice)
+      - verified live: querying UPRN 10007362429 resolved to "Lord
+      Scudamore Primary School", then
+      /education/primary/catchment/Lord%20Scudamore%20Primary%20School/geojson
+      (with an Accept: application/json header) returned a real ~90-vertex
+      Polygon. Not enabled yet because the API is queried per-school-name
+      (not a single bulk download like every other source in this file),
+      and the school name must be supplied exactly - there is no
+      properties field returning the name in the response, and no bulk
+      "list every catchment" endpoint was found. Would need a bespoke
+      per-school adapter (similar in shape to wales_performance.py's
+      per-URN fetch loop, but keyed by GIAS school name with fuzzy-match
+      risk against Herefordshire's own internal naming) rather than the
+      generic_arcgis_feature_service parser every other source in this
+      file uses - a real engineering task, not a quick add. Secondary
+      catchment endpoint is documented at the same base URL but was not
+      demonstrated live (no working example name found in the time
+      available).

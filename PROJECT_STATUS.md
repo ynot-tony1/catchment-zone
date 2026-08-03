@@ -413,6 +413,31 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   catchments can now score for the first time, on top of England's
   8-council catchment expansion this session.
 
+- **England expanded to 20 local authorities: Telford and Wrekin added
+  (56 catchment areas, self-hosted ArcGIS Server on the council's own
+  maps.telford.gov.uk).** The FeatureServer also publishes separate
+  Grammar and "Non-Catchment" (fed by a neighbouring authority's school)
+  layer variants - only the two standard "In Catchment" Primary/
+  Secondary layers are imported, matching this project's existing
+  convention. Also investigated and found real but not yet integrated:
+  Herefordshire's schoolservice API
+  (restservices.herefordshire.gov.uk/opendata/services/schoolservice,
+  OGL v2 licensed, verified live with a real ~90-vertex polygon) - not a
+  single bulk download like every other source in this file, but queried
+  per exact school name with no bulk "list every catchment" endpoint
+  found, so it would need a bespoke per-school adapter (Wales-performance-
+  scraper shaped, but name-keyed rather than URN-keyed, with fuzzy-match
+  risk against Herefordshire's own naming) rather than a quick config
+  addition - recorded as a candidate for a future session, not
+  abandoned. Further London-borough dead ends conclusively resolved via
+  Playwright network capture (not guessed URLs): Wandsworth's Aurora
+  platform only serves school-location point layers, no catchment
+  polygons; Greenwich's "catchment radius" tool is confirmed to be a
+  pure distance calculator. Brighton and Hove and Islington's real FOI-
+  released shapefiles remain genuinely inaccessible - WhatDoTheyKnow now
+  serves a Cloudflare JS challenge that blocks even a real Playwright
+  browser context, not just curl.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
