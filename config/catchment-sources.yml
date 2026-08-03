@@ -1054,6 +1054,148 @@ sources:
     enabled: true
     notes: "63 primary catchment polygons. No secondary catchment layer found on this server."
 
+  # Renfrewshire: one combined layer with a Type attribute holding all
+  # four phase/denomination combinations - the same arcgis_where
+  # filtering pattern as Argyll and Bute. The layer's own ArcGIS item
+  # has no licenseInfo set, so licence evidence comes from a sibling
+  # item on the same ArcGIS org (an "Education" Web Map, licenseInfo
+  # "No special restrictions or limitations on using the item's
+  # content", accessInformation "Renfrewshire Council") plus the
+  # council's one data.gov.uk dataset (Renfrewshire Core Paths) being
+  # explicitly OGL.
+  - local_authority_code: "S12000038"
+    local_authority_name: "Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data-ren.opendata.arcgis.com"
+    download_url: "https://services2.arcgis.com/fq3IIWzrdf1xBoPI/arcgis/rest/services/SCHOOL_ESTATE/FeatureServer/1"
+    arcgis_where: "Type='Non Denominational Primary'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "No special restrictions or limitations on using the item's content (per a sibling ArcGIS item on the same Renfrewshire Council org; corroborated by the council's one data.gov.uk dataset being OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational primary catchment polygons (34 of 61 total features across all types)."
+
+  - local_authority_code: "S12000038"
+    local_authority_name: "Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://data-ren.opendata.arcgis.com"
+    download_url: "https://services2.arcgis.com/fq3IIWzrdf1xBoPI/arcgis/rest/services/SCHOOL_ESTATE/FeatureServer/1"
+    arcgis_where: "Type='Denominational Primary'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "No special restrictions or limitations on using the item's content (per a sibling ArcGIS item on the same Renfrewshire Council org; corroborated by the council's one data.gov.uk dataset being OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Denominational primary catchment polygons (16 of 61 total features across all types)."
+
+  - local_authority_code: "S12000038"
+    local_authority_name: "Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data-ren.opendata.arcgis.com"
+    download_url: "https://services2.arcgis.com/fq3IIWzrdf1xBoPI/arcgis/rest/services/SCHOOL_ESTATE/FeatureServer/1"
+    arcgis_where: "Type='Non Denominational Secondary'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "No special restrictions or limitations on using the item's content (per a sibling ArcGIS item on the same Renfrewshire Council org; corroborated by the council's one data.gov.uk dataset being OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational secondary catchment polygons (8 of 61 total features across all types)."
+
+  - local_authority_code: "S12000038"
+    local_authority_name: "Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://data-ren.opendata.arcgis.com"
+    download_url: "https://services2.arcgis.com/fq3IIWzrdf1xBoPI/arcgis/rest/services/SCHOOL_ESTATE/FeatureServer/1"
+    arcgis_where: "Type='Denominational Secondary'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "No special restrictions or limitations on using the item's content (per a sibling ArcGIS item on the same Renfrewshire Council org; corroborated by the council's one data.gov.uk dataset being OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Denominational secondary catchment polygons (3 of 61 total features across all types)."
+
+  # East Renfrewshire: found via ArcGIS Online org search rather than
+  # the council's self-hosted server (which only exposes Locators/
+  # DEMOUnsecured, no catchment service). Combined layer with two
+  # attributes (Type_1 for phase, Type2 for denomination); Early
+  # Learning and Childcare Community features (4 of 34) are excluded by
+  # the where clauses below since they are neither primary nor
+  # secondary. Service name is "Education_Web_Maps_2020_Temp" - dated
+  # and "Temp" in the name, a real caveat on how authoritative/current
+  # this specific publication is, though the data itself sampled live
+  # and is real, populated, real-school-named data. Licence: item's own
+  # licenseInfo is blank, but 5 of 5 East Renfrewshire Council datasets
+  # on data.gov.uk are unanimously OGL - a stronger sibling ratio than
+  # Powys's.
+  - local_authority_code: "S12000011"
+    local_authority_name: "East Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=fe8d7eb4d99f40ada1b9ad14411406dc"
+    download_url: "https://services7.arcgis.com/KLyYDdUQEILnCLk4/arcgis/rest/services/Education_Web_Maps_2020_Temp/FeatureServer/2"
+    arcgis_where: "Type_1='Primary School' AND Type2='Non-Denominational'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (inferred: item's own licenseInfo is blank, but 5 of 5 East Renfrewshire Council datasets on data.gov.uk are OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational primary catchment polygons (16 of 34 total features, which also include 4 Early Learning and Childcare Community areas not imported here)."
+
+  - local_authority_code: "S12000011"
+    local_authority_name: "East Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=fe8d7eb4d99f40ada1b9ad14411406dc"
+    download_url: "https://services7.arcgis.com/KLyYDdUQEILnCLk4/arcgis/rest/services/Education_Web_Maps_2020_Temp/FeatureServer/2"
+    arcgis_where: "Type_1='Primary School' AND Type2='Denominational'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (inferred: item's own licenseInfo is blank, but 5 of 5 East Renfrewshire Council datasets on data.gov.uk are OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Denominational primary catchment polygons (7 of 34 total features)."
+
+  - local_authority_code: "S12000011"
+    local_authority_name: "East Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.arcgis.com/home/item.html?id=fe8d7eb4d99f40ada1b9ad14411406dc"
+    download_url: "https://services7.arcgis.com/KLyYDdUQEILnCLk4/arcgis/rest/services/Education_Web_Maps_2020_Temp/FeatureServer/2"
+    arcgis_where: "Type_1='Secondary School' AND Type2='Non-Denominational'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (inferred: item's own licenseInfo is blank, but 5 of 5 East Renfrewshire Council datasets on data.gov.uk are OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Non-denominational secondary catchment polygons (5 of 34 total features)."
+
+  - local_authority_code: "S12000011"
+    local_authority_name: "East Renfrewshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://www.arcgis.com/home/item.html?id=fe8d7eb4d99f40ada1b9ad14411406dc"
+    download_url: "https://services7.arcgis.com/KLyYDdUQEILnCLk4/arcgis/rest/services/Education_Web_Maps_2020_Temp/FeatureServer/2"
+    arcgis_where: "Type_1='Secondary School' AND Type2='Denominational'"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (inferred: item's own licenseInfo is blank, but 5 of 5 East Renfrewshire Council datasets on data.gov.uk are OGL)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "Denominational secondary catchment polygons (2 of 34 total features)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -1080,3 +1222,77 @@ candidates:
       workaround pattern) before spending more effort on individual councils.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: "Only an interactive address-lookup map application (ishare.cardiff.gov.uk) was found, no downloadable dataset or documented API - explicitly excluded by this project's own 'what we deliberately do not use' rule. Other Welsh councils not yet checked."
+  - local_authority_name: "Midlothian"
+    reason_not_enabled: >
+      Real, live, sampled ArcGIS FeatureServer found at
+      https://services5.arcgis.com/CT2Zj7xubqvzu3yJ/arcgis/rest/services/MC_SchoolCatchments/FeatureServer/1
+      (39 features, school_name/seed_code/Type fields). Item's own
+      licenseInfo is blank and Midlothian Council has no data.gov.uk
+      organization at all (0 packages), so there is no sibling-dataset
+      licence evidence to point to either - unlike every enabled source
+      in this file. Do not enable without a real licence statement from
+      somewhere (a council webpage, a FOI response, or a data.gov.uk
+      listing appearing later).
+  - local_authority_name: "West Lothian"
+    reason_not_enabled: >
+      Real, live, sampled ArcGIS FeatureServer set found (the web map's
+      combined "School catchments" layer has url: null, but the 4
+      underlying services are independently queryable):
+      https://services-eu1.arcgis.com/Sx4zi6vTSfTqa3IJ/arcgis/rest/services/ND_primary_catchment_areas/FeatureServer/4
+      (53 features), .../ND_secondary_catchment_areas/FeatureServer/10
+      (11), .../RC_primary_catchment_areas/FeatureServer/11 (16),
+      .../RC_secondary_catchment_areas/FeatureServer/12 (3). No
+      licenseInfo on any of the 4 items and no data.gov.uk organization
+      for West Lothian Council exists to check for sibling evidence.
+      Same "real data, no licence evidence anywhere" situation as
+      Midlothian above - do not enable without a real licence source.
+  - local_authority_name: "South Lanarkshire"
+    reason_not_enabled: >
+      Real, live, sampled self-hosted ArcGIS MapServer found:
+      https://gis.southlanarkshire.gov.uk/arcgis/rest/services/Public/Education/MapServer/4
+      (Denominational, 32 features) and .../MapServer/5
+      (Non-Denominational, 102 features). Each polygon covers a combined
+      primary+secondary catchment pair (fields DENOM_PS/DENOM_SS or
+      ND_PS/ND_SS) rather than one school per feature, so this source
+      would need its own parsing logic even before licensing is solved.
+      Self-hosted server has no ArcGIS Online item metadata to check,
+      and South Lanarkshire Council has no data.gov.uk organization
+      (0 packages) - no licence evidence found anywhere.
+  - local_authority_name: "East Dunbartonshire"
+    reason_not_enabled: >
+      Licence evidence is the strongest of any candidate here - all 4
+      ArcGIS Online catalog items (Open_Data-branded, matching the
+      Argyll and Bute pattern) have licenseInfo explicitly set to "Open
+      Government Licence V3.0": maps.eastdunbarton.gov.uk/arcgis/rest/services/Open_Data/OpenData_Education/MapServer/{5,6,7,8}
+      (ND primary, RC primary, ND secondary, RC secondary catchments).
+      Blocked purely by the council's own server being unreachable: its
+      TLS certificate expired 2026-04-24 (verified live via openssl
+      s_client), and even with certificate verification disabled the
+      connection hangs and times out rather than completing - a real,
+      live infrastructure problem on the council's side, not a
+      licensing or discovery gap. Re-check once the council's
+      certificate/server is fixed; this should be one of the first
+      candidates enabled when it is, given the licence is already
+      confirmed.
+  - local_authority_name: "West Dunbartonshire"
+    reason_not_enabled: >
+      Real data found (services9.arcgis.com/wZYknYToxgELcbw2/arcgis/rest/services/Schools/FeatureServer,
+      layers 2-5 for denominational/non-denominational primary/secondary
+      catchments) but deliberately excluded: the item's licence text is
+      an Ordnance Survey non-commercial viewing licence that explicitly
+      states "You are not permitted to copy, sub-license, distribute,
+      sell or otherwise make available the Licensed Data to third
+      parties in any form" - directly incompatible with serving this
+      data to end users on a public map. Do not import under this
+      licence; only worth reconsidering if the council publishes the
+      same data under different (OGL or equivalent) terms elsewhere.
+  - local_authority_name: "East Ayrshire (re-checked)"
+    reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
+  - local_authority_name: "Inverclyde"
+    reason_not_enabled: "Proprietary 'My Inverclyde' viewer (ASP.NET NoticeBoard8 platform using the Google Maps JS API, not ArcGIS/GeoServer) plus a static PDF (inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf) - no structured/bulk-queryable data found."
+  - local_authority_name: "East Lothian"
+    reason_not_enabled: "Only individually downloadable per-school PDF catchment maps found (eastlothian.gov.uk/school-catchments) - no interactive map, no GIS portal, no ArcGIS/WFS presence."
+  - local_authority_name: "Na h-Eileanan an Iar (Western Isles)"
+    reason_not_enabled: "Catchment areas published only as plain HTML text tables of school-name-to-area-name (cne-siar.gov.uk/education-and-learning/schools/catchment-areas) - not even a PDF map exists, let alone structured boundary data."
+  - local_authority_name: "Shetland Islands"
+    reason_not_enabled: "PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map, confirmed via Content-Type: application/pdf) - no ArcGIS Online presence found for the council."

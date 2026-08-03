@@ -98,6 +98,48 @@ disk, not what is intended.
   Scotland) - total scored areas across the whole map went from 127 of
   1,617 to 135 of 1,969.
 
+- **Wales's second catchment source: Pembrokeshire (`W-668`), 62 real
+  primary catchment areas** (found via the same `inspire.<council>.gov.uk`
+  GeoServer naming pattern as Powys, though confirmed to be a one-off
+  choice, not a shared platform - tried against every other unchecked
+  Welsh council with no further hits). Unlike Powys's sibling-dataset
+  inference, this source has its own explicit licence statement
+  directly on data.gov.uk (an Ordnance Survey INSPIRE/OpenData licence,
+  a different open licence to OGL but of the same reuse-permitting
+  kind). No secondary catchment layer exists on this server. 1 of 63
+  features rejected for a genuinely empty geometry in the source data.
+
+- **Scotland catchment coverage extended to 19 councils: Renfrewshire
+  and East Renfrewshire added (91 more real catchment areas).**
+  Renfrewshire (61 areas) found via the `data-ren.opendata.arcgis.com`
+  hub and split by its own `Type` attribute using the same
+  `arcgis_where` mechanism built for Argyll and Bute; its ArcGIS item
+  has no licence set, so licence evidence comes from a sibling
+  "Education" Web Map item on the same council org plus the council's
+  one data.gov.uk dataset being OGL. East Renfrewshire (30 areas) was
+  found via ArcGIS Online org search rather than the council's
+  self-hosted server (which only exposes unrelated locator services);
+  its 5-of-5 data.gov.uk datasets being unanimously OGL is the
+  strongest sibling-inference ratio found so far, though the source
+  service's own name ("Education_Web_Maps_2020_Temp") is a real,
+  disclosed caveat on how current/authoritative it is. Total scored
+  areas stay at 135 (Scotland still has no performance metrics).
+  Several further councils were investigated and deliberately left
+  unenabled, documented as `candidates:` entries in
+  `catchment-sources.yml` rather than silently dropped: Midlothian and
+  West Lothian and South Lanarkshire (real data found, but zero licence
+  evidence anywhere - no data.gov.uk organisation and no item
+  licenceInfo); East Dunbartonshire (licence is the strongest of any
+  candidate, explicit OGL v3 on all 4 items, but the council's own
+  server has an expired TLS certificate and hangs even with
+  verification disabled - a live infrastructure problem, not a
+  licensing one, worth rechecking later); West Dunbartonshire (real
+  data, but an explicit Ordnance Survey licence that prohibits
+  redistribution to third parties, so deliberately not used); East
+  Ayrshire, Inverclyde, East Lothian, Na h-Eileanan an Iar and Shetland
+  Islands (genuinely no structured data exists, PDF/text/proprietary-
+  viewer only).
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -700,9 +742,9 @@ false)` right before the foreign keys) still failed intermittently:
   a local-authority-level metrics table) would be needed to use them at
   all, and has not been attempted.
 - **Catchment area performance scoring covers Sheffield and Powys's
-  secondary catchments (135 of 1,969 areas) right now** - not a bug, a
+  secondary catchments (135 of 2,122 areas) right now** - not a bug, a
   direct consequence of current catchment coverage: Scotland has no
-  performance metrics at all, so none of its 17 councils' catchments
+  performance metrics at all, so none of its 19 councils' catchments
   score, even though catchment coverage there is now the largest part
   of the dataset. As catchment coverage or performance-metric coverage
   grows, re-running `refresh-catchment-scores` will pick up
@@ -719,26 +761,35 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 19 local authorities out of ~200+ across Great
+- **Catchment coverage is 21 local authorities out of ~200+ across Great
   Britain** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow
   City, Fife, North Lanarkshire, Highland, Dundee City, Perth and
   Kinross, North Ayrshire, South Ayrshire, Angus, Clackmannanshire,
   Aberdeenshire, Orkney Islands, Stirling, Argyll and Bute, Moray,
-  Dumfries and Galloway/Scotland; Powys/Wales). Spatial Hub Scotland's
-  original catalog (13 of 13) is fully exhausted; 4 further Scottish
-  councils were found individually via ArcGIS Online item-metadata
-  verification instead (Stirling, Argyll and Bute, Moray, Dumfries and
-  Galloway), and ~14 more remain unchecked or only partially checked
-  (Renfrewshire, Inverclyde, South Lanarkshire, East Ayrshire,
-  East Dunbartonshire, Midlothian, Na h-Eileanan an Iar, Shetland
-  Islands, West Dunbartonshire, West Lothian, East Lothian). A genuine
-  national aggregate (Spatial Hub Scotland / Improvement Service,
-  covering all of Scotland in one WFS with per-feature local-authority
-  fields) was found but could not be reached from this session's
-  environment (403, see the `catchment-sources.yml` candidate entry) -
-  worth retrying from a different network origin, though it would now
-  mostly be a consolidation rather than unlocking new coverage. Wales
-  now has one real source (Powys); ~20 other Welsh councils were
+  Dumfries and Galloway, Renfrewshire, East Renfrewshire/Scotland;
+  Powys, Pembrokeshire/Wales). Spatial Hub Scotland's original catalog
+  (13 of 13) is fully exhausted; 6 further Scottish councils were found
+  individually via ArcGIS Online item-metadata verification instead
+  (Stirling, Argyll and Bute, Moray, Dumfries and Galloway,
+  Renfrewshire, East Renfrewshire). Real data with no usable licence
+  evidence was found for 3 more (Midlothian, West Lothian, South
+  Lanarkshire) and real, well-licensed data for one more was blocked by
+  the council's own server having an expired TLS certificate (East
+  Dunbartonshire) - all documented as `candidates:` entries in
+  `catchment-sources.yml` rather than silently dropped, so they can be
+  revisited without a fresh search. West Dunbartonshire has real data
+  under an explicitly redistribution-prohibiting Ordnance Survey
+  licence and is deliberately excluded. Falkirk, Scottish Borders, East
+  Ayrshire, Inverclyde, East Lothian, Na h-Eileanan an Iar and Shetland
+  Islands are confirmed genuine dead ends (PDF/text/proprietary-viewer
+  only, or a platform-level access block). A genuine national aggregate
+  (Spatial Hub Scotland / Improvement Service, covering all of Scotland
+  in one WFS with per-feature local-authority fields) was found but
+  could not be reached from this session's environment (403, see the
+  `catchment-sources.yml` candidate entry) - worth retrying from a
+  different network origin, though it would now mostly be a
+  consolidation rather than unlocking new coverage. Wales now has two
+  real sources (Powys, Pembrokeshire); ~19 other Welsh councils were
   checked this session and found to have only interactive address-
   lookup tools or PDF maps, a genuine structural gap rather than a
   search gap, though not every council has been exhaustively checked.
