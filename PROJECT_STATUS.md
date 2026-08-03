@@ -1,9 +1,111 @@
 # Project status
 
-Updated 2026-08-02. Reflects what has actually been run and verified on
+Updated 2026-08-03. Reflects what has actually been run and verified on
 disk, not what is intended.
 
 ## Completed and verified
+
+- **The map was fundamentally broken in production (no schools, no
+  interactivity), root-caused and fixed - plus the underlying data gaps
+  that made it look broken even once the map itself worked.** Found via
+  live, instrumented Playwright runs (network/console capture) against
+  both production and a local build with real data, not guessed from
+  code: zero `/api/*` requests were ever made from `/map`, meaning
+  MapLibre's `"load"` event - which every fetch, click handler and the
+  catchment overlay are gated on - never fired. Root cause: `maplibre-gl`
+  was pinned to `^6.1.0`, whose `6.0.0` release (11 days old at the time,
+  per npm) dropped the classic single-file bundle for an ESM +
+  separate-worker-module layout that silently never completes `"load"`
+  under Next.js's webpack bundling - confirmed by isolating `v4` (fires
+  correctly) against `v6` (never fires, no error at all) in the same
+  headless environment. Downgraded to the latest stable `v5.24.0`.
+  Fixing that surfaced two more real bugs: `MAX_BBOX_AREA_DEGREES` was 4,
+  but the initial view (fit to all of Great Britain, then padded further
+  by MapLibre to the browser window's aspect ratio - verified live,
+  ~400 square degrees for a typical 1280x900 window) always exceeded it,
+  so literally every visitor's first view of the map failed silently;
+  raised to 600 (result size was already separately capped by
+  `MAX_MAP_FEATURES`/`take`, and `School` has a `[latitude, longitude]`
+  index, so this was never actually guarding against an expensive query).
+  And **every one of England's then-10,000 imported schools had NULL
+  latitude/longitude** - GIAS's real extract publishes location only as
+  British National Grid Easting/Northing (verified against the live
+  extract), and the ingestor's `RawGiasRow` model never parsed them, so
+  this had been silently broken since the project began (Scotland/Wales
+  were unaffected - their own sources publish WGS84 lat/lon directly).
+  Added the same BNG-\>WGS84 conversion already used for Sheffield's
+  catchment polygons. Verified against a real row (URN 100000, The
+  Aldgate School: Easting 533498/Northing 181201 -\> 51.514N -0.078E,
+  correctly central London).
+
+- **England expanded from a 10,000-row pilot sample to full national
+  coverage, and the map's school sampling was fixed to actually
+  represent the whole country.** With the coordinate fix landed, re-ran
+  `import-gias` with no row limit: 52,473 schools upserted (up from
+  10,000), 188 local authorities (up from 92) - this is every
+  establishment status GIAS tracks (27,168 currently open, 25,210
+  closed, 56 open-but-proposed-to-close, 39 proposed-to-open), matching
+  how Scotland and Wales were already imported in full. 50,553 of the
+  52,473 now have real coordinates (96.4%; the remainder are genuinely
+  missing Easting/Northing in GIAS's own extract, correctly left null
+  rather than guessed). This also exposed a pre-existing bug in
+  `/api/map/schools`: with no `orderBy`, an unbounded bbox query capped
+  by `take` just returned whatever the database's default scan order put
+  first - verified live, this was almost entirely Scotland, despite
+  England now being ~87% of the underlying data. Switched to `$queryRaw`
+  with `ORDER BY random() LIMIT` (the first raw SQL in this codebase;
+  every value still parameterized via `Prisma.sql`/`Prisma.join`, no
+  string-built SQL - the query builder has no equivalent for genuine
+  random sampling). Verified live: a full-GB view now returns a
+  proportional mix (~87% England / ~8% Scotland / ~5% Wales, matching
+  real population shares), and every existing filter (status, phaseCode,
+  establishmentTypeCode, trustId) still narrows identically to before.
+
+- **Real school performance metrics added for the first time - the
+  site's core purpose (rating schools) had never actually had any
+  metrics published.** `import-performance` was a reserved placeholder
+  that only logged "nothing configured"; the four originally-configured
+  EES publications (capacity, absence x2, workforce) only expose
+  local-authority/regional/national aggregates, never per-school rows,
+  so `SchoolMetric` (school_urn NOT NULL) could never be populated from
+  them - but DfE's actual school performance tables (the flagship "how
+  did this school do" data) had never been investigated as an
+  alternative source. Found and verified live: DfE republishes its
+  official performance tables through the same EES API as genuinely
+  school-level datasets (`geographicLevel: "School"`, confirmed against
+  the API) - "Performance tables schools data" (key-stage-4-performance)
+  and "Key stage 2 institutional level - Schools (performance)"
+  (key-stage-2-attainment). Downloaded via the API's CSV endpoint
+  (`GET /data-sets/{id}/csv`) rather than its `/query` endpoint: the
+  CSV's headers are real column names (`attainment8_average`,
+  `expected_standard_pupil_percent`, etc.), while `/query` responses are
+  keyed by opaque indicator/filter IDs this service never had a mapping
+  for - the actual blocker the old "documented TODO" comments described.
+  Six new metric definitions added: `attainment8_average`,
+  `progress8_average` (KS4/secondary), `ks2_rwm_expected_standard_percent`,
+  `ks2_rwm_higher_standard_percent`, `ks2_reading_average_scaled_score`,
+  `ks2_maths_average_scaled_score` (KS2/primary). DfE's "z"
+  not-applicable marker (verified live: e.g. every school's
+  `progress8_average` in the current 2024/25 release, and
+  `average_scaled_score` for subjects with no scaled score) is handled
+  distinctly from small-cohort suppression - never estimated, never
+  shown as "suppressed" when it's really "not published this year".
+  Imported for real against production: **208,406 metric rows across
+  21,399 distinct schools**, verified both by direct SQL query and by
+  loading real school pages live (URN 100000 correctly shows KS2 reading/
+  maths/RWM figures; URN 100001 correctly shows a real Attainment 8 score
+  alongside Progress 8 as "Not available", not "Suppressed"). Getting
+  this to run against the real data volume surfaced two real bugs on the
+  way: `cur.fetchall()` returns `dict_row` rows in this codebase
+  (`row["urn"]`, not `row[0]`), and wrapping a ~98,000-row upsert in one
+  transaction reliably hit a CockroachDB SERIALIZABLE retry error on
+  COMMIT even with a same-shape whole-transaction retry wrapper (3
+  attempts, exponential backoff) - fixed by committing and independently
+  retrying per ~1000-row batch instead, safe since every write is an
+  idempotent upsert. Also fixed `refresh-metrics`'s consistency check
+  (validated `publications`' metric codes but not the new
+  `performance_datasets`'s) and the full `run` pipeline's
+  `import-performance` step (never propagated `--dry-run` to itself).
 
 - **Northern Ireland removed from the project entirely, by explicit
   request.** It had been built and live (adapter, CLI command, scheduled
@@ -493,13 +595,19 @@ false)` right before the foreign keys) still failed intermittently:
 
 ## Unfinished
 
-- **Metrics import is unimplemented, and the currently-configured sources
-  can't fill it as designed.** See "Known gap" above. Needs either a
-  school-level DfE metrics source or a schema change (e.g. a local-
-  authority-level metrics table) before this is worth revisiting. Not
-  nation-specific: Scotland and Wales each have their own, entirely
-  separate statistics bodies (National Records of Scotland, StatsWales)
-  that have not been looked at at all.
+- **England now has real performance metrics (KS2 SATs, KS4 Attainment 8/
+  Progress 8 - see "Completed and verified" above); Scotland and Wales
+  still have none.** Each has its own, entirely separate statistics body
+  (National Records of Scotland / Insight benchmarking; StatsWales) that
+  has not been looked at at all - unlike England's gap, this was not
+  previously investigated to find it was actually solvable, so it is
+  a genuinely open question whether either publishes an equivalent
+  school-level, machine-readable dataset. The original LA-level EES
+  publications (school-capacity, pupil-absence x2, school-workforce) are
+  still unusable for `SchoolMetric` as designed (no per-school rows) and
+  remain resolved-but-not-imported by `import-statistics`; a schema
+  change (e.g. a local-authority-level metrics table) would be needed to
+  use them at all, and has not been attempted.
 - **`SchoolCatchmentArea` (linking a catchment polygon to the school it
   covers) is entirely unimplemented, and confirmed not solvable by name-
   matching for most sources.** Sheffield's features carry no name at all;
@@ -566,38 +674,41 @@ guessing from code. Found and fixed:
 
 ## Known failing tests
 
-None. Every test suite that was run passed: `packages/shared` (42),
-`apps/web` (29), `services/ingestor` (76).
+None. Every test suite that was run passed: `packages/shared` (45),
+`apps/web` (29), `services/ingestor` (85).
 
 ## Exact next steps, in order
 
-1. Spatial Hub Scotland's catalog is now exhausted (13 of 13 individual
+1. Look for a Scotland/Wales equivalent of DfE's school performance
+   tables (National Records of Scotland / Insight benchmarking;
+   StatsWales) - not yet investigated at all, unlike England's gap which
+   turned out to be solvable once actually looked into (see "Completed
+   and verified" above). If found, replicate the same headline-row-filter
+   - CSV-download pattern already built for KS2/KS4.
+2. Spatial Hub Scotland's catalog is now exhausted (13 of 13 individual
    councils imported); its national aggregate WFS is still worth trying
    again from a different network origin (403 from this session's
-   environment - see "Completed and verified" above) mainly as a
-   consolidation/cross-check, not to unlock new coverage. Further Scottish
-   expansion means checking councils individually outside that catalog
-   (not yet attempted, no discovery mechanism established for it yet).
-   Separately, check more Welsh councils beyond Cardiff (ruled out).
-2. Decide on a path for the metrics gap (school-level DfE source for
-   England, or entirely separate research for Scotland/Wales's own
-   statistics bodies) before spending more time on `import-statistics`.
+   environment) mainly as a consolidation/cross-check, not to unlock new
+   coverage. Further Scottish expansion means checking councils
+   individually outside that catalog (not yet attempted, no discovery
+   mechanism established for it yet). Separately, check more Welsh
+   councils beyond Cardiff (ruled out).
 3. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
-   before any larger/national GIAS import (that report predates the
-   devolved-nations work and only covers England). The report's own
-   recommendation: national schools/trusts/local-authorities data looks
+   before further catchment-geometry expansion at scale (that report
+   predates both the full-national GIAS import and the performance-
+   metrics addition, so its storage projections should be re-checked
+   against real current console figures rather than assumed still
+   accurate). The report's own recommendation: national schools/trusts/
+   local-authorities data (now including performance metrics) looks
    cheap; catchment geometry is the dominant storage cost and should be
    rolled out one local authority at a time with real console figures
    checked after each addition, not assumed to scale linearly from the
    single Sheffield sample.
-4. Continue the frontend/UX polish pass: the map basemap, missing
-   pagination, and the stale catchment-checkbox label are fixed (see
-   "Completed and verified" above); review the remaining screenshots
-   (trusts, local authorities, admissions, about/data, status, and dark
-   mode across all pages) for further real issues.
-5. Optional polish: `SchoolCatchmentArea` per-source research (see
+4. Optional polish: `SchoolCatchmentArea` per-source research (see
    "Unfinished" above - Edinburgh's `EST_NAME` field is the most
    promising real starting point), a denomination-aware `/admissions`
    flow for Scotland's ND/RC catchment splits, Playwright e2e coverage
    for the golden paths (search a school, check a postcode, view the map
-   with the catchment overlay on).
+   with the catchment overlay on). A `/schools` search-results column or
+   filter for a headline performance metric would also make the new
+   data more discoverable than only showing on each school's own page.
