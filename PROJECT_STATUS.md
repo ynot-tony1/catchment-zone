@@ -767,7 +767,11 @@ false)` right before the foreign keys) still failed intermittently:
   Kinross, North Ayrshire, South Ayrshire, Angus, Clackmannanshire,
   Aberdeenshire, Orkney Islands, Stirling, Argyll and Bute, Moray,
   Dumfries and Galloway, Renfrewshire, East Renfrewshire/Scotland;
-  Powys, Pembrokeshire/Wales). Spatial Hub Scotland's original catalog
+  Powys, Pembrokeshire/Wales) - but every one of Scotland's 32 councils
+  and every one of Wales's 22 councils has now been individually
+  investigated, not just the ones that yielded real data, so this is
+  close to as complete as this project can currently make it without
+  new data being published. Spatial Hub Scotland's original catalog
   (13 of 13) is fully exhausted; 6 further Scottish councils were found
   individually via ArcGIS Online item-metadata verification instead
   (Stirling, Argyll and Bute, Moray, Dumfries and Galloway,
@@ -782,17 +786,23 @@ false)` right before the foreign keys) still failed intermittently:
   licence and is deliberately excluded. Falkirk, Scottish Borders, East
   Ayrshire, Inverclyde, East Lothian, Na h-Eileanan an Iar and Shetland
   Islands are confirmed genuine dead ends (PDF/text/proprietary-viewer
-  only, or a platform-level access block). A genuine national aggregate
+  only, or a platform-level access block) - every one of Scotland's 32
+  councils is now accounted for, either with real imported data or a
+  documented reason it does not have any. A genuine national aggregate
   (Spatial Hub Scotland / Improvement Service, covering all of Scotland
   in one WFS with per-feature local-authority fields) was found but
   could not be reached from this session's environment (403, see the
   `catchment-sources.yml` candidate entry) - worth retrying from a
   different network origin, though it would now mostly be a
   consolidation rather than unlocking new coverage. Wales now has two
-  real sources (Powys, Pembrokeshire); ~19 other Welsh councils were
-  checked this session and found to have only interactive address-
-  lookup tools or PDF maps, a genuine structural gap rather than a
-  search gap, though not every council has been exhaustively checked.
+  real sources (Powys, Pembrokeshire); every one of the other 20 Welsh
+  councils was individually checked this session and found to have only
+  interactive address-lookup tools or PDF maps, a genuine structural
+  gap rather than a search gap. Both nations are now at a natural
+  stopping point for this technique - further coverage would mean
+  either new data being published by a currently-empty council, the
+  Improvement Service aggregate becoming reachable, or East
+  Dunbartonshire's certificate being fixed, not more searching.
 - **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife,
   North Lanarkshire, Dundee, Perth and Kinross) are map-overlay-only, not
   reachable via `/admissions`.** See "Completed and verified" above for
