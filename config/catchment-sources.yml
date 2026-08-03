@@ -2247,6 +2247,18 @@ candidates:
       reverse-engineer the click-query attribute lookup is found.
   - local_authority_name: "Newport, Swansea, Neath Port Talbot (Wales)"
     reason_not_enabled: "All three have a live ArcGIS Online Hub open-data portal (data-newport.opendata.arcgis.com, data-swansea.opendata.arcgis.com, data-nptc.opendata.arcgis.com), checked via their DCAT feed and arcgis.com/data.gov.uk search - no school catchment dataset found on any of the three."
+  - local_authority_name: "Wrexham, Flintshire, Conwy, Isle of Anglesey, Gwynedd, Ceredigion, Carmarthenshire, Denbighshire, Torfaen, Caerphilly, Merthyr Tydfil, Blaenau Gwent, Vale of Glamorgan (Wales)"
+    reason_not_enabled: >
+      All 13 have a live ArcGIS Online Hub open-data portal
+      (data-<council>.opendata.arcgis.com, verified 200 OK for each), but
+      every one returned zero datasets from its own DCAT feed
+      (api/feed/dcat-us/1.1.json) - these look like Hub sites that were
+      provisioned but never populated, not a search failure. Gwynedd was
+      checked further via its GIS team's public ArcGIS Online item list
+      (owner dafyddelfryn) as a spot-check: libraries, CCTV, planning
+      boundaries, traffic and coastal-monitoring layers are published,
+      but no education/school layer of any kind - a real absence, not a
+      naming mismatch. Not a licensing gap; no data was found to license.
   - local_authority_name: "Bridgend (Wales)"
     reason_not_enabled: >
       Runs a Cadcorp GeognoSIS 9 WebMap (maps.bridgend.gov.uk/webmap9) -
