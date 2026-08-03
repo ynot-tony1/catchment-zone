@@ -971,6 +971,54 @@ sources:
     enabled: true
     notes: "91 primary (non-denominational) catchment polygons."
 
+  # Powys: the first Wales catchment source in this registry. Every
+  # other Welsh council checked (Cardiff, Carmarthenshire, Powys's
+  # sibling councils, and a further ~15 checked by name against ArcGIS
+  # Online directly) had no structured catchment boundary data at all,
+  # only interactive address-lookup tools or "find a school" pages - a
+  # genuine, verified structural difference from Scotland, not a search
+  # gap. Powys runs its own GeoServer WFS (geo.powys.gov.uk) with both a
+  # "2025" plain layer (real school names/URNs) and a newer "web_...2026"
+  # layer used for the public map, which has null name fields - the 2025
+  # layer is used here since it is the one with real, matchable data.
+  # Licence: not registered as its own entry on data.gov.uk, but every
+  # other Powys County Council dataset from the exact same "opendata"
+  # GeoServer workspace that is registered there (17 of 19 sibling
+  # datasets, e.g. pcc-ldp-devbound, pcc-prow) is explicitly UK Open
+  # Government Licence - inferred from that consistency, disclosed
+  # honestly rather than assumed silently, matching how this file
+  # already handles a couple of other sources with no licenceInfo of
+  # their own.
+  - local_authority_code: "W-666"
+    local_authority_name: "Powys"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://geo.powys.gov.uk/geoserver/opendata/wfs"
+    download_url: "https://geo.powys.gov.uk/geoserver/opendata/wfs"
+    wfs_type_name: "opendata:primary_school_catchments_2025_en"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (inferred from 17 of 19 sibling Powys County Council datasets on the same opendata GeoServer workspace being explicitly OGL-licensed on data.gov.uk; this specific layer is not individually registered there)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "71 primary catchment polygons."
+
+  - local_authority_code: "W-666"
+    local_authority_name: "Powys"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://geo.powys.gov.uk/geoserver/opendata/wfs"
+    download_url: "https://geo.powys.gov.uk/geoserver/opendata/wfs"
+    wfs_type_name: "opendata:secondary_school_catchments_2025_en"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v3.0 (inferred from 17 of 19 sibling Powys County Council datasets on the same opendata GeoServer workspace being explicitly OGL-licensed on data.gov.uk; this specific layer is not individually registered there)"
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: "13 secondary catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the

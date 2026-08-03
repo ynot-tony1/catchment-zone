@@ -122,13 +122,26 @@ def query_all_features(client: httpx.Client, feature_server_url: str, where: str
     return FeatureQueryResult(features=all_features, detected_wkid=detected_wkid)
 
 
+#: GeoServer refuses startIndex/count pagination on a layer with no
+#: declared primary key ("Cannot do natural order without a primary
+#: key..."), e.g. Powys's opendata workspace. sortBy=id (GeoServer's
+#: built-in feature-id pseudo-column, distinct from any real attribute
+#: named "id") gives it a stable order to paginate against; only added
+#: as a retry once the plain request has proven necessary, since Angus's
+#: XMap Cloud and Clackmannanshire's Cadcorp servers already paginate
+#: fine without it and are not known to support this param.
+_GEOSERVER_MISSING_PRIMARY_KEY_MARKER = "natural order without a primary key"
+
+
 @retry(
     reraise=True,
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=15),
     retry=retry_if_exception_type(httpx.TransportError),
 )
-def _query_wfs_page(client: httpx.Client, service_url: str, type_name: str, start_index: int) -> dict[str, Any]:
+def _query_wfs_page(
+    client: httpx.Client, service_url: str, type_name: str, start_index: int, sort_by: str | None = None
+) -> dict[str, Any]:
     params: dict[str, str | int] = {
         "service": "WFS",
         "version": "2.0.0",
@@ -143,8 +156,15 @@ def _query_wfs_page(client: httpx.Client, service_url: str, type_name: str, star
         "count": PAGE_SIZE,
         "startIndex": start_index,
     }
-    response = client.get(service_url, params=params)
-    response.raise_for_status()
+    if sort_by:
+        params["sortBy"] = sort_by
+    try:
+        response = client.get(service_url, params=params)
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        if sort_by is None and exc.response.status_code == 400 and _GEOSERVER_MISSING_PRIMARY_KEY_MARKER in exc.response.text:
+            return _query_wfs_page(client, service_url, type_name, start_index, sort_by="id")
+        raise
     payload: dict[str, Any] = response.json()
     if payload.get("type") != "FeatureCollection":
         raise CatchmentSourceError(f"unexpected WFS response shape for {service_url}: {payload!r}"[:500])
