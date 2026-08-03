@@ -270,6 +270,17 @@ model CatchmentArea {
   validFrom                    DateTime @map("valid_from")
   validTo                      DateTime? @map("valid_to")
 
+  // Computed by refresh-catchment-scores (not set at import time): the
+  // served school's percentile rank (0-1, higher is better) on whichever
+  // performance metric applies to this area's phase and nation, averaged
+  // across every school whose point falls inside this polygon. Null
+  // whenever no school with a matching metric was found inside the area
+  // (e.g. Scotland currently has no performance metrics at all) - the map
+  // must never invent a score, so null is a real, expected, common value
+  // here, not a bug.
+  performancePercentile        Float?   @map("performance_percentile")
+  performanceMetricCode        String?  @map("performance_metric_code")
+
   createdAt                    DateTime @default(now()) @map("created_at")
   updatedAt                    DateTime @updatedAt @map("updated_at")
 

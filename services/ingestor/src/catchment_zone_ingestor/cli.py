@@ -25,6 +25,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from catchment_zone_ingestor import db, pipeline
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
+from catchment_zone_ingestor.adapters import catchment_scores as catchment_scores_adapter
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
 from catchment_zone_ingestor.adapters import scotland as scotland_adapter
@@ -998,6 +999,55 @@ def import_admissions(
 
 
 # ---------------------------------------------------------------------------
+# refresh-catchment-scores
+# ---------------------------------------------------------------------------
+
+
+@app.command("refresh-catchment-scores")
+def refresh_catchment_scores(
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Compute only; do not write to the database.")] = False,
+) -> None:
+    """Recomputes every catchment area's performance_percentile: the
+    served school's percentile rank on whichever metric applies to the
+    area's phase and nation, averaged across every school whose point
+    falls inside the polygon (see catchment_scores.py for the full
+    method). Depends on both import-catchments and the performance-
+    metric imports having already run; re-run this whenever either
+    changes, not just once.
+    """
+    settings = get_settings()
+    set_run_context(source="catchment_scores")
+    conn = _connect_or_none(settings, dry_run=False)
+    if conn is None:
+        _fail("a database connection is required to compute catchment scores", source="catchment_scores")
+        return
+
+    schools = catchment_scores_adapter.load_schools_with_coordinates(conn)
+    areas = catchment_scores_adapter.load_catchment_areas(conn)
+
+    metric_codes = catchment_scores_adapter.all_configured_metric_codes()
+    percentiles_by_metric = {
+        code: catchment_scores_adapter.compute_percentiles(catchment_scores_adapter.load_latest_metric_values(conn, code))
+        for code in metric_codes
+    }
+
+    scores = catchment_scores_adapter.compute_catchment_scores(areas, schools, percentiles_by_metric)
+    scored_count = sum(1 for s in scores if s.performance_percentile is not None)
+
+    logger.info(
+        "computed catchment scores",
+        extra={"total_areas": len(scores), "scored_areas": scored_count},
+    )
+
+    if dry_run:
+        typer.echo(f"dry-run: {scored_count} of {len(scores)} catchment areas would be scored")
+        return
+
+    updated = catchment_scores_adapter.write_catchment_scores(conn, scores, settings.batch_size)
+    typer.echo(f"scored {scored_count} of {updated} catchment areas")
+
+
+# ---------------------------------------------------------------------------
 # refresh-metrics / verify / cleanup
 # ---------------------------------------------------------------------------
 
@@ -1121,6 +1171,7 @@ _PIPELINE_STEPS = (
     "import-wales-performance",
     "import-catchments",
     "import-admissions",
+    "refresh-catchment-scores",
     "refresh-metrics",
     "verify",
     "cleanup",
@@ -1166,6 +1217,7 @@ def run_full_pipeline(
     elif not skip_admissions:
         logger.info("no --admissions-source-file given; skipping import-admissions for this run")
 
+    _run("refresh-catchment-scores", lambda: refresh_catchment_scores(dry_run=dry_run))
     _run("refresh-metrics", refresh_metrics)
     _run("verify", verify)
     _run("cleanup", lambda: cleanup(dry_run=dry_run))
