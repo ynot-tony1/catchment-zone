@@ -35,8 +35,15 @@ type CatchmentFeatureProperties = {
 // light red, to dark red at the bottom. Areas with no computed score
 // (most of them right now - see refresh-catchment-scores in the
 // ingestor for exactly which areas qualify) fall through to a neutral
-// grey outline/fill instead of implying an unearned grade.
-const UNSCORED_CATCHMENT_COLOR = "#adb5bd";
+// colour outline/fill instead of implying an unearned grade. Deliberately
+// a saturated blue-grey rather than a plain grey: catchment coverage is
+// still sparse (a couple dozen local authorities out of 200+), and most
+// of those areas are unscored (only England and Wales have performance
+// metrics right now), so a low-contrast grey against a similarly-toned
+// basemap made the whole feature look broken - toggling it on produced
+// no perceptible change unless you happened to already be zoomed into a
+// covered area.
+const UNSCORED_CATCHMENT_COLOR = "#4263eb";
 
 // Covers Great Britain (England, Scotland and Wales) - west to Scotland's
 // Outer Hebrides, north to Shetland - not just England. Northern Ireland
@@ -59,6 +66,9 @@ export function SchoolMap({
   const [selectedCatchment, setSelectedCatchment] =
     useState<CatchmentFeatureProperties | null>(null);
   const [showCatchments, setShowCatchments] = useState(false);
+  const [catchmentCountInView, setCatchmentCountInView] = useState<
+    number | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -99,7 +109,7 @@ export function SchoolMap({
             ],
             UNSCORED_CATCHMENT_COLOR,
           ],
-          "fill-opacity": 0.4,
+          "fill-opacity": 0.55,
         },
       });
       map.addLayer({
@@ -123,7 +133,7 @@ export function SchoolMap({
             ],
             UNSCORED_CATCHMENT_COLOR,
           ],
-          "line-width": 1.5,
+          "line-width": 2,
         },
       });
 
@@ -172,7 +182,8 @@ export function SchoolMap({
       loadSchoolsInView(map, setError);
       map.on("moveend", () => {
         loadSchoolsInView(map, setError);
-        if (showCatchmentsRef.current) loadCatchmentsInView(map, setError);
+        if (showCatchmentsRef.current)
+          loadCatchmentsInView(map, setError, setCatchmentCountInView);
       });
     });
 
@@ -187,11 +198,12 @@ export function SchoolMap({
     showCatchmentsRef.current = showCatchments;
     const map = mapRef.current;
     if (!map || !showCatchments) return;
-    loadCatchmentsInView(map, setError);
+    loadCatchmentsInView(map, setError, setCatchmentCountInView);
   }, [showCatchments]);
 
   function handleShowCatchmentsChange(checked: boolean) {
     setShowCatchments(checked);
+    setCatchmentCountInView(null);
     if (checked) return;
     setSelectedCatchment(null);
     const source = mapRef.current?.getSource("catchments") as
@@ -222,10 +234,25 @@ export function SchoolMap({
           <span className="text-muted-foreground">worst to best</span>
           <span
             className="ml-2 h-3 w-3 rounded-sm"
-            style={{ background: "#adb5bd" }}
+            style={{ background: UNSCORED_CATCHMENT_COLOR }}
           />
           <span className="text-muted-foreground">no data</span>
         </div>
+      )}
+      {showCatchments && catchmentCountInView === 0 && (
+        <p className="text-muted-foreground text-xs">
+          No catchment areas are published in the current view. Coverage is
+          still limited to a couple of dozen local authorities - try zooming
+          into Sheffield, several Scottish council areas, or Powys and
+          Pembrokeshire in Wales, or see the{" "}
+          <Link
+            href="/local-authorities"
+            className="text-primary underline underline-offset-2"
+          >
+            local authorities page
+          </Link>{" "}
+          for the full list.
+        </p>
       )}
       <div
         ref={containerRef}
@@ -324,6 +351,7 @@ async function loadSchoolsInView(
 async function loadCatchmentsInView(
   map: MapLibreMap,
   setError: (message: string | null) => void,
+  setCatchmentCountInView: (count: number | null) => void,
 ) {
   const bounds = map.getBounds();
   const bbox = [
@@ -344,6 +372,7 @@ async function loadCatchmentsInView(
     const featureCollection = await response.json();
     const source = map.getSource("catchments") as GeoJSONSource | undefined;
     source?.setData(featureCollection);
+    setCatchmentCountInView(featureCollection.features?.length ?? 0);
     setError(null);
   } catch {
     setError("Could not load catchment areas for this area.");
