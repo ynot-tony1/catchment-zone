@@ -9,7 +9,8 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Link from "next/link";
-import { formatNation } from "@/lib/format";
+import { getMetricDefinition } from "@catchment-zone/shared";
+import { formatNation, formatNumber } from "@/lib/format";
 
 type SchoolFeatureProperties = {
   urn: string;
@@ -25,7 +26,17 @@ type CatchmentFeatureProperties = {
   areaName: string;
   areaType: string;
   academicYear: string;
+  performancePercentile: number | null;
+  performanceMetricCode: string | null;
 };
+
+// Colours the served school's performance percentile (0 = worst, 1 =
+// best) within its own metric's population: green at the top, through
+// light red, to dark red at the bottom. Areas with no computed score
+// (most of them right now - see refresh-catchment-scores in the
+// ingestor for exactly which areas qualify) fall through to a neutral
+// grey outline/fill instead of implying an unearned grade.
+const UNSCORED_CATCHMENT_COLOR = "#adb5bd";
 
 // Covers Great Britain (England, Scotland and Wales) - west to Scotland's
 // Outer Hebrides, north to Shetland - not just England. Northern Ireland
@@ -72,8 +83,23 @@ export function SchoolMap({
         type: "fill",
         source: "catchments",
         paint: {
-          "fill-color": "#f08c00",
-          "fill-opacity": 0.15,
+          "fill-color": [
+            "case",
+            ["!=", ["get", "performancePercentile"], null],
+            [
+              "interpolate",
+              ["linear"],
+              ["get", "performancePercentile"],
+              0,
+              "#9c1c1c",
+              0.5,
+              "#ff8787",
+              1,
+              "#2f9e44",
+            ],
+            UNSCORED_CATCHMENT_COLOR,
+          ],
+          "fill-opacity": 0.4,
         },
       });
       map.addLayer({
@@ -81,7 +107,22 @@ export function SchoolMap({
         type: "line",
         source: "catchments",
         paint: {
-          "line-color": "#f08c00",
+          "line-color": [
+            "case",
+            ["!=", ["get", "performancePercentile"], null],
+            [
+              "interpolate",
+              ["linear"],
+              ["get", "performancePercentile"],
+              0,
+              "#9c1c1c",
+              0.5,
+              "#ff8787",
+              1,
+              "#2f9e44",
+            ],
+            UNSCORED_CATCHMENT_COLOR,
+          ],
           "line-width": 1.5,
         },
       });
@@ -168,6 +209,24 @@ export function SchoolMap({
         />
         Show catchment areas (where published)
       </label>
+      {showCatchments && (
+        <div className="flex w-fit items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Performance grade:</span>
+          <span
+            className="h-3 w-16 rounded-sm"
+            style={{
+              background:
+                "linear-gradient(to right, #9c1c1c, #ff8787, #2f9e44)",
+            }}
+          />
+          <span className="text-muted-foreground">worst to best</span>
+          <span
+            className="ml-2 h-3 w-3 rounded-sm"
+            style={{ background: "#adb5bd" }}
+          />
+          <span className="text-muted-foreground">no data</span>
+        </div>
+      )}
       <div
         ref={containerRef}
         className="border-border h-[70vh] w-full rounded-lg border"
@@ -180,6 +239,24 @@ export function SchoolMap({
             {selectedCatchment.areaType} &middot;{" "}
             {selectedCatchment.academicYear}
           </p>
+          {selectedCatchment.performancePercentile !== null && (
+            <p className="mt-1">
+              Performance grade:{" "}
+              <span className="font-medium">
+                {formatNumber(selectedCatchment.performancePercentile * 100, 0)}
+                th percentile
+              </span>{" "}
+              <span className="text-muted-foreground">
+                on{" "}
+                {selectedCatchment.performanceMetricCode
+                  ? (getMetricDefinition(
+                      selectedCatchment.performanceMetricCode,
+                    )?.label ?? selectedCatchment.performanceMetricCode)
+                  : "an unknown metric"}
+                , among schools with that same measure.
+              </span>
+            </p>
+          )}
           <p className="text-muted-foreground mt-1 text-xs">
             Illustrative only: catchment boundaries are not a legal guarantee of
             a school place. Check the local authority&apos;s own admissions page

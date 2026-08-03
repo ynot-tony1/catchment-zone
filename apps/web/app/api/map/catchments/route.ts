@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
         areaType: true,
         academicYear: true,
         simplifiedGeometryGeojson: true,
+        performancePercentile: true,
+        performanceMetricCode: true,
       },
       take: query.limit,
     });
@@ -73,6 +75,8 @@ export async function GET(request: NextRequest) {
           areaName: area.areaName,
           areaType: area.areaType,
           academicYear: area.academicYear,
+          performancePercentile: area.performancePercentile,
+          performanceMetricCode: area.performanceMetricCode,
         },
       });
     }
