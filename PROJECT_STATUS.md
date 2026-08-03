@@ -53,6 +53,51 @@ disk, not what is intended.
   rendering near Sheffield/Stocksbridge), and the catchment click-detail
   panel now shows the percentile and which metric it is based on.
 
+- **Scotland catchment coverage expanded past Spatial Hub's catalog: 4
+  more councils found and imported (Stirling, Argyll and Bute, Moray,
+  Dumfries and Galloway), taking Scotland from 13 to 17 councils
+  covered.** Found via ArcGIS Online item-metadata verification
+  (`.../sharing/rest/content/items/{id}?f=json`, checking `licenseInfo`)
+  rather than Spatial Hub's now-exhausted catalog. Argyll and Bute
+  needed a new `arcgis_where` config field to split one combined
+  ND/RC layer by its `DENOM` attribute - and its properly-licensed
+  layers turned out to live on a separate `Open_Data/MapServer`
+  service from the identical data on an `Education/MapServer` service
+  that had no licence set at all, a real distinction, not an arbitrary
+  URL choice. 269 new catchment areas imported and verified against
+  production (0 rejected across all 4 councils); shared-package pilot
+  test list updated to match. Councils ruled out this pass, documented
+  so they are not re-searched from scratch: Falkirk (ArcGIS Online org
+  subscription fully disabled platform-wide), East Ayrshire (only 13
+  features found, looks like a partial subset not full coverage), East
+  Renfrewshire (self-hosted ArcGIS server exposes no catchment
+  service), West Lothian (Web Map layer has `url: null`), Scottish
+  Borders (PDF map only).
+
+- **Wales's first catchment source: Powys (`W-666`), 84 real catchment
+  areas (71 primary, 13 secondary).** ~20 other Welsh councils checked
+  this session came back empty (interactive address-lookup tools or
+  PDF maps only, no structured boundary data) - a genuine structural
+  gap versus Scotland, not a search gap. Powys runs its own GeoServer
+  WFS with real school names/URNs on its "2025" layers; the newer
+  "web_...2026" layers used for the council's own public map were
+  checked and found to have a null school-name field on every single
+  feature, so the older layers are used instead. Licence inferred from
+  17 of 19 sibling Powys datasets on the same GeoServer workspace being
+  explicitly OGL-licensed on data.gov.uk (the layers themselves are not
+  individually registered there). Importing this source surfaced a
+  real WFS pagination bug: GeoServer refuses `startIndex`/`count`
+  pagination on a layer with no declared primary key ("Cannot do
+  natural order without a primary key"); `query_all_wfs_features` now
+  retries with `sortBy=id` (GeoServer's built-in feature-id
+  pseudo-column) only when that specific error is seen, so it does not
+  affect Angus/Clackmannanshire's non-GeoServer WFS servers. Re-running
+  refresh-catchment-scores afterwards scored 8 of Powys's 13 secondary
+  catchments against Wales's real KS4 Capped 9 metric (Wales already
+  had performance metrics from the earlier scraping work, unlike
+  Scotland) - total scored areas across the whole map went from 127 of
+  1,617 to 135 of 1,969.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -654,15 +699,16 @@ false)` right before the foreign keys) still failed intermittently:
   resolved-but-not-imported by `import-statistics`; a schema change (e.g.
   a local-authority-level metrics table) would be needed to use them at
   all, and has not been attempted.
-- **Catchment area performance scoring only covers Sheffield (127 of
-  1,617 areas) right now** - not a bug, a direct consequence of current
-  catchment coverage: Scotland has no performance metrics at all, and
-  Wales has no catchment sources yet (see the next bullet). As catchment
-  coverage or performance-metric coverage grows, re-running
-  `refresh-catchment-scores` will pick up newly-scorable areas
-  automatically with no code change needed - it was written generically
-  against the nation/phase metric-candidate table, not hardcoded to
-  Sheffield.
+- **Catchment area performance scoring covers Sheffield and Powys's
+  secondary catchments (135 of 1,969 areas) right now** - not a bug, a
+  direct consequence of current catchment coverage: Scotland has no
+  performance metrics at all, so none of its 17 councils' catchments
+  score, even though catchment coverage there is now the largest part
+  of the dataset. As catchment coverage or performance-metric coverage
+  grows, re-running `refresh-catchment-scores` will pick up
+  newly-scorable areas automatically with no code change needed - it
+  was written generically against the nation/phase metric-candidate
+  table, not hardcoded to any one council.
 - **`SchoolCatchmentArea` (linking a catchment polygon to the school it
   covers) is entirely unimplemented, and confirmed not solvable by name-
   matching for most sources.** Sheffield's features carry no name at all;
@@ -673,22 +719,29 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 15 local authorities out of ~200+ across Great
+- **Catchment coverage is 19 local authorities out of ~200+ across Great
   Britain** (Sheffield/England; Aberdeen City, City of Edinburgh, Glasgow
   City, Fife, North Lanarkshire, Highland, Dundee City, Perth and
   Kinross, North Ayrshire, South Ayrshire, Angus, Clackmannanshire,
-  Aberdeenshire, Orkney Islands/Scotland). Every individual council listed
-  in Spatial Hub Scotland's catalog (13 of 13) now has real, licensed
-  catchment data imported - that catalog is exhausted. A genuine national
-  aggregate (Spatial Hub Scotland / Improvement Service, covering all of
-  Scotland in one WFS with per-feature local-authority fields) was found
-  but could not be reached from this session's environment (403, see the
-  `catchment-sources.yml` candidate entry) - worth retrying from a
-  different network origin, though it would now mostly be a consolidation
-  rather than unlocking new coverage. Further Scottish coverage would mean
-  checking councils individually outside that catalog (not yet attempted).
-  Wales has no viable source found yet beyond Cardiff (ruled out); other
-  Welsh councils have not been checked.
+  Aberdeenshire, Orkney Islands, Stirling, Argyll and Bute, Moray,
+  Dumfries and Galloway/Scotland; Powys/Wales). Spatial Hub Scotland's
+  original catalog (13 of 13) is fully exhausted; 4 further Scottish
+  councils were found individually via ArcGIS Online item-metadata
+  verification instead (Stirling, Argyll and Bute, Moray, Dumfries and
+  Galloway), and ~14 more remain unchecked or only partially checked
+  (Renfrewshire, Inverclyde, South Lanarkshire, East Ayrshire,
+  East Dunbartonshire, Midlothian, Na h-Eileanan an Iar, Shetland
+  Islands, West Dunbartonshire, West Lothian, East Lothian). A genuine
+  national aggregate (Spatial Hub Scotland / Improvement Service,
+  covering all of Scotland in one WFS with per-feature local-authority
+  fields) was found but could not be reached from this session's
+  environment (403, see the `catchment-sources.yml` candidate entry) -
+  worth retrying from a different network origin, though it would now
+  mostly be a consolidation rather than unlocking new coverage. Wales
+  now has one real source (Powys); ~20 other Welsh councils were
+  checked this session and found to have only interactive address-
+  lookup tools or PDF maps, a genuine structural gap rather than a
+  search gap, though not every council has been exhaustively checked.
 - **Denominational (ND/RC) catchment splits (Edinburgh, Glasgow, Fife,
   North Lanarkshire, Dundee, Perth and Kinross) are map-overlay-only, not
   reachable via `/admissions`.** See "Completed and verified" above for
