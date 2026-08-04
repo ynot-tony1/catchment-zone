@@ -3354,18 +3354,26 @@ candidates:
       in this file).
   - local_authority_name: "West Sussex"
     reason_not_enabled: >
-      Real data confirmed to exist via the council's own instructions
-      PDF, which screenshots a live popup with two toggleable layers
-      ("WSCC Primary Catchments"/"WSCC Secondary Catchments") and a real
-      feature record (Name, Minimum age, Maximum age, WSCC Area,
-      website). The live map itself
-      (westsussex.statmap.co.uk/map/Earthlight.html) runs on a
-      proprietary "StatMap Earthlight" viewer, not ArcGIS/WFS/WMS - its
-      bootstrap loader (EarthlightLoader.js) is a small stub with no
-      visible endpoint URLs, and no underlying queryable API was found
-      within reasonable effort. Worth a follow-up pass with a real
-      browser session capturing network requests (the technique that
-      previously cracked Bridgend's Cadcorp platform), not curl alone.
+      Real data confirmed to exist and partially reverse-engineered via a
+      live Playwright session capturing network requests (the same
+      technique that previously cracked Bridgend's Cadcorp platform):
+      westsussex.statmap.co.uk/map/Earthlight.html runs on a proprietary
+      "StatMap Earthlight" job-queue API (SMJobs.svc/Earthlight/*, not
+      OGC WFS/WMS). An OpenMapJob response confirmed both real vector
+      layers exist server-side - "WSCC Primary Catchments" and "WSCC
+      Secondary Catchments" (VectorLayer type, GeometryType 4/polygon),
+      both backed by the same underlying table `dbo.EDUC_CED_SCHCAT_ALL`,
+      with real internal layer GUIDs (8e935667-683b-42b2-b8b5-081bff1ebbdf
+      for primary, a63ab9c8-ed81-48bf-9f9d-7bb5241c2f27 for secondary).
+      A GetResultSetJob call returned an empty TableSet because no
+      selection/query job had been issued for that layer yet - actually
+      pulling features needs simulating the UI's own
+      select-layer-then-query sequence (a ModifySelectionJob call was
+      observed in the request log but its own response wasn't captured
+      this pass), not just capturing passive page-load traffic. Worth a
+      focused follow-up session driving that specific interaction rather
+      than more general searching - the hard part (finding the real
+      table/layer identifiers) is already done.
   - local_authority_name: "North Somerset"
     reason_not_enabled: >
       Real per-school catchment maps confirmed via official council
@@ -3375,9 +3383,15 @@ candidates:
       Embedded at map.n-somerset.gov.uk, running on a proprietary Cadcorp
       Aurora scripted map server (Aurora.svc/run?script=...), not
       standard WFS/WMS/ArcGIS. Probed likely Cadcorp GeognoSIS OGC paths
-      - all 404 or connection failures. Same category as Derby/
-      Stoke-on-Trent's Cadcorp GeognoSIS dead ends elsewhere in this
-      file - worth a real-browser-session follow-up.
+      - all 404 or connection failures. A real-browser-session (Playwright)
+      follow-up was attempted (the technique that worked for West Sussex
+      and previously for Bridgend) but the Aurora.svc/Frame request
+      itself never returned a response within 45 seconds, from both curl
+      and a live browser session - this specific server appears to be
+      extremely slow or hanging outright, a different and harder problem
+      than West Sussex's merely-undocumented-but-responsive API. Same
+      general category as Derby/Stoke-on-Trent's Cadcorp GeognoSIS dead
+      ends elsewhere in this file.
   - local_authority_name: "Windsor and Maidenhead"
     reason_not_enabled: >
       The council's own admissions pages name a real tool ("Neighbourhood
