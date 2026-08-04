@@ -1464,37 +1464,69 @@ None. Every test suite that was run passed: `packages/shared` (45),
 
 ## Exact next steps, in order
 
-1. Wales performance metrics are done and Scotland has been investigated
-   and closed (no viable public source right now, see "Completed and
-   verified" above) - periodically recheck Scotland in case Insight or an
-   equivalent ever becomes public.
-2. Spatial Hub Scotland's catalog is now exhausted (13 of 13 individual
-   councils imported); its national aggregate WFS is still worth trying
-   again from a different network origin (403 from this session's
-   environment) mainly as a consolidation/cross-check, not to unlock new
-   coverage. Further Scottish expansion means checking councils
-   individually outside that catalog (not yet attempted, no discovery
-   mechanism established for it yet). Separately, check more Welsh
-   councils beyond Cardiff (ruled out) - Wales now has real performance
-   metrics but zero catchment sources, so adding even one Welsh
-   catchment source would immediately extend the map's colour-grading
-   feature there too, not just add coverage.
-3. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
-   before further catchment-geometry expansion at scale (that report
-   predates both the full-national GIAS import and the performance-
-   metrics addition, so its storage projections should be re-checked
-   against real current console figures rather than assumed still
-   accurate). The report's own recommendation: national schools/trusts/
-   local-authorities data (now including performance metrics) looks
-   cheap; catchment geometry is the dominant storage cost and should be
-   rolled out one local authority at a time with real console figures
-   checked after each addition, not assumed to scale linearly from the
-   single Sheffield sample.
-4. Optional polish: `SchoolCatchmentArea` per-source research (see
-   "Unfinished" above - Edinburgh's `EST_NAME` field is the most
-   promising real starting point), a denomination-aware `/admissions`
-   flow for Scotland's ND/RC catchment splits, Playwright e2e coverage
-   for the golden paths (search a school, check a postcode, view the map
-   with the catchment overlay on). A `/schools` search-results column or
-   filter for a headline performance metric would also make the new
-   data more discoverable than only showing on each school's own page.
+This whole section was stale (predated most of the session's real work -
+Scotland performance metrics, Wales catchments, and the entire England
+sweep all happened after it was last written) and has been rewritten to
+match the actual current state as of the last commit.
+
+1. **Catchment-zone discovery for England, Scotland and Wales is now
+   genuinely exhaustive**, not just "no further batches planned": every
+   local authority in the `local_authorities` database table (188
+   England, all 32 Scotland councils, all 22 Wales councils) has either
+   real imported data or a specific, investigated, documented reason it
+   does not (see `candidates:` in `config/catchment-sources.yml`, cross-
+   checked directly against the database rather than trusted from this
+   file's own running list - see "Completed and verified" above for how
+   that cross-check was done and what it caught). Further catchment
+   growth from here would come from one of:
+   - New councils publishing data that doesn't exist yet (worth a
+     periodic recheck of the whole candidates list, not urgent).
+   - Retrying the specific "real but currently unreachable from this
+     sandbox" candidates from a different network origin: Ealing
+     (inspire.misoportal.com), Hampshire (maps.hants.gov.uk, 403),
+     Salford (map.salford.gov.uk), Milton Keynes
+     (mapping.milton-keynes.gov.uk) - all confirmed real, licensed-
+     looking data, just not reachable from here.
+   - Deeper reverse-engineering of the handful of real-but-proprietary
+     platforms already identified and partially investigated with
+     Playwright: West Sussex (StatMap Earthlight - the real underlying
+     table and layer GUIDs are already found; what's missing is
+     simulating the UI's own select-then-query job sequence to actually
+     pull features) is the most promising; Derbyshire (Precisely/MapInfo
+     Exponare) is a real second candidate. Kirklees, Rotherham and North
+     Somerset were all attempted this session and confirmed to be
+     either broken server-side (Kirklees), raster-tile-only with no
+     public API (Rotherham, same architecture as the already-excluded
+     Bridgend/Derby/Stoke-on-Trent), or unresponsive (North Somerset) -
+     not worth another pass without a materially different approach.
+2. **Performance-metric coverage is comprehensive for all three nations**
+   (England: Attainment 8, Progress 8, 4 KS2 measures, A-level APS;
+   Wales: Capped 9 + 4 more KS4 measures; Scotland: 8 SQA tariff-band/
+   SIMD measures) - see "Completed and verified" above for exactly what
+   exists and why primary-phase Wales/Scotland and special-school metrics
+   don't (no public source exists for either, confirmed by direct
+   investigation). Periodically recheck Scotland's Insight tool in case
+   it or an equivalent is ever opened up as public data - low priority,
+   previously confirmed closed and gated behind real school/council
+   authentication that must never be bypassed.
+3. Run `refresh-catchment-scores` after any future catchment or
+   performance-metric addition - it is fully generic against the
+   nation/phase metric-candidate table in `catchment_scores.py`, no code
+   change needed to pick up new coverage. Last run: 4,744 of 7,807 areas
+   scored.
+4. Get explicit go-ahead, informed by `scripts/calibration-report.md`,
+   before any further catchment-geometry expansion changes the
+   project's cost profile materially (that report predates almost all of
+   this session's catchment growth, so its storage projections should be
+   re-checked against real current console figures, not assumed still
+   accurate at the current ~7,800-row scale).
+5. Optional polish, not urgent: `SchoolCatchmentArea` per-source name-
+   matching research (Edinburgh's `EST_NAME` field remains the most
+   promising real starting point; Dorset's `school_name` field and East
+   Sussex's `NAME` field are two more real candidates found this
+   session), a denomination-aware `/admissions` flow for Scotland's
+   ND/RC catchment splits, Playwright e2e coverage for the golden paths
+   (search a school, check a postcode, view the map with the catchment
+   overlay on). A `/schools` search-results column or filter for a
+   headline performance metric would also make the data more
+   discoverable than only showing on each school's own page.
