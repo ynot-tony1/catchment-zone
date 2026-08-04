@@ -3453,7 +3453,22 @@ candidates:
   - local_authority_name: "Kirklees"
     reason_not_enabled: "The council's own page links a real 'Priority Admission Areas (Public)' layer on a Precisely/Pitney Bowes Spectrum Spatial Analyst platform (mapping.kirklees.gov.uk), but its API base returns a 500 'Failed to read configuration' without full session state, and no OGC WFS/WMS endpoint was discoverable by path-probing. Worth a follow-up pass with a real browser session (as previously worked for Bridgend/Cadcorp) rather than curl alone."
   - local_authority_name: "Rotherham"
-    reason_not_enabled: "Council's 'RMBC Mapping' page confirms primary and secondary catchment layers exist on the same Cadcorp SIS Vue platform as Bury below, with an embedded map GUID found, but no working REST/data endpoint discoverable by path-probing - a modern SPA with no exposed simple query API, same limitation as Bury/Kirklees. Worth a follow-up pass with a real browser session."
+    reason_not_enabled: >
+      Confirmed via a real Playwright browser session (maps.rotherham.gov.uk/webmapping/en-gb/PublicMap/Rotherham)
+      to run genuine Cadcorp GeognoSIS: a real session is opened
+      (POST .../GeognoSis/Rotherham/{orgId}/Sessions) and 77 overlay
+      layers are loaded, each served only as
+      .../Overlay/{n}/Image?bbox=... - rendered raster PNG tiles, not
+      vector data. Requesting an overlay endpoint directly outside the
+      browser's own session context returns 401 (session-scoped, no
+      public API). This is the same session-scoped-rendering-only
+      architecture already confirmed for Bridgend/Derby/Stoke-on-Trent's
+      Cadcorp GeognoSIS deployments - a genuine structural dead end for
+      this platform, not a search gap. A previously-noted FOI request
+      titled "School Catchment Area Coordinates" exists on
+      WhatDoTheyKnow but that site is Cloudflare-blocked from this
+      environment, the same block already documented for Brighton/
+      Islington's FOI attachments elsewhere in this file.
   - local_authority_name: "Bury"
     reason_not_enabled: "Runs a Cadcorp SIS webmap platform (map.bury.gov.uk/externalwebmap/) with no discoverable data-layer/API. Actual catchment information is published only as per-school PDF maps; community primaries reportedly have no catchments at all."
   - local_authority_name: "Salford"
