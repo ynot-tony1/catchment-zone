@@ -636,6 +636,38 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   `refresh-catchment-scores` re-run: scored areas now stand at 4,649 of
   7,712 (up from 4,496 of 7,539).
 
+- **England expanded to 37 local authorities: East Sussex added (95
+  catchment areas, 74 primary + 21 secondary).** The council calls these
+  "Community Areas" rather than "catchment areas," but they serve the
+  identical admissions-priority function (verified against the council's
+  own admissions pages) - found via an ArcGIS Web AppBuilder app whose
+  config points at feature services hosted on the shared
+  `utility.arcgis.com` domain rather than the council's own
+  `*.maps.arcgis.com` org, a different hosting pattern from every other
+  ArcGIS source in this file, only found by reading the app's own JS
+  config rather than guessing a URL. Central Bedfordshire has real, fully
+  downloadable polygon data (142 features across its lower/middle/upper
+  three-tier system) but zero attribute fields at all - the same
+  structural "real geometry, no identifying data" gap already documented
+  for Cardiff/Monmouthshire, and for the same reason not enabled
+  (fuzzy-matching polygons to schools by shape alone risks attributing
+  the wrong catchment to the wrong school). West Sussex and North
+  Somerset both have real, officially-documented catchment data on
+  proprietary non-OGC platforms (StatMap Earthlight and Cadcorp Aurora
+  respectively) that resisted curl-based investigation within budget -
+  both flagged as real-browser-session follow-up candidates, the same
+  category as Kirklees/Rotherham. Thurrock's ArcGIS Online subscription
+  is confirmed cancelled (a genuine account-level shutdown, not a
+  licensing question) - a cleaner negative than most dead ends in this
+  file. 13 more England dead ends documented across the South East,
+  South West and East of England, including the Isle of Wight's
+  admissions policy being structurally distance-only (no catchment
+  concept at all) and Gloucester City Council confirmed not to be its
+  own area's schools admissions authority (Gloucestershire County
+  Council is, already a documented dead end).
+  `refresh-catchment-scores` re-run: scored areas now stand at 4,744 of
+  7,807 (up from 4,649 of 7,712).
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -1266,12 +1298,12 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 66 local authorities out of ~200+ across Great
+- **Catchment coverage is 67 local authorities out of ~200+ across Great
   Britain as of the last count (see `PILOT_LOCAL_AUTHORITIES` in
   `packages/shared/src/config/catchment-sources.test.ts` for the exact,
   current, tested list rather than repeating it here - it grew steadily
   across this session and this bullet is otherwise guaranteed to go
-  stale again): 28 Scotland, 36 England, 2 Wales.** Every one of
+  stale again): 28 Scotland, 37 England, 2 Wales.** Every one of
   Scotland's 32 councils and every one of Wales's 22 councils has now
   been individually investigated, not just the ones that yielded real
   data, so both nations are close to as complete as this project can

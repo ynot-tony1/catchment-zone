@@ -3265,6 +3265,44 @@ sources:
     enabled: true
     notes: 'Rastrick High Catchment Area - 1 polygon. Unlike its 5 siblings above, this specific file''s export lacks any name property at all (only internal MapInfo/QGIS styling metadata, e.g. "_LayerName", "_Style") - verified live, not a fetch error. No name_field is set, so this area imports as an unnamed catchment (same accepted limitation as Sheffield/Aberdeen elsewhere in this file); the feature is still real, correctly located, and still scorable by refresh-catchment-scores'' point-in-polygon match regardless of display name.'
 
+  # East Sussex: council calls these "Community Areas" not "catchment
+  # areas" but they serve exactly the same admissions-priority function
+  # (verified via the council's own admissions pages). Surfaced through
+  # an ArcGIS Web AppBuilder app whose config points at feature services
+  # hosted on the shared utility.arcgis.com domain rather than the
+  # council's own org - a different hosting pattern from every other
+  # ArcGIS source in this file, found by reading the app's JS config
+  # rather than guessing a services.arcgis.com URL.
+  - local_authority_code: "845"
+    local_authority_name: "East Sussex"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.eastsussex.gov.uk/education-learning/schools/admissions/find-my-community-area-primary"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/2ffa734154554250a8254c76b2a0ae9c/rest/services/CommAreasPrimary/MapServer/1"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licence text in the service metadata or app config."
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '74 primary "Community Area" polygons, name field "NAME" (school name, e.g. "Forest Row CE Primary School"); "AREA_ID" is a numeric identifier.'
+
+  - local_authority_code: "845"
+    local_authority_name: "East Sussex"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.eastsussex.gov.uk/education-learning/schools/apply-for-a-school-place/apply-for-a-secondary-school/find-a-secondary-school-or-community-area"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/466fb77623c44033b931ae7a5be7593e/rest/services/CommAreasSecondary/MapServer/1"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licence text in the service metadata or app config."
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '21 secondary "Community Area" polygons, name field "NAME" (a shorthand area name, e.g. "Beacon" for Beacon Academy, not a full school name); "COMM_ID" is a numeric identifier.'
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3272,6 +3310,89 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Central Bedfordshire"
+    reason_not_enabled: >
+      Real, fully downloadable polygon data confirmed via the council's
+      Astun iShare WFS (my.centralbedfordshire.gov.uk/GetOWS.ashx) - 3
+      tiers matching the county's lower/middle/upper school system
+      (catchment_areas_lower 99 features, catchment_areas_middle 28,
+      catchment_areas_upper 15; 142 total), correctly in EPSG:27700. But
+      DescribeFeatureType confirms the schema exposes only a single
+      msGeometry element, no other attributes at all - the same "real
+      geometry, zero identifying data" gap already documented for
+      Cardiff/Monmouthshire's Astun iShare deployments in Wales. A
+      GetFeatureInfo attempt to surface a name via the popup mechanism
+      returned "LayerNotQueryable". Not enabled: fuzzy-matching polygons
+      to schools by shape/location alone risks attributing the wrong
+      catchment to the wrong school, a real data-quality risk this
+      project does not take even with licensing not being a gate (see
+      the same judgement call already made for Herefordshire elsewhere
+      in this file).
+  - local_authority_name: "West Sussex"
+    reason_not_enabled: >
+      Real data confirmed to exist via the council's own instructions
+      PDF, which screenshots a live popup with two toggleable layers
+      ("WSCC Primary Catchments"/"WSCC Secondary Catchments") and a real
+      feature record (Name, Minimum age, Maximum age, WSCC Area,
+      website). The live map itself
+      (westsussex.statmap.co.uk/map/Earthlight.html) runs on a
+      proprietary "StatMap Earthlight" viewer, not ArcGIS/WFS/WMS - its
+      bootstrap loader (EarthlightLoader.js) is a small stub with no
+      visible endpoint URLs, and no underlying queryable API was found
+      within reasonable effort. Worth a follow-up pass with a real
+      browser session capturing network requests (the technique that
+      previously cracked Bridgend's Cadcorp platform), not curl alone.
+  - local_authority_name: "North Somerset"
+    reason_not_enabled: >
+      Real per-school catchment maps confirmed via official council
+      pages (the council's own text explicitly notes most schools in
+      Weston-super-Mare/Clevedon/Nailsea/Portishead are NOT included,
+      i.e. this is a genuinely partial dataset even where it exists).
+      Embedded at map.n-somerset.gov.uk, running on a proprietary Cadcorp
+      Aurora scripted map server (Aurora.svc/run?script=...), not
+      standard WFS/WMS/ArcGIS. Probed likely Cadcorp GeognoSIS OGC paths
+      - all 404 or connection failures. Same category as Derby/
+      Stoke-on-Trent's Cadcorp GeognoSIS dead ends elsewhere in this
+      file - worth a real-browser-session follow-up.
+  - local_authority_name: "Windsor and Maidenhead"
+    reason_not_enabled: >
+      The council's own admissions pages name a real tool ("Neighbourhood
+      View"/"Neighbourhood Map" at mol.rbwm.gov.uk) for finding school
+      designated areas, but mol.rbwm.gov.uk/mol/map/ consistently returns
+      a custom "503 Server-unavailable!" page (a real HTTP response, not
+      a network-level timeout) - reads as the backend mapping
+      application being down or decommissioned rather than a data-access
+      block. Worth rechecking later in case it comes back online.
+  - local_authority_name: "Milton Keynes"
+    reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin."
+  - local_authority_name: "Hertfordshire"
+    reason_not_enabled: "No GIS/ArcGIS/open-data presence discovered. The council's 'Find a school' tool appears to be a simple distance-based lookup, not published catchment polygons."
+  - local_authority_name: "Bedford Borough"
+    reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published.'
+  - local_authority_name: "Luton"
+    reason_not_enabled: "The council's catchment tool fetches a flat tab-separated text file (road name to primary/secondary school) - no geometry of any kind, fails the polygon requirement entirely."
+  - local_authority_name: "Oxfordshire"
+    reason_not_enabled: "The council's own ArcGIS Server was fully enumerated (~80 named services across all folders) with no schools/catchment layer found anywhere in it. A FOI request for catchment area data was refused by the council. Only static per-school PDF 'designated area' maps are published."
+  - local_authority_name: "Reading"
+    reason_not_enabled: "Runs Astun iShare (my.reading.gov.uk) with nursery/primary/secondary school layers confirmed live, but verified via GetFeature that these are esriGeometryPoint (school locations only) - no layer with 'catchment' in the name exists on this server."
+  - local_authority_name: "Slough"
+    reason_not_enabled: "maps.slough.gov.uk resolves but only serves the default unconfigured IIS Windows Server placeholder page. No ArcGIS/iShare/GeoServer platform of any kind found."
+  - local_authority_name: "Isle of Wight"
+    reason_not_enabled: "Structural, not a search gap: the council's admissions policy explicitly uses a pure straight-line-distance tiebreak measured by its own GIS, not catchment-area polygons. iow.gov.uk also blocks unauthenticated fetches with a Cloudflare 403."
+  - local_authority_name: "Medway"
+    reason_not_enabled: "Runs a Cadcorp SIS WebMap 9 application (medwaymaps.medway.gov.uk); likely OGC endpoint paths all 404. No catchment-specific layer discoverable in the static page HTML. Most Medway schools are academies/voluntary-aided setting their own admissions with no unified LA catchment polygon dataset found."
+  - local_authority_name: "Thurrock"
+    reason_not_enabled: 'Confirmed structurally dead, not just unsearched: the council''s ArcGIS Online subscription has been cancelled. Its "Schools" Feature Service returns {"error":{"code":403,"messageCode":"SB_0006","message":"Subscription is canceled, the item is not accessible"}} - a genuine account-level shutdown, not a permissions or licensing question. Council''s own catchment PDFs are road-name-to-school lists, not GIS.'
+  - local_authority_name: "Bath and North East Somerset"
+    reason_not_enabled: "No dedicated GIS/map subdomain resolves. The one interactive tool found (app.bathnes.gov.uk/webforms/nearby) is described only generically and its own URL name strongly suggests a distance/nearest-school tool rather than catchment polygons - not confirmed as real catchment boundary data."
+  - local_authority_name: "South Gloucestershire"
+    reason_not_enabled: "No GIS/ArcGIS/map subdomain resolves and no interactive catchment tool found; the council appears to rely on static admissions documents only."
+  - local_authority_name: "Plymouth"
+    reason_not_enabled: "The council's own 'Plymouth GIS' portal (plymouth.mapxpress.net) has no school/catchment mention on its data-downloads page, and no separate catchment map tool was found on plymouth.gov.uk."
+  - local_authority_name: "Torbay"
+    reason_not_enabled: "Historical record shows Torbay used MapInfo Professional internally (83 licences as of 2012) but no public-facing catchment map tool or GIS portal is discoverable today. Only third-party catchment estimators (Locrating, School Guide) found."
+  - local_authority_name: "Gloucester"
+    reason_not_enabled: "Not the schools admissions authority for its own area - Gloucestershire County Council administers all community/VC school admissions and catchments for Gloucester (Gloucestershire itself is already a documented dead end, login-gated). Gloucester City Council has no separate schools catchment GIS of its own."
   - local_authority_name: "Birmingham"
     reason_not_enabled: >
       A real ArcGIS Enterprise portal (maps.birmingham.gov.uk/arcgis)
