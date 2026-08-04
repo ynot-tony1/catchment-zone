@@ -3411,6 +3411,8 @@ candidates:
       temporarily down. No longer worth rechecking; the tool is gone.
   - local_authority_name: "Milton Keynes"
     reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin."
+  - local_authority_name: "Portsmouth"
+    reason_not_enabled: 'Confirmed via per-school pages: catchment maps are published as individual PDFs (e.g. "Mayfield-and-Trafalgar-secondary-school-catchment-area-Accessible.pdf"), not GIS. Both ArcGIS Hub hostnames resolve but their DCAT feeds 404. Two ArcGIS Experience apps found in search ("schools and catchment areas", "School Catchment Areas") were both confirmed via item metadata to belong to other councils (North Yorkshire and an unrelated org respectively), not Portsmouth - false positives from search relevance, not real leads.'
   - local_authority_name: "Hertfordshire"
     reason_not_enabled: "No GIS/ArcGIS/open-data presence discovered. The council's 'Find a school' tool appears to be a simple distance-based lookup, not published catchment polygons."
   - local_authority_name: "Bedford Borough"

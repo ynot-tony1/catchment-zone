@@ -723,6 +723,25 @@ level"` + `disadvantage_status="Total"` as the headline filter,
     now returns 200 but resolves to the plain council homepage - confirms
     it has been decommissioned rather than being temporarily down.
 
+- **Cross-checked the whole England catchment sweep against the
+  authoritative `local_authorities` database table (188 real England
+  entries, `catchment_coverage_status` PILOT/NOT_AVAILABLE) rather than
+  just this file's own running list, to find any local authority
+  genuinely never investigated at all this session.** Found exactly one:
+  Portsmouth. Investigated directly - confirmed PDF-only catchment
+  publication per school (e.g.
+  "Mayfield-and-Trafalgar-secondary-school-catchment-area-Accessible.pdf"),
+  both candidate ArcGIS Hub hostnames resolve but their DCAT feeds 404,
+  and two ArcGIS Experience apps that surfaced in search under
+  Portsmouth-relevant titles were both confirmed via item metadata to
+  actually belong to other councils (North Yorkshire and an unrelated
+  org) - the same false-positive-search pattern already seen this
+  session for Oxfordshire/Stirling and Barnet/Dundee. With Portsmouth
+  now documented, every England local authority in the database has
+  either real imported catchment data or an explicitly investigated
+  reason it does not - the systematic sweep is genuinely exhaustive as
+  of this point, not just "no further batches planned."
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
