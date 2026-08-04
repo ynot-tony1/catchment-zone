@@ -603,6 +603,39 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   source in the project - this class of bug is now believed fully
   resolved, not just patched for the two councils found by hand.
 
+- **England expanded to 36 local authorities: Doncaster, Solihull and
+  Calderdale added (191 more catchment areas).** Doncaster (ArcGIS
+  FeatureServer, all phases including nursery/infant/junior tiers, 90
+  primary + 18 secondary imported) and Solihull (ArcGIS FeatureServer,
+  59 primary + 18 secondary, name field `CONAME`) both followed the
+  project's standard pattern. Calderdale is structurally different from
+  every other source in this file: published as one separate
+  single-feature GeoJSON download per secondary school rather than one
+  bulk endpoint (6 real, independently-verified download URLs, secondary
+  only - no primary catchment dataset exists for Calderdale), each
+  correctly declaring `EPSG:27700` in its own `crs` block - caught and
+  declared correctly in `catchment-sources.yml` from the start this time,
+  applying the exact lesson from the Powys bug fixed earlier this
+  session. One of the six (Rastrick High) has no name property in its
+  own export at all (only internal MapInfo/QGIS styling metadata) -
+  imported as an unnamed catchment area, the same accepted limitation
+  already documented for Sheffield/Aberdeen; still real, correctly
+  located, and still scorable by point-in-polygon matching regardless of
+  display name. 20 more England councils/boroughs documented as dead
+  ends across Greater Manchester, Merseyside, West/South Yorkshire, West
+  Midlands and the North East, including Birmingham's real
+  `SchoolsDataSvc` ArcGIS service being genuinely token-gated (a hard
+  stop, not attempted) and Barnsley confirmed by a published FOI response
+  to structurally not operate catchment areas at all (distance-only
+  admissions). Kirklees and Rotherham both have a real catchment layer
+  confirmed to exist on a Precisely/Pitney Bowes Spectrum platform and a
+  Cadcorp SIS Vue platform respectively, but neither exposed a working
+  REST/WFS endpoint to a plain `curl`-based investigation - flagged as
+  worth a real-browser-session follow-up, the same technique that
+  previously cracked Bridgend's Cadcorp platform.
+  `refresh-catchment-scores` re-run: scored areas now stand at 4,649 of
+  7,712 (up from 4,496 of 7,539).
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -1233,12 +1266,12 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 63 local authorities out of ~200+ across Great
+- **Catchment coverage is 66 local authorities out of ~200+ across Great
   Britain as of the last count (see `PILOT_LOCAL_AUTHORITIES` in
   `packages/shared/src/config/catchment-sources.test.ts` for the exact,
   current, tested list rather than repeating it here - it grew steadily
   across this session and this bullet is otherwise guaranteed to go
-  stale again): 28 Scotland, 33 England, 2 Wales.** Every one of
+  stale again): 28 Scotland, 36 England, 2 Wales.** Every one of
   Scotland's 32 councils and every one of Wales's 22 councils has now
   been individually investigated, not just the ones that yielded real
   data, so both nations are close to as complete as this project can

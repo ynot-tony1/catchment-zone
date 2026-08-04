@@ -3108,6 +3108,163 @@ sources:
     enabled: true
     notes: '27 middle/junior catchment polygons, name field "school_name" - Dorset runs a three-tier First/Middle/Upper system in parts of the county. Includes one non-school administrative feature (school_name "Somerset County Council", dscf_number 0) marking the boundary with the neighbouring authority - imported as-is, real published data.'
 
+  - local_authority_code: "371"
+    local_authority_name: "Doncaster"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://maps.doncaster.gov.uk/server/rest/services/Schools/School_Admissions/FeatureServer"
+    download_url: "https://maps.doncaster.gov.uk/server/rest/services/Schools/School_Admissions/FeatureServer/5"
+    name_field: "Name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - copyrightText is empty on the FeatureServer."
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '90 primary catchment polygons (layer "Primary Catchments"). Field "SecondaryName" carries the feeder secondary school each primary feeds into.'
+
+  - local_authority_code: "371"
+    local_authority_name: "Doncaster"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.doncaster.gov.uk/server/rest/services/Schools/School_Admissions/FeatureServer"
+    download_url: "https://maps.doncaster.gov.uk/server/rest/services/Schools/School_Admissions/FeatureServer/6"
+    name_field: "Name"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - copyrightText is empty on the FeatureServer."
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '18 secondary catchment polygons (layer "Secondary Catchments").'
+
+  - local_authority_code: "333"
+    local_authority_name: "Solihull"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://solihull-mbc.maps.arcgis.com/apps/webappviewer/index.html?id=7252e47add5c45a3b0ef6d82a10df2ca"
+    download_url: "https://services.arcgis.com/L4gSWjgFt7RclHud/arcgis/rest/services/PrimaryCatchments/FeatureServer/0"
+    name_field: "CONAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - not stated on the FeatureServer."
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '59 primary catchment polygons, name field "CONAME" (school name, e.g. "Langley Primary School"); "SCHOOL2" carries the same name with "Catchment Area" appended.'
+
+  - local_authority_code: "333"
+    local_authority_name: "Solihull"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://solihull-mbc.maps.arcgis.com/apps/webappviewer/index.html?id=7252e47add5c45a3b0ef6d82a10df2ca"
+    download_url: "https://services.arcgis.com/L4gSWjgFt7RclHud/arcgis/rest/services/SecondaryCatchments/FeatureServer/0"
+    name_field: "CONAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - not stated on the FeatureServer."
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: '18 secondary catchment polygons, name field "CONAME" (e.g. "Arden School").'
+
+  # Calderdale: unlike every other source in this file, published as one
+  # separate single-feature GeoJSON download per school rather than one
+  # bulk endpoint - each entry below is a real, independently-verified
+  # download URL, secondary schools only (no primary catchment dataset
+  # exists for Calderdale). All 6 declare EPSG:27700 in their own crs
+  # block, verified live, so this is set explicitly per entry rather than
+  # assuming WGS84 - the exact mistake found and fixed for Powys earlier
+  # this session.
+  - local_authority_code: "381"
+    local_authority_name: "Calderdale"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://dataworks.calderdale.gov.uk/dataset/secondary-school-catchment-areas-2ro4o"
+    download_url: "https://dataworks.calderdale.gov.uk/download/2ro4o/l1y/Halifax%20Catchment%20Area.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL v3) (quoted verbatim from the dataset page)"
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: 'Halifax Catchment Area - 1 polygon. "SCHOOLS_SERVED" property: "The Halifax Academy, Park Lane Academy" (jointly served, not split). Own disclaimer field quoted: "The catchment information is only an indication, and not a guarantee of school placement."'
+
+  - local_authority_code: "381"
+    local_authority_name: "Calderdale"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://dataworks.calderdale.gov.uk/dataset/secondary-school-catchment-areas-2ro4o"
+    download_url: "https://dataworks.calderdale.gov.uk/download/2ro4o/m1z/Calder%20High%20Catchment%20Area.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL v3) (quoted verbatim from the dataset page)"
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "Calder High Catchment Area - 1 polygon."
+
+  - local_authority_code: "381"
+    local_authority_name: "Calderdale"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://dataworks.calderdale.gov.uk/dataset/secondary-school-catchment-areas-2ro4o"
+    download_url: "https://dataworks.calderdale.gov.uk/download/2ro4o/p3b/Trinity%20Academy%20HX%20Catchment%20Area.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL v3) (quoted verbatim from the dataset page)"
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "Trinity Academy Halifax Catchment Area - 1 polygon."
+
+  - local_authority_code: "381"
+    local_authority_name: "Calderdale"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://dataworks.calderdale.gov.uk/dataset/secondary-school-catchment-areas-2ro4o"
+    download_url: "https://dataworks.calderdale.gov.uk/download/2ro4o/vf5/Ryburn%20Valley%20High%20Catchment%20Area.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL v3) (quoted verbatim from the dataset page)"
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "Ryburn Valley High Catchment Area - 1 polygon."
+
+  - local_authority_code: "381"
+    local_authority_name: "Calderdale"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://dataworks.calderdale.gov.uk/dataset/secondary-school-catchment-areas-2ro4o"
+    download_url: "https://dataworks.calderdale.gov.uk/download/2ro4o/wln/Todmorden%20High%20Catchment%20Area.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL v3) (quoted verbatim from the dataset page)"
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "Todmorden High Catchment Area - 1 polygon."
+
+  - local_authority_code: "381"
+    local_authority_name: "Calderdale"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://dataworks.calderdale.gov.uk/dataset/secondary-school-catchment-areas-2ro4o"
+    download_url: "https://dataworks.calderdale.gov.uk/download/2ro4o/zfs/Rastrick%20High%20Catchment%20Area.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UK Open Government Licence (OGL v3) (quoted verbatim from the dataset page)"
+    last_verified_at: "2026-08-04"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: 'Rastrick High Catchment Area - 1 polygon. Unlike its 5 siblings above, this specific file''s export lacks any name property at all (only internal MapInfo/QGIS styling metadata, e.g. "_LayerName", "_Style") - verified live, not a fetch error. No name_field is set, so this area imports as an unnamed catchment (same accepted limitation as Sheffield/Aberdeen elsewhere in this file); the feature is still real, correctly located, and still scorable by refresh-catchment-scores'' point-in-polygon match regardless of display name.'
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3115,6 +3272,43 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Birmingham"
+    reason_not_enabled: >
+      A real ArcGIS Enterprise portal (maps.birmingham.gov.uk/arcgis)
+      confirmed to have a SchoolsDataSvc service folder, but querying it
+      returns {"code":499,"message":"Token Required"} - a genuine
+      authentication requirement, a hard stop per this project's standing
+      rule against bypassing access control, not attempted further. The
+      public mybrummap/Schools_and_Leisure/MapServer service only has
+      point layers (school locations), no catchment polygons.
+  - local_authority_name: "Kirklees"
+    reason_not_enabled: "The council's own page links a real 'Priority Admission Areas (Public)' layer on a Precisely/Pitney Bowes Spectrum Spatial Analyst platform (mapping.kirklees.gov.uk), but its API base returns a 500 'Failed to read configuration' without full session state, and no OGC WFS/WMS endpoint was discoverable by path-probing. Worth a follow-up pass with a real browser session (as previously worked for Bridgend/Cadcorp) rather than curl alone."
+  - local_authority_name: "Rotherham"
+    reason_not_enabled: "Council's 'RMBC Mapping' page confirms primary and secondary catchment layers exist on the same Cadcorp SIS Vue platform as Bury below, with an embedded map GUID found, but no working REST/data endpoint discoverable by path-probing - a modern SPA with no exposed simple query API, same limitation as Bury/Kirklees. Worth a follow-up pass with a real browser session."
+  - local_authority_name: "Bury"
+    reason_not_enabled: "Runs a Cadcorp SIS webmap platform (map.bury.gov.uk/externalwebmap/) with no discoverable data-layer/API. Actual catchment information is published only as per-school PDF maps; community primaries reportedly have no catchments at all."
+  - local_authority_name: "Salford"
+    reason_not_enabled: "Official page provides PDF catchment maps only for ~25 faith schools, no GIS. map.salford.gov.uk's interactive map timed out from this sandbox on every attempt - the same unreachability pattern as Ealing/Hampshire, worth retrying from a different network origin rather than assumed empty."
+  - local_authority_name: "Wirral"
+    reason_not_enabled: "The council's own 'school catchment area finder' embeds a legacy ASP tool (ww3.wirral.gov.uk/catchment/indexiframe.asp) that is a road/street-name text search returning a list of catchment schools per street - no polygon geometry exposed anywhere, not a map at all."
+  - local_authority_name: "Wolverhampton"
+    reason_not_enabled: "The council's own 'Schools' ArcGIS Experience app resolves to a real MapServer (maps.wolverhampton.gov.uk/arcgis/rest/services/CWC/MapServer), but its Schools layer is confirmed esriGeometryPoint (locations only) - no catchment polygon layer exists in that MapServer."
+  - local_authority_name: "Manchester, Tameside, Wigan"
+    reason_not_enabled: "Manchester and Wigan both have live, fully-checked ArcGIS Hub open-data portals (26 and 95 datasets respectively, checked via DCAT feed) with no catchment dataset among them. Tameside's school-map page has no discoverable catchment polygon layer or API. No PDF-only fallback found for any of the three either."
+  - local_authority_name: "Leeds"
+    reason_not_enabled: "Catchment maps published only as combined PDF documents (e.g. secondary catchment maps as one large PDF); no GIS/API presence found."
+  - local_authority_name: "Bradford"
+    reason_not_enabled: "ArcGIS Hub portal (spatialdata-cbmdc.hub.arcgis.com, 62 datasets) checked via DCAT feed - no catchment dataset; the only schools-adjacent dataset is an air-quality interpolation layer, unrelated."
+  - local_authority_name: "Wakefield"
+    reason_not_enabled: "Official tool is a GET-form single-address lookup (one catchment result per address), not a map or bulk polygon dataset."
+  - local_authority_name: "Coventry"
+    reason_not_enabled: "Official tool is a street-name text search (explicitly not by postcode) returning a school-name list, not a map. No GIS presence found."
+  - local_authority_name: "South Tyneside"
+    reason_not_enabled: "Only PDF catchment maps published (2025 and 2023-24 admissions cycles). The council's interactive GIS is for planning/Local Plan policy only, not schools."
+  - local_authority_name: "Barnsley"
+    reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
+  - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
+    reason_not_enabled: "No GIS/open-data catchment presence discovered for any of these 11 (checked individually: council pages, data.gov.uk/ArcGIS Hub org search where one exists, PDF fallback search) - Liverpool/St Helens/Sandwell have data.gov.uk orgs with unrelated dataset lists (checked in full), the rest have no discoverable GIS presence at all. Sunderland's own site additionally blocks unauthenticated fetches (403)."
   - local_authority_name: "Hampshire"
     reason_not_enabled: >
       Real data confirmed to exist: data.gov.uk lists "Hampshire School
