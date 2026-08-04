@@ -58,6 +58,18 @@ const CATCHMENT_VISIBLE_ZOOM_THRESHOLD = 9;
 // is deliberately excluded from this project (see PROJECT_STATUS.md).
 const GB_BOUNDS: [number, number, number, number] = [-8.7, 49.8, 1.9, 61.0];
 
+// Coalesces bursts of "moveend" events (a mouse-wheel zoom or a drag-pan
+// fires several in quick succession) into a single fetch after the user
+// actually stops moving, instead of firing one full schools+catchments
+// round-trip per intermediate event - verified live this was the main
+// cause of the map feeling slow and of school pins visibly "jumping"
+// between positions (see the request-sequence guards in loadSchoolsInView/
+// loadCatchmentsInView below for the other half of that fix: even with
+// debouncing, a slow request for an earlier viewport can still resolve
+// after a faster request for a later one, so both also drop any response
+// that isn't for the most recent request they themselves issued).
+const MOVE_DEBOUNCE_MS = 300;
+
 export function SchoolMap({
   styleUrl,
   attribution,
@@ -68,12 +80,17 @@ export function SchoolMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const showCatchmentsRef = useRef(false);
+  const onlyCatchmentsRef = useRef(false);
+  const moveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const schoolsRequestIdRef = useRef(0);
+  const catchmentsRequestIdRef = useRef(0);
   const [selected, setSelected] = useState<SchoolFeatureProperties | null>(
     null,
   );
   const [selectedCatchment, setSelectedCatchment] =
     useState<CatchmentFeatureProperties | null>(null);
   const [showCatchments, setShowCatchments] = useState(false);
+  const [onlyCatchments, setOnlyCatchments] = useState(false);
   const [catchmentCountInView, setCatchmentCountInView] = useState<
     number | null
   >(null);
@@ -154,6 +171,7 @@ export function SchoolMap({
         id: "schools-points",
         type: "circle",
         source: "schools",
+        layout: { visibility: onlyCatchmentsRef.current ? "none" : "visible" },
         paint: {
           "circle-radius": 5,
           "circle-color": "#3b5bdb",
@@ -188,17 +206,31 @@ export function SchoolMap({
         map.getCanvas().style.cursor = "";
       });
 
-      loadSchoolsInView(map, setError);
+      function loadCurrentView() {
+        if (!onlyCatchmentsRef.current) {
+          loadSchoolsInView(map, schoolsRequestIdRef, setError);
+        }
+        if (showCatchmentsRef.current) {
+          loadCatchmentsInView(
+            map,
+            catchmentsRequestIdRef,
+            setError,
+            setCatchmentCountInView,
+          );
+        }
+      }
+
+      loadCurrentView();
       setZoom(map.getZoom());
       map.on("moveend", () => {
         setZoom(map.getZoom());
-        loadSchoolsInView(map, setError);
-        if (showCatchmentsRef.current)
-          loadCatchmentsInView(map, setError, setCatchmentCountInView);
+        if (moveDebounceRef.current) clearTimeout(moveDebounceRef.current);
+        moveDebounceRef.current = setTimeout(loadCurrentView, MOVE_DEBOUNCE_MS);
       });
     });
 
     return () => {
+      if (moveDebounceRef.current) clearTimeout(moveDebounceRef.current);
       map.remove();
       mapRef.current = null;
     };
@@ -209,14 +241,37 @@ export function SchoolMap({
     showCatchmentsRef.current = showCatchments;
     const map = mapRef.current;
     if (!map || !showCatchments) return;
-    loadCatchmentsInView(map, setError, setCatchmentCountInView);
+    loadCatchmentsInView(
+      map,
+      catchmentsRequestIdRef,
+      setError,
+      setCatchmentCountInView,
+    );
   }, [showCatchments]);
+
+  function handleOnlyCatchmentsChange(checked: boolean) {
+    onlyCatchmentsRef.current = checked;
+    setOnlyCatchments(checked);
+    const map = mapRef.current;
+    if (!map || !map.getLayer("schools-points")) return;
+    map.setLayoutProperty(
+      "schools-points",
+      "visibility",
+      checked ? "none" : "visible",
+    );
+    if (checked) {
+      setSelected(null);
+    } else {
+      loadSchoolsInView(map, schoolsRequestIdRef, setError);
+    }
+  }
 
   function handleShowCatchmentsChange(checked: boolean) {
     setShowCatchments(checked);
     setCatchmentCountInView(null);
     if (checked) return;
     setSelectedCatchment(null);
+    if (onlyCatchments) handleOnlyCatchmentsChange(false);
     const source = mapRef.current?.getSource("catchments") as
       GeoJSONSource | undefined;
     source?.setData({ type: "FeatureCollection", features: [] });
@@ -232,6 +287,19 @@ export function SchoolMap({
         />
         Show catchment areas (where published)
       </label>
+      {showCatchments && (
+        <label className="flex w-fit items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={onlyCatchments}
+            onChange={(event) =>
+              handleOnlyCatchmentsChange(event.target.checked)
+            }
+          />
+          Show only catchment zones (hide school pins, faster on slower
+          connections)
+        </label>
+      )}
       {showCatchments && (
         <div className="flex w-fit items-center gap-2 text-xs">
           <span className="text-muted-foreground">Performance grade:</span>
@@ -349,6 +417,7 @@ export function SchoolMap({
 
 async function loadSchoolsInView(
   map: MapLibreMap,
+  requestIdRef: { current: number },
   setError: (message: string | null) => void,
 ) {
   const bounds = map.getBounds();
@@ -358,26 +427,36 @@ async function loadSchoolsInView(
     bounds.getEast(),
     bounds.getNorth(),
   ].join(",");
+  const requestId = ++requestIdRef.current;
 
   try {
     const response = await fetch(
       `/api/map/schools?bbox=${encodeURIComponent(bbox)}`,
     );
+    // A slower request for an earlier viewport can resolve after a faster
+    // one for a later viewport (the map may have moved again in between,
+    // debounced or not) - applying it now would flash stale pins into the
+    // wrong positions, which is what "dancing" pins actually was.
+    if (requestIdRef.current !== requestId) return;
     if (!response.ok) {
       setError("Could not load schools for this area.");
       return;
     }
     const featureCollection = await response.json();
+    if (requestIdRef.current !== requestId) return;
     const source = map.getSource("schools") as GeoJSONSource | undefined;
     source?.setData(featureCollection);
     setError(null);
   } catch {
-    setError("Could not load schools for this area.");
+    if (requestIdRef.current === requestId) {
+      setError("Could not load schools for this area.");
+    }
   }
 }
 
 async function loadCatchmentsInView(
   map: MapLibreMap,
+  requestIdRef: { current: number },
   setError: (message: string | null) => void,
   setCatchmentCountInView: (count: number | null) => void,
 ) {
@@ -388,21 +467,26 @@ async function loadCatchmentsInView(
     bounds.getEast(),
     bounds.getNorth(),
   ].join(",");
+  const requestId = ++requestIdRef.current;
 
   try {
     const response = await fetch(
       `/api/map/catchments?bbox=${encodeURIComponent(bbox)}`,
     );
+    if (requestIdRef.current !== requestId) return;
     if (!response.ok) {
       setError("Could not load catchment areas for this area.");
       return;
     }
     const featureCollection = await response.json();
+    if (requestIdRef.current !== requestId) return;
     const source = map.getSource("catchments") as GeoJSONSource | undefined;
     source?.setData(featureCollection);
     setCatchmentCountInView(featureCollection.features?.length ?? 0);
     setError(null);
   } catch {
-    setError("Could not load catchment areas for this area.");
+    if (requestIdRef.current === requestId) {
+      setError("Could not load catchment areas for this area.");
+    }
   }
 }
