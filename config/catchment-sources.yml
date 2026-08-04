@@ -3396,11 +3396,12 @@ candidates:
     reason_not_enabled: >
       The council's own admissions pages name a real tool ("Neighbourhood
       View"/"Neighbourhood Map" at mol.rbwm.gov.uk) for finding school
-      designated areas, but mol.rbwm.gov.uk/mol/map/ consistently returns
-      a custom "503 Server-unavailable!" page (a real HTTP response, not
-      a network-level timeout) - reads as the backend mapping
-      application being down or decommissioned rather than a data-access
-      block. Worth rechecking later in case it comes back online.
+      designated areas. Initially found returning a custom "503
+      Server-unavailable!" page; re-checked later the same session and it
+      now returns HTTP 200 but resolves to the plain rbwm.gov.uk
+      homepage, not a map application - confirms the backend mapping app
+      has been decommissioned/removed rather than being merely
+      temporarily down. No longer worth rechecking; the tool is gone.
   - local_authority_name: "Milton Keynes"
     reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin."
   - local_authority_name: "Hertfordshire"
