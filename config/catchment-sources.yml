@@ -3324,7 +3324,27 @@ candidates:
   - local_authority_name: "Kingston upon Thames"
     reason_not_enabled: "Has a real, fully public, working StatMap WFS platform (kingston.statmap.co.uk/map/wfs.svc/open_data_wfs, GetCapabilities confirmed live, no auth) with 20 real layers (allotments, conservation areas, green belt, tree preservation orders, etc.) - but no school catchment layer exists among them (school_open_spaces is playing-field polygons, not catchments). Catchment info exists only as a schematic PDF. Worth periodically re-checking this specific WFS in case a catchment layer is ever added, since the platform itself is already proven reachable and working."
   - local_authority_name: "Derbyshire"
-    reason_not_enabled: 'Has a real GIS platform ("Derbyshire Mapping Portal", maps.derbyshire.gov.uk) but it runs on Precisely/MapInfo Exponare/Connect architecture requiring internal project/table names not discoverable from the client JS bundle within reasonable effort - no catchment layer name could be confirmed. The council''s separate "Normal Area Finder" tool does point-in-polygon matching entirely server-side (ASP.NET postcode form), returning only a school name, not boundary geometry.'
+    reason_not_enabled: >
+      Confirmed via a live Playwright session against the "Derbyshire
+      Mapping Portal" (maps.derbyshire.gov.uk, Precisely/MapInfo
+      Exponare/Connect architecture) that the real per-table REST path
+      pattern is
+      connectProxy/rest/Spatial/ProjectService?url=/projects/Analyst/NamedProjects/{name}.json,
+      revealed by the public "Ordnance_Survey_Maps" project's own real
+      table names (Village_Greens, SSSIs, Libraries, DCC_Assets, etc.).
+      The full public projects list
+      (.../ProjectService?url=/projects.json) has only 6 entries, none
+      education-related. Probing a plausible "Education" project name
+      directly returns a genuine
+      com.pb.spectrum.spatial.component.acl.AccessDeniedException
+      ("Access denied - /Analyst/NamedProjects/Education [EXECUTE]")
+      rather than a not-found error - confirming the project exists but
+      is access-controlled. This is a real authentication/authorization
+      wall, not an undiscovered URL - a hard stop per this project's
+      standing rule against bypassing access control, not attempted
+      further. The council's separate "Normal Area Finder" tool does
+      point-in-polygon matching entirely server-side (ASP.NET postcode
+      form), returning only a school name, not boundary geometry.
   - local_authority_name: "Barnet"
     reason_not_enabled: 'Only static JPEG primary catchment maps published. The council''s real Astun-style iShare GIS platform (maps.barnet.gov.uk/barnetwebmap) exposes Elections/HealthAndWellbeing/LocalPlan and similar workspaces but no Schools/Catchments workspace. (A seemingly on-point "School_Catchments_2022_View" FeatureServer found in search is a false positive - verified via item metadata to actually belong to Dundee City, Scotland, not Barnet.)'
   - local_authority_name: "Bromley"
