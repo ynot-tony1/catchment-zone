@@ -1530,3 +1530,144 @@ match the actual current state as of the last commit.
    overlay on). A `/schools` search-results column or filter for a
    headline performance metric would also make the data more
    discoverable than only showing on each school's own page.
+
+## Checkpoint - paused here, usage running low
+
+Pausing at explicit user request (usage running out). Everything below is
+committed and pushed to `main`; CI green on every commit.
+
+**This session's work, most recent first:**
+
+- **Map performance fix (user-reported, live-verified):** the map's school
+  pins visibly "jumped" between positions and catchment areas felt slow to
+  load. Root-caused to two real bugs, not one: (1) neither
+  `loadSchoolsInView` nor `loadCatchmentsInView` in
+  `apps/web/components/school-map.tsx` guarded against out-of-order
+  responses, so a slow request for an earlier viewport could resolve after
+  and overwrite a faster request for a later one - that was the "dancing";
+  (2) every intermediate `moveend` event during a single pan/zoom gesture
+  fired its own full fetch, with no debouncing. Fixed both (request-
+  sequence guard + 300ms debounce on `moveend`), verified live with
+  Playwright that an 8-step rapid pan now fires exactly 1 request instead
+  of many. Also added the user-requested "Show only catchment zones"
+  checkbox (hides school pins, stops fetching them entirely while
+  checked). Checked whether `/api/map/schools`'s `ORDER BY random()` was
+  the slow-query culprit too - `EXPLAIN ANALYZE` showed it isn't (forcing
+  the lat/lon index actually made it slower, 655ms vs 120ms, due to an
+  extra lookup join at this selectivity), so left unchanged.
+- Pushed the remaining "real but proprietary platform" catchment leads
+  from the previous batch to their conclusions: Rotherham confirmed
+  raster-tile-only (Cadcorp GeognoSIS, same dead end as Bridgend/Derby/
+  Stoke) via a live browser session; Derbyshire confirmed its education
+  data sits behind a genuine `AccessDeniedException` - a real
+  authentication wall, not just a hard-to-find URL, so a hard stop per
+  this project's standing rule; West Sussex got further (found the real
+  underlying table and layer GUIDs via its job-queue API) but feature
+  extraction still isn't cracked; the network-blocked candidates (Ealing,
+  Hampshire, Salford, Milton Keynes) were re-checked and are unchanged.
+- Before that: closed out a systematic England catchment sweep,
+  cross-checked against the database's own `local_authorities` table
+  (188 real England entries) rather than trusted from this file's own
+  running list - found and fixed one genuinely untouched authority
+  (Portsmouth, confirmed PDF-only) and one real LA-code bug (Solihull's
+  77 catchment areas had been tagged under Sandwell's code, 333 vs 334 -
+  found by cross-checking every code used this session against that same
+  table, fixed and re-imported). Before that: two real coordinate-
+  reprojection bugs found via proactive database sweeps and fixed
+  (Aberdeenshire/Orkney's shapefile source, and Powys's GeoServer lying
+  about its own CRS) - the Powys fix added a general plausibility check
+  that protects every future source from the same class of bug, not just
+  Powys.
+- **Current real numbers** (see `PILOT_LOCAL_AUTHORITIES` in
+  `packages/shared/src/config/catchment-sources.test.ts` for the exact
+  list): 67 local authorities with real catchment data (28 Scotland, 37
+  England, 2 Wales) out of ~250 across Great Britain; `refresh-catchment-
+scores` last showed 4,744 of 7,807 areas scored. Performance metrics
+  are comprehensive across England, Wales and Scotland (see "Completed
+  and verified" above for exactly which measures and why primary-phase
+  Wales/Scotland don't have any - no public source exists for either).
+
+## What needs to happen next (explicit user priority, 2026-08-04)
+
+The user's verdict: current coverage across the whole project is **not
+nearly enough**, full stop - "London was just an example of how you have
+not nearly achieved what you have been tasked with so far." The target
+is genuinely comprehensive catchment-zone and performance-metric
+coverage for the **whole UK**, not a London-specific push. Treat the
+London numbers below as one illustration of how far short 67-of-~250
+local authorities is of "done," not as the boundary of the next batch of
+work - every nation/region this session already touched should be
+revisited with the newly-authorised broader acquisition methods (see
+below), not just London.
+
+London itself, as the concrete example the user gave: of 33 local
+education authorities (32 boroughs + City of London), only **2** have
+real catchment data right now - Tower Hamlets and Newham. Every other
+London borough was investigated this session and found to be either a
+genuine dead end (distance-based admissions, no catchment concept at
+all - true for several boroughs, e.g. Croydon, Haringey) or blocked by a
+real barrier (Enfield: private ArcGIS org; Lewisham: genuinely
+login-gated MapThat platform - do NOT bypass this, it is a real
+credential wall). See the `candidates:` section of
+`config/catchment-sources.yml` for the specific documented reason for
+every London borough already checked - re-read those before re-searching
+the same ground, then apply the broader acquisition methods below to
+them specifically as the first concrete batch.
+
+**The user has explicitly authorised going further than this session's
+standing approach to get real London (and other missing) data**:
+"dont care how you get the data... you can scrape it or do whatever you
+want" - this is a private, non-commercial project. This extends the
+existing "licensing doesn't gate inclusion" rule (see
+`feedback_licensing_private_project.md` in memory) to also cover the
+_method_ of acquisition, not just the reuse-permission question - e.g.
+scraping a borough's own published PDF/HTML catchment maps and
+digitising the boundaries by hand/OCR if no API exists, not just
+searching for ready-made GIS endpoints. The one boundary that remains
+absolute regardless of this authorisation, self-established earlier
+this session and never contradicted: never attempt to bypass a real
+authentication/login wall (e.g. Lewisham's MapThat, Derbyshire's
+Education project, Birmingham's token-gated ArcGIS service) - "however
+you can get it" means creative acquisition of otherwise-public data, not
+unauthorized access to a gated system.
+
+**Concrete next steps, in priority order - scope is the whole UK, London
+is just the first worked example:**
+
+1. Revisit every `candidates:` entry across the whole file (not just
+   London - every dead-ended English county/metro borough, every closed
+   Scottish/Welsh council too) and check specifically for scrapeable
+   PDF/JPEG catchment maps published on the council's own site, now that
+   the user has explicitly authorised digitising a published map (even
+   manually tracing coordinates from a clear PDF/image) as real,
+   legitimate data acquisition for this project - not just searching for
+   ready-made GIS endpoints. Several councils were already found this
+   session to publish exactly this kind of PDF-only map (Bury, Hounslow,
+   South Tyneside, Leeds, and many more - search `candidates:` for
+   "PDF"); each is now a real acquisition candidate under the new
+   authorisation, not a closed dead end. Every digitised source must
+   still be genuinely traced from the council's own real published map
+   and disclosed as such in `catchment-sources.yml`'s notes field - never
+   invent a boundary that wasn't really published somewhere.
+2. Re-open the proprietary-platform candidates found real-but-not-fully-
+   extracted this session (West Sussex's StatMap Earthlight - the
+   hardest part, the real table/layer identifiers, is already found and
+   documented; North Somerset's Cadcorp Aurora, worth retrying since its
+   unresponsiveness may have been transient) with more sustained
+   browser-automation effort than a single pass allowed.
+3. For local authorities confirmed to have zero catchment concept at all
+   (pure distance-based admissions - true for several London boroughs and
+   some others), performance-metric coverage still matters for their
+   schools regardless - verify England's existing performance-metric
+   pipeline already covers every open school in every such authority (it
+   should, since it's not catchment-scoped), and that
+   `refresh-catchment-scores` isn't silently skipping them for a
+   different reason.
+4. Re-verify performance-metric coverage is still genuinely comprehensive
+   UK-wide, not just re-assume it from this file's own past claims -
+   double check there are no gaps beyond what's already documented as
+   closed (Wales primary, Scotland primary/special).
+5. Retry the network-blocked candidates (Ealing, Hampshire, Salford,
+   Milton Keynes) from a different network origin if one becomes
+   available - all four are confirmed real, licensed-looking data, purely
+   blocked by this sandbox's network path.
