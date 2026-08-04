@@ -3058,6 +3058,56 @@ sources:
     enabled: true
     notes: '41 "Geographical Priority Area" polygons as of 14 January 2026 per the layer''s own description, overwhelmingly secondary/high schools and colleges with 5 primary schools mixed in, no phase field. A second, overlapping, undated dataset (Schools_Geographical_Priority_Areas, 52 features, 35 names in common) was found but not imported - this one is explicitly dated and describes itself as the more complete/current export.'
 
+  # Dorset: resolved directly (not via the app's own numeric-layer-ID API,
+  # which never revealed the right ID) by reading the DorsetExplorer
+  # platform's public API/VersionConfiguration/1 endpoint, which lists
+  # every layer's real underlying GeoServer WFS typeName - a genuine
+  # WFS 2.0 GeoJSON endpoint, unlike the app's own tile/WMS-only map view.
+  - local_authority_code: "838"
+    local_authority_name: "Dorset"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://gi.dorsetcouncil.gov.uk/dorsetexplorer/"
+    download_url: "https://gi.dorsetcouncil.gov.uk/geoserver/schools/wfs"
+    wfs_type_name: "schools:edu_primary_catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'UNCONFIRMED - no licence statement in the GeoServer layer metadata; the map''s rendered attribution is a generic "© Dorset Council 2026".'
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: '153 primary catchment polygons, name field "school_name" (e.g. "Motcombe Primary School"). Field "pyramid" carries the secondary-school pyramid/family name each primary feeds into.'
+
+  - local_authority_code: "838"
+    local_authority_name: "Dorset"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://gi.dorsetcouncil.gov.uk/dorsetexplorer/"
+    download_url: "https://gi.dorsetcouncil.gov.uk/geoserver/schools/wfs"
+    wfs_type_name: "schools:edu_secondary_catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licence statement in the GeoServer layer metadata."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: '33 secondary catchment polygons, name field "school_name". Includes one genuine "No Catchment" feature (verified live: school_name literally reads "No Catchment : This area is subject to local arrangements...") for an area with no catchment school - imported as-is rather than filtered out, since it is real published data, not an error; it will simply never usefully match a served school by name.'
+
+  - local_authority_code: "838"
+    local_authority_name: "Dorset"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://gi.dorsetcouncil.gov.uk/dorsetexplorer/"
+    download_url: "https://gi.dorsetcouncil.gov.uk/geoserver/schools/wfs"
+    wfs_type_name: "schools:edu_middle_junior_catchments"
+    format: "wfs_geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licence statement in the GeoServer layer metadata."
+    last_verified_at: "2026-08-03"
+    parser_name: "generic_wfs"
+    enabled: true
+    notes: '27 middle/junior catchment polygons, name field "school_name" - Dorset runs a three-tier First/Middle/Upper system in parts of the county. Includes one non-school administrative feature (school_name "Somerset County Council", dscf_number 0) marking the boundary with the neighbouring authority - imported as-is, real published data.'
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3078,20 +3128,6 @@ candidates:
       whole hants.gov.uk domain, not evidence the data doesn't exist.
       Worth retrying from a different network origin before writing an
       adapter for it (layer field names/counts still unconfirmed).
-  - local_authority_name: "Dorset"
-    reason_not_enabled: >
-      Dorset Council's own documentation confirms a live "School
-      Catchments" layer exists among 100+ layers in DorsetExplorer, an
-      open-source platform (github.com/Dorset-Council-UK/GIFramework-Maps)
-      at https://gi.dorsetcouncil.gov.uk/dorsetexplorer/. The legacy
-      mapping.dorsetforyou.gov.uk domain referenced in older search
-      results is genuinely retired (DNS NXDOMAIN). The new app's API
-      pattern ({appRoot}API/LayerSourceDescription/{id}) was found but
-      the correct layer ID for School Catchments was not - old numeric
-      IDs carried over from the legacy platform all returned empty 204s.
-      Worth a follow-up pass driving the actual app UI (it is a
-      Blazor/JS single-page app, not a static REST catalog) rather than
-      guessing layer IDs.
   - local_authority_name: "Essex"
     reason_not_enabled: "Only a server-side postcode lookup tool (secureapps.essex.gov.uk/cas/) that does point-in-polygon internally and returns a school name via ReportProxy.aspx - no exposed polygon feature service found. Essex's own CKAN portal has no catchment dataset."
   - local_authority_name: "Kent"

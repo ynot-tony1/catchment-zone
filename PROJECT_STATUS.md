@@ -549,6 +549,29 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   gap. `refresh-catchment-scores` re-run after this batch: scored areas
   now stand at 4,349 of 7,334 (up from 2,804 of 5,469).
 
+- **England expanded to 33 local authorities: Dorset added (213
+  catchment areas across 3 tiers).** Solved directly (not via a research
+  agent, and not by guessing layer IDs on the DorsetExplorer app's own
+  numeric-layer API, which never revealed the right one): read the
+  DorsetExplorer platform's public `API/VersionConfiguration/1` endpoint,
+  which lists every one of its 100+ layers' real underlying GeoServer
+  typeName - found `edu_primary_catchments`, `edu_middle_junior_catchments`
+  and `edu_secondary_catchments` on a genuine WFS 2.0 GeoJSON endpoint
+  (`gi.dorsetcouncil.gov.uk/geoserver/schools/wfs`), distinct from the
+  tile/WMS-only view the app's map UI actually renders. 153 primary + 33
+  secondary + 27 middle/junior polygons, name field `school_name`.
+  Includes two intentionally-kept non-school-boundary features left in
+  as-is rather than filtered out, since both are real published data:
+  one secondary "No Catchment: this area is subject to local
+  arrangements..." feature, and one middle/junior feature literally named
+  "Somerset County Council" marking the edge of Dorset's own boundary.
+  Hampshire and Ealing were both independently re-tested this session
+  from this environment and are still blocked (Hampshire 403,
+  Ealing/inspire.misoportal.com connection timeout) - no change from the
+  prior finding, still real candidates worth retrying from elsewhere.
+  `refresh-catchment-scores` re-run: scored areas now stand at 4,496 of
+  7,539 (up from 4,349 of 7,334).
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
@@ -1179,12 +1202,12 @@ false)` right before the foreign keys) still failed intermittently:
   for this if pursued. Until this exists generally, a matched catchment
   on `/admissions` correctly shows the area name but an empty
   served-schools list - degraded, not wrong.
-- **Catchment coverage is 62 local authorities out of ~200+ across Great
+- **Catchment coverage is 63 local authorities out of ~200+ across Great
   Britain as of the last count (see `PILOT_LOCAL_AUTHORITIES` in
   `packages/shared/src/config/catchment-sources.test.ts` for the exact,
   current, tested list rather than repeating it here - it grew steadily
   across this session and this bullet is otherwise guaranteed to go
-  stale again): 28 Scotland, 32 England, 2 Wales.** Every one of
+  stale again): 28 Scotland, 33 England, 2 Wales.** Every one of
   Scotland's 32 councils and every one of Wales's 22 councils has now
   been individually investigated, not just the ones that yielded real
   data, so both nations are close to as complete as this project can

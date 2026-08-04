@@ -73,6 +73,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "811", name: "East Riding of Yorkshire", sourceTypeCount: 2 },
   { code: "891", name: "Nottinghamshire", sourceTypeCount: 2 },
   { code: "888", name: "Lancashire", sourceTypeCount: 1 },
+  { code: "838", name: "Dorset", sourceTypeCount: 3 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
