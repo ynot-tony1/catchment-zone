@@ -75,7 +75,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "888", name: "Lancashire", sourceTypeCount: 1 },
   { code: "838", name: "Dorset", sourceTypeCount: 3 },
   { code: "371", name: "Doncaster", sourceTypeCount: 2 },
-  { code: "333", name: "Solihull", sourceTypeCount: 2 },
+  { code: "334", name: "Solihull", sourceTypeCount: 2 },
   { code: "381", name: "Calderdale", sourceTypeCount: 6 },
   { code: "845", name: "East Sussex", sourceTypeCount: 2 },
 ];

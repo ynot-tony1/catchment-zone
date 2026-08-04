@@ -696,6 +696,33 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   Sussex, North Somerset, Derbyshire) rather than more breadth-first
   searching.
 
+- **Found and fixed a real local-authority-code misattribution bug via a
+  proactive cross-check, not a bug report - Solihull's catchment data had
+  been imported under code "333", which is actually Sandwell.** Caught by
+  cross-referencing every England/Scotland/Wales LA code used this
+  session against the authoritative `local_authorities` database table
+  (not previously used as a cross-check source this session) - every
+  other code checked out correct, this was an isolated error, not
+  systemic. Root cause: verifying Solihull's code by searching for a
+  school named "Langley Primary School" and trusting the one match found
+  - but Sandwell also has a school with that exact name, and the match
+    returned was Sandwell's, not Solihull's (the catchment data's own
+    postcode field, B92, independently confirms the polygons themselves
+    are genuinely Solihull's). Deleted the 2 misattributed
+    `catchment_sources` rows and their 77 `catchment_areas` rows, corrected
+    the code in `catchment-sources.yml` to the true "334", and
+    re-imported clean. Also attempted a real Playwright browser session
+    against two of the "real but proprietary platform" candidates found in
+    the previous batch: partially succeeded against West Sussex (confirmed
+    the real underlying table name and both layer GUIDs via the platform's
+    own job-queue API, though pulling actual features still needs
+    simulating a UI selection step not yet captured); North Somerset's
+    server itself never responded within 45 seconds from either curl or a
+    live browser, a harder problem than West Sussex's merely-undocumented
+    API. Windsor and Maidenhead's mapping tool, previously returning a 503,
+    now returns 200 but resolves to the plain council homepage - confirms
+    it has been decommissioned rather than being temporarily down.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via

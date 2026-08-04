@@ -3138,7 +3138,14 @@ sources:
     enabled: true
     notes: '18 secondary catchment polygons (layer "Secondary Catchments").'
 
-  - local_authority_code: "333"
+  # Bug fixed 2026-08-04: originally imported under code "333", which is
+  # actually Sandwell, not Solihull - found by cross-checking every LA
+  # code used this session against the local_authorities table, verified
+  # against the schools table via a same-named-but-wrong-council
+  # "Langley Primary School" (there's one in each of Sandwell and
+  # Solihull; the catchment data's own postcode field, B92, confirms the
+  # Solihull one). Corrected to the true code "334".
+  - local_authority_code: "334"
     local_authority_name: "Solihull"
     academic_year: "2025-2026"
     source_type: "primary_catchment"
@@ -3153,7 +3160,7 @@ sources:
     enabled: true
     notes: '59 primary catchment polygons, name field "CONAME" (school name, e.g. "Langley Primary School"); "SCHOOL2" carries the same name with "Catchment Area" appended.'
 
-  - local_authority_code: "333"
+  - local_authority_code: "334"
     local_authority_name: "Solihull"
     academic_year: "2025-2026"
     source_type: "secondary_catchment"
