@@ -414,6 +414,35 @@ def _extract_wkid(crs: dict[str, Any]) -> int | None:
     return None
 
 
+#: A real GB catchment polygon's bounds must fall roughly within Great
+#: Britain's own lon/lat envelope (see GB_BOUNDS in the web app's map
+#: component for the same range used there). Used only as a "this clearly
+#: isn't WGS84" trip-wire, not a precise validity check - British National
+#: Grid easting/northing values (hundreds of thousands) fail it by a huge
+#: margin, which is all that is needed to catch the case below.
+_PLAUSIBLE_GB_LON_RANGE = (-9.0, 2.5)
+_PLAUSIBLE_GB_LAT_RANGE = (49.0, 61.5)
+
+
+def _looks_like_gb_wgs84(geometry: BaseGeometry) -> bool:
+    minx, miny, maxx, maxy = (float(v) for v in geometry.bounds)
+    return (
+        _PLAUSIBLE_GB_LON_RANGE[0] <= minx <= _PLAUSIBLE_GB_LON_RANGE[1]
+        and _PLAUSIBLE_GB_LON_RANGE[0] <= maxx <= _PLAUSIBLE_GB_LON_RANGE[1]
+        and _PLAUSIBLE_GB_LAT_RANGE[0] <= miny <= _PLAUSIBLE_GB_LAT_RANGE[1]
+        and _PLAUSIBLE_GB_LAT_RANGE[0] <= maxy <= _PLAUSIBLE_GB_LAT_RANGE[1]
+    )
+
+
+def _reproject_from_crs(geometry: BaseGeometry, source_crs: str) -> BaseGeometry:
+    source_epsg = source_crs.split(":")[-1]
+    transformer = Transformer.from_crs(f"EPSG:{source_epsg}", WGS84, always_xy=True)
+
+    from shapely.ops import transform as shapely_transform
+
+    return shapely_transform(transformer.transform, geometry)
+
+
 def reproject_if_needed(
     geometry: BaseGeometry, detected_wkid: int | None, fallback_source_crs: str
 ) -> BaseGeometry:
@@ -423,29 +452,37 @@ def reproject_if_needed(
     declared for this source in catchment-sources.yml (e.g. EPSG:27700 for
     Sheffield's native British National Grid data).
     """
-    if detected_wkid == 4326:
-        return geometry
-    if detected_wkid is None and fallback_source_crs == "EPSG:4326":
-        # No CRS was reported in the response at all, which for an
-        # f=geojson ArcGIS response normally means the server's default of
-        # WGS84 applies (GeoJSON's implicit CRS) - but only actually true
-        # when the source's own declared CRS agrees. Shapefile sources
-        # (detected_wkid is always None, see download_shapefile_zip_features)
-        # declare their real native CRS (e.g. EPSG:27700) here instead, and
-        # must still be reprojected - verified live: Aberdeenshire and
-        # Orkney Islands' shapefile-sourced catchments were being stored
-        # with raw British National Grid easting/northing in the
-        # latitude/longitude columns before this fix, silently invisible
-        # to the map's bbox filter and to refresh-catchment-scores'
-        # point-in-polygon match.
-        return geometry
+    already_wgs84 = detected_wkid == 4326 or (
+        detected_wkid is None and fallback_source_crs == "EPSG:4326"
+    )
+    # Shapefile sources (detected_wkid is always None, see
+    # download_shapefile_zip_features) declare their real native CRS (e.g.
+    # EPSG:27700) here instead, and must still be reprojected - verified
+    # live: Aberdeenshire and Orkney Islands' shapefile-sourced catchments
+    # were being stored with raw British National Grid easting/northing in
+    # the latitude/longitude columns before this fix, silently invisible
+    # to the map's bbox filter and to refresh-catchment-scores'
+    # point-in-polygon match.
+    if already_wgs84:
+        if _looks_like_gb_wgs84(geometry):
+            return geometry
+        if fallback_source_crs == "EPSG:4326":
+            # Nothing more trustworthy to fall back to; leave as-is.
+            return geometry
+        # Trust the numbers over the label: a server's crs block (or this
+        # source's own declared CRS) can claim WGS84 while actually
+        # returning unprojected native-CRS coordinates - verified live:
+        # Powys's GeoServer WFS claims urn:ogc:def:crs:EPSG::4326 in its
+        # crs block for primary_school_catchments_2025_en even when
+        # srsName=EPSG:4326 is explicitly requested, but returns raw
+        # British National Grid easting/northing unchanged (its
+        # secondary_school_catchments layer, on the same server, is not
+        # affected - a per-layer misconfiguration, not a whole-workspace
+        # one). Reproject from the source's declared CRS as a corrective
+        # fallback rather than accepting an implausible result.
+        return _reproject_from_crs(geometry, fallback_source_crs)
 
-    source_epsg = fallback_source_crs.split(":")[-1]
-    transformer = Transformer.from_crs(f"EPSG:{source_epsg}", WGS84, always_xy=True)
-
-    from shapely.ops import transform as shapely_transform
-
-    return shapely_transform(transformer.transform, geometry)
+    return _reproject_from_crs(geometry, fallback_source_crs)
 
 
 def _to_2d_geojson_geometry(geometry: dict[str, Any]) -> dict[str, Any]:

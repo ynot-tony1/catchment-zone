@@ -997,12 +997,12 @@ sources:
     download_url: "https://geo.powys.gov.uk/geoserver/opendata/wfs"
     wfs_type_name: "opendata:primary_school_catchments_2025_en"
     format: "wfs_geojson"
-    coordinate_reference_system: "EPSG:4326"
+    coordinate_reference_system: "EPSG:27700"
     licence: "Open Government Licence v3.0 (inferred from 17 of 19 sibling Powys County Council datasets on the same opendata GeoServer workspace being explicitly OGL-licensed on data.gov.uk; this specific layer is not individually registered there)"
-    last_verified_at: "2026-08-03"
+    last_verified_at: "2026-08-04"
     parser_name: "generic_wfs"
     enabled: true
-    notes: "71 primary catchment polygons."
+    notes: "71 primary catchment polygons. Server-side bug found and worked around 2026-08-04: this specific layer's GetFeature response claims crs urn:ogc:def:crs:EPSG::4326 even when srsName=EPSG:4326 is requested, but actually returns raw British National Grid easting/northing unchanged (verified live) - unlike this council's own secondary_catchment layer below, which correctly returns real WGS84. coordinate_reference_system corrected to EPSG:27700 as the true native CRS so build_catchment_areas' plausibility check (see reproject_if_needed) reprojects it correctly regardless of what the server's crs block claims."
 
   - local_authority_code: "W-666"
     local_authority_name: "Powys"

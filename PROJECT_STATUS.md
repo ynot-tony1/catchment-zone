@@ -572,6 +572,37 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   `refresh-catchment-scores` re-run: scored areas now stand at 4,496 of
   7,539 (up from 4,349 of 7,334).
 
+- **Found and fixed a second, different reprojection bug via a proactive
+  database sweep (not a bug report) - a server that lies about its own
+  CRS.** After fixing the shapefile-source reprojection bug earlier this
+  session, ran a broader one-off check across every catchment source for
+  any `minimum_latitude`/`maximum_latitude`/`minimum_longitude`/`maximum_longitude`
+  outside Great Britain's real envelope. Found 71 more broken rows, all
+  in Powys's `primary_catchment` layer (its `secondary_catchment` layer,
+  on the same GeoServer, was unaffected). Root cause, verified live:
+  Powys's GeoServer WFS response for
+  `primary_school_catchments_2025_en` claims
+  `crs: urn:ogc:def:crs:EPSG::4326` even when `srsName=EPSG:4326` is
+  explicitly requested, but the coordinate values themselves are raw,
+  unprojected British National Grid easting/northing - a server-side
+  misconfiguration on that one layer, not anything this project's code
+  or config got wrong about how to ask. `detected_wkid` was correctly
+  parsed as 4326 from the (false) crs block, so the existing
+  `reproject_if_needed` logic had no way to know to distrust it. Added a
+  plausibility check (`_looks_like_gb_wgs84`): coordinates claimed as
+  WGS84 are now sanity-checked against Great Britain's real lon/lat
+  envelope before being trusted, and reprojected from the source's own
+  declared `coordinate_reference_system` as a corrective fallback if they
+  clearly aren't real lon/lat values - this also required correcting
+  Powys's primary layer's declared CRS in `catchment-sources.yml` from
+  the (also wrong) `EPSG:4326` to the true `EPSG:27700`, since the
+  plausibility check needs a real CRS to fall back to. 4 new regression
+  tests. Re-imported Powys and deleted the 71 stale broken rows the old
+  code had left behind. A repeat of the same full-dataset sweep after the
+  fix found zero remaining out-of-envelope rows across every catchment
+  source in the project - this class of bug is now believed fully
+  resolved, not just patched for the two councils found by hand.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via

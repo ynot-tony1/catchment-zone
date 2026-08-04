@@ -370,3 +370,42 @@ def test_download_geojson_features_rejects_non_feature_collection() -> None:
         pytest.raises(CatchmentSourceError),
     ):
         download_geojson_features(client, "https://example.invalid/api/catchments")
+
+
+def test_reproject_if_needed_corrects_a_server_that_lies_about_its_own_crs() -> None:
+    """Regression test: Powys's GeoServer WFS claims crs
+    urn:ogc:def:crs:EPSG::4326 in its response even when srsName=EPSG:4326
+    is explicitly requested, but actually returns raw British National
+    Grid easting/northing unchanged (verified live) - detected_wkid is
+    correctly extracted as 4326 in this case, so the plausibility check is
+    the only thing that catches it."""
+    # Roughly Sheffield city centre in EPSG:27700 (BNG), mislabelled by the
+    # server as if it were already WGS84.
+    bng_point_mislabelled_as_wgs84 = Point(433800, 387200)
+    result = reproject_if_needed(
+        bng_point_mislabelled_as_wgs84, detected_wkid=4326, fallback_source_crs="EPSG:27700"
+    )
+    assert -2.0 < result.x < -1.0
+    assert 53.0 < result.y < 53.6
+
+
+def test_reproject_if_needed_leaves_implausible_geometry_alone_with_no_better_crs_to_try() -> None:
+    """If both the server's crs block and this source's own declared CRS
+    claim WGS84, but the coordinates are implausible, there is nothing
+    more trustworthy to fall back to - left as-is rather than guessing."""
+    bng_point_mislabelled_as_wgs84 = Point(433800, 387200)
+    result = reproject_if_needed(
+        bng_point_mislabelled_as_wgs84, detected_wkid=4326, fallback_source_crs="EPSG:4326"
+    )
+    assert result.x == 433800
+    assert result.y == 387200
+
+
+def test_reproject_if_needed_trusts_genuinely_plausible_wgs84_geometry() -> None:
+    """A real GB lon/lat point must not be "corrected" away just because
+    fallback_source_crs happens to be a projected CRS - the plausibility
+    check must only fire when the coordinates actually look wrong."""
+    real_point = Point(-1.47, 53.38)
+    result = reproject_if_needed(real_point, detected_wkid=4326, fallback_source_crs="EPSG:27700")
+    assert result.x == real_point.x
+    assert result.y == real_point.y
