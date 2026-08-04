@@ -668,6 +668,34 @@ level"` + `disadvantage_status="Total"` as the headline filter,
   `refresh-catchment-scores` re-run: scored areas now stand at 4,744 of
   7,807 (up from 4,649 of 7,712).
 
+- **The last remaining major unchecked block of English territory - 11
+  London boroughs (Barnet, Bromley, Croydon, Enfield, Haringey, Harrow,
+  Havering, Hillingdon, Hounslow, Lewisham, Kingston upon Thames) plus
+  Derbyshire county - checked and all 12 confirmed dead ends, no new
+  catchment sources found this batch.** Lewisham's real GIS platform
+  ("MapThat") is genuinely login-gated - a hard stop, not attempted.
+  Enfield's ArcGIS Hub org is private/401. Kingston upon Thames has a
+  real, fully public, already-working StatMap WFS (20 real layers -
+  allotments, green belt, tree preservation orders, etc.) that simply
+  has no catchment layer among them - worth periodically re-checking
+  since the platform itself is proven reachable, unlike most other dead
+  ends in this file. Derbyshire has a real GIS platform on Precisely/
+  MapInfo Exponare/Connect architecture that needs internal project/
+  table names not discoverable from the client JS bundle - a genuine
+  reverse-engineering gap, not a data-absence one. Croydon and Haringey
+  are both structural (explicitly distance-based; Haringey confirmed via
+  a published FOI response that catchment maps aren't even generated).
+  With this batch done, England catchment-source discovery across this
+  session has now touched essentially every major population centre and
+  shire county in the country at least once - real coverage remains
+  concentrated in the ~37 councils with genuinely public GIS data (see
+  "Completed and verified" above), and further growth from here would
+  mean either new councils publishing data that doesn't exist yet, or
+  deeper reverse-engineering effort on the several real-but-gated/
+  proprietary platforms already identified (Kirklees, Rotherham, West
+  Sussex, North Somerset, Derbyshire) rather than more breadth-first
+  searching.
+
 - **The map was fundamentally broken in production (no schools, no
   interactivity), root-caused and fixed - plus the underlying data gaps
   that made it look broken even once the map itself worked.** Found via
