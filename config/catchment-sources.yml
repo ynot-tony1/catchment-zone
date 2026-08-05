@@ -3796,18 +3796,33 @@ candidates:
       therefore concentrated in the geometrically busier part of the
       network, not a single isolated gap - likely several small breaks
       near intersections where 3-4 boundary lines cross, compounding
-      across that denser area rather than one fixable spot. Next attempt
-      should try a graph-based approach instead of more dilation: skeletonize
-      the line network, build a graph of skeleton pixels, and explicitly
-      bridge only genuine degree-1 endpoints to their nearest other
-      endpoint within a small radius (already confirmed most
-      endpoint-to-endpoint gaps are under 25px via a skeleton endpoint
-      scan), rather than growing every wall uniformly. Once closed, the
-      plan is still to use each zone's own blue school-marker (matched to
-      its real DB coordinate by checking which resulting region the
-      marker falls inside, then reading that region's zone-ID label and
-      looking it up in the legend) as a georeferencing control point -
-      with ~27 of them available on one page, a single global
+      across that denser area rather than one fixable spot. Tried a
+      graph-based approach instead of more dilation: skeletonize the
+      line network, then explicitly bridge only genuine degree-1
+      endpoints to their nearest other endpoint within a small radius
+      (found 115 endpoints; most endpoint-to-endpoint gaps are under
+      25px) - this did NOT beat simple uniform dilation, plateauing
+      around the same ~6-9 separated regions no matter the radius tried,
+      suggesting the true breaks aren't simple nearby-endpoint gaps.
+      Blind, heavy dilation using an 8-connected structuring element
+      actually did better: iterations=75 (on the 250dpi/4134x2924
+      render) separates 28 background regions, 20 of them a real
+      plausible zone size (>3000px) - close to the full ~27, and visibly
+      correct on a colour-coded render. Also built and confirmed working
+      (via pdftotext -bbox + a cKDTree nearest-background-pixel search)
+      automatic matching of each region to its zone-ID number label -
+      but only 14-17 of the 27 zone labels land unambiguously close
+      (<25px) to their own region; the rest match only because they're
+      the *nearest available* background pixel after a still-swallowed
+      or merged zone, which is not trustworthy - assigning those would
+      risk silently mislabelling a school's catchment, which this
+      project does not do. Stopped here rather than force a
+      partial-confidence result. Once resolved, the plan is still to use
+      each zone's own blue/red school-marker (matched to its real DB
+      coordinate by checking which resulting region the marker falls
+      inside, then reading that region's zone-ID label via the mapping
+      above and looking it up in the legend) as a georeferencing control
+      point - with ~27 of them available on one page, a single global
       least-squares affine fit should be more robust than the
       single-point-plus-scale-bar method used for BCP/Leeds's per-school
       PDFs. No scale bar exists on this map at all, so this multi-point
