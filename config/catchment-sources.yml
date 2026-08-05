@@ -3663,7 +3663,53 @@ candidates:
   - local_authority_name: "Coventry"
     reason_not_enabled: "Official tool is a street-name text search (explicitly not by postcode) returning a school-name list, not a map. No GIS presence found."
   - local_authority_name: "South Tyneside"
-    reason_not_enabled: "Only PDF catchment maps published (2025 and 2023-24 admissions cycles). The council's interactive GIS is for planning/Local Plan policy only, not schools."
+    reason_not_enabled: >
+      Real, substantial progress made digitising this (not a plain
+      dead end - worth resuming, not re-researching from scratch).
+      The council's main site blocks curl/plain httpx with a Cloudflare
+      JS challenge (cf-mitigated: challenge) - not a login/credential
+      wall, just a bot check, so a real Playwright browser session
+      (already proven elsewhere this project, e.g. Rotherham/West
+      Sussex) gets past it fine: page.goto() the article page
+      (https://www.southtyneside.gov.uk/article/25376/Primary-school-catchment-areas-2026-admissions)
+      to pick up the real download link
+      (media.southtyneside.gov.uk/.../Primary_School_Catchment_Areas_-_2026.pdf),
+      then fetch that URL with page.expect_download() (a plain
+      context.request.get() on the media URL still 403s even with
+      cookies from the article page - it must be a real browser
+      navigation that triggers Chrome's download handling).
+      Unlike every other Leeds/BCP-style source in this file, this is
+      ONE single-page A3 map (MapInfo PDF Printer export) covering all
+      ~27 primary schools' catchments at once as a partitioned zone map
+      (red lines divide the whole borough into ~27 numbered cells, a
+      side legend table maps "ID -> school name", blue dots mark each
+      school with its name printed as real text) - not one boundary per
+      school. Confirmed via pdftotext -bbox that both the legend table
+      (clean "ID / name" rows) and the ~27 zone-number labels (each
+      digit is rendered twice at a ~1.5pt x-offset - a bold simulation,
+      not two different values - dedupe by clustering same-text words
+      within ~10pt of each other) are real, precisely extractable text,
+      not images - a real advantage over the per-school PDFs. Also
+      confirmed the red zone-divider line network extracts cleanly by
+      colour, filtering out only components with bbox diagonal <150px
+      (a clean separation between line segments and text/digit glyphs
+      at 250dpi). The unsolved part: turning that line network into ~27
+      closed polygons via flood-fill of the background - dilating the
+      line mask up to 16px still doesn't fully separate the interior
+      into one region per zone (stops at ~5 distinct regions), meaning
+      there's a real gap or a missing line segment somewhere the network
+      isn't fully closed, not yet isolated. Once that's fixed, the plan
+      is to use each zone's own blue school-marker (matched to its real
+      DB coordinate by checking which resulting region the marker falls
+      inside, then reading that region's zone-ID label and looking it up
+      in the legend) as a georeferencing control point - with ~27 of
+      them available on one page, a single global least-squares affine
+      fit should be more robust than the single-point-plus-scale-bar
+      method used for BCP/Leeds's per-school PDFs. No scale bar exists
+      on this map at all, so this multi-point approach is necessary, not
+      just an improvement. A secondary schools version of this same
+      partition-map format almost certainly exists on the council's
+      admissions pages too (not yet located).
   - local_authority_name: "Barnsley"
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"

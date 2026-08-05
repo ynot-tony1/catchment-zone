@@ -5,6 +5,30 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **South Tyneside: substantial digitisation R&D done, not yet finished -
+  see the detailed `candidates:` entry in `catchment-sources.yml` before
+  re-researching this from scratch.** This council publishes primary
+  catchments as one single-page borough-wide partition map (all ~27
+  schools' zones on one page, MapInfo PDF Printer export) rather than one
+  PDF per school like BCP/Leeds - a genuinely different format. Confirmed
+  working: (1) the site's Cloudflare bot-check (not a login wall) is
+  passed fine with a real Playwright browser session and
+  `page.expect_download()` - a plain `httpx`/`context.request.get()`
+  still gets 403'd even with cookies; (2) both the legend table (ID ->
+  school name) and the ~27 zone-number labels are real, precisely
+  extractable PDF text via `pdftotext -bbox`, not images - each zone
+  digit is rendered twice at a ~1.5pt offset (bold simulation) and needs
+  deduplication; (3) the red zone-divider line network extracts cleanly
+  by colour once components with bbox diagonal <150px (text/digits) are
+  filtered out. Not yet solved: closing that line network into ~27
+  separate polygons via background flood-fill - dilating up to 16px
+  still leaves the interior mostly one connected blob, meaning there's a
+  real unclosed gap in the network not yet isolated. No scale bar exists
+  on this map, so once closed, georeferencing needs a multi-point
+  least-squares affine fit (using each zone's own blue school marker,
+  matched to a real DB coordinate via which region it falls inside) -
+  more robust than the single-point method used for BCP/Leeds, but not
+  yet implemented either.
 - **Leeds secondary: 4 more catchments digitised from a second combined PDF**
   (`2023 Catchment Maps for Secondary.pdf`) - only 5 of Leeds's ~30
   secondary schools have a defined priority catchment at all (the rest
