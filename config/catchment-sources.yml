@@ -3424,6 +3424,45 @@ sources:
       whether Leeds has since published a real GIS layer, not re-fetching
       this file (which is static, hosted in this repo).
 
+  # Leeds secondary: only 5 of Leeds's ~30 secondary schools have a
+  # defined priority catchment area at all (per the council's own
+  # "2023 Catchment Maps for Secondary.pdf") - the rest use distance-based
+  # admissions with no catchment concept, a real structural fact, not a
+  # gap in this digitisation. Of those 5, 4 use the same line+marker+ruler
+  # template as the primary maps (one, Allerton Grange, in black; two,
+  # Benton Park and Roundhay, also black; Lawnswood uniquely draws its
+  # boundary in blue rather than black - the extractor tries both colours
+  # per page). The 5th (Allerton High School) shows two semi-transparent
+  # filled priority zones with no outline stroke at all, a different
+  # presentation this pipeline doesn't parse - recorded as an open
+  # candidate below, not silently dropped. This page's PDF also breaks
+  # this project's usual "collapse all whitespace, regex the scale label"
+  # reading (used successfully for the primary maps) whenever a tick
+  # value reaches 1 or more, e.g. "0.75" immediately followed by "1.5"
+  # collapses to the ambiguous "0.751.5" - fixed by cross-referencing the
+  # PDF's own word bounding boxes (pdftotext -bbox) against the already
+  # pixel-detected ruler position instead of relying on text reading
+  # order, which is unreliable on these exports.
+  - local_authority_code: "383"
+    local_authority_name: "Leeds"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.leeds.gov.uk/docs/2023%20Catchment%20Maps%20for%20Secondary.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/leeds/leeds_digitized_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - each source PDF page states only '© Crown Copyright. Leeds City Council - 100019567 (2019)', no explicit Open Government Licence statement."
+    last_verified_at: "2026-08-05"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      4 secondary catchment polygons digitised from Leeds's combined
+      secondary PDF (Allerton Grange School, Benton Park School,
+      Lawnswood School, Roundhay School) - see the block comment above
+      this entry for the method and for why Allerton High School (the
+      document's 5th school) isn't included.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3615,8 +3654,8 @@ candidates:
     reason_not_enabled: "The council's own 'Schools' ArcGIS Experience app resolves to a real MapServer (maps.wolverhampton.gov.uk/arcgis/rest/services/CWC/MapServer), but its Schools layer is confirmed esriGeometryPoint (locations only) - no catchment polygon layer exists in that MapServer."
   - local_authority_name: "Manchester, Tameside, Wigan"
     reason_not_enabled: "Manchester and Wigan both have live, fully-checked ArcGIS Hub open-data portals (26 and 95 datasets respectively, checked via DCAT feed) with no catchment dataset among them. Tameside's school-map page has no discoverable catchment polygon layer or API. No PDF-only fallback found for any of the three either."
-  - local_authority_name: "Leeds (secondary catchment maps)"
-    reason_not_enabled: "Primary catchments are now digitised and enabled (see the Leeds entry in sources: above) - the same technique applies to secondary schools too, but the secondary catchment maps (published as a separate combined PDF, e.g. '2023 Catchment Maps for Secondary.pdf') have not yet been run through the pipeline."
+  - local_authority_name: "Leeds (Allerton High School's two priority zones)"
+    reason_not_enabled: "4 of the 5 schools in Leeds's '2023 Catchment Maps for Secondary.pdf' are now digitised and enabled (see the Leeds secondary_catchment entry above). Allerton High School's page uses a genuinely different presentation - two semi-transparent filled zones (no outline stroke) rather than a single black/blue boundary line - which this project's line-tracing pipeline doesn't handle; would need a fill-colour-region technique instead. Note also that only 5 of Leeds's ~30 secondary schools have a defined priority catchment area at all per this document - the rest use distance-based admissions, a genuine structural fact, not a search gap."
   - local_authority_name: "Bradford"
     reason_not_enabled: "ArcGIS Hub portal (spatialdata-cbmdc.hub.arcgis.com, 62 datasets) checked via DCAT feed - no catchment dataset; the only schools-adjacent dataset is an air-quality interpolation layer, unrelated."
   - local_authority_name: "Wakefield"

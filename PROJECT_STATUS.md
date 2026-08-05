@@ -5,6 +5,23 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Leeds secondary: 4 more catchments digitised from a second combined PDF**
+  (`2023 Catchment Maps for Secondary.pdf`) - only 5 of Leeds's ~30
+  secondary schools have a defined priority catchment at all (the rest
+  are distance-based, a real structural fact); of those 5, 4 used the
+  same line+marker+ruler template (one, Lawnswood, drawn in blue rather
+  than black - the extractor now tries both colours per page) and were
+  digitised; the 5th, Allerton High School, shows two semi-transparent
+  filled zones with no outline stroke at all, a genuinely different
+  presentation not yet handled, recorded as an open candidate rather than
+  silently skipped. This PDF also broke the primary batch's scale-reading
+  approach the moment a tick value reached 1 or more (e.g. "0.75"
+  immediately followed by "1.5" collapses to the ambiguous "0.751.5" once
+  whitespace is stripped) - fixed by cross-referencing the PDF's own word
+  bounding boxes (`pdftotext -bbox`) against the already pixel-detected
+  ruler position instead of trusting text reading order, which scrambles
+  badly on these exports. All 4 spot-checked visually, pixel-perfect.
+  Imported clean: 4 areas, 0 rejected.
 - **Leeds: 93 primary catchments digitised from the council's own combined
   93-page PDF** (`2025 Primary School catchment maps.pdf`, Esri ArcMap
   export - a different tool and template than BCP's QGIS exports, proving
@@ -13,19 +30,19 @@ disk, not what is intended.
   reuse: Leeds's scale bar is a tick-mark ruler, not a filled block, and
   its total value (e.g. "0.7 Miles") is embedded as real text in the PDF
   - parsed directly via `pdftotext`, no visual reading needed at all for
-  93 pages, a large efficiency win over BCP's manual approach. School-name
-  matching against the `schools` table surfaced 4 real academy-conversion
-  renames since the map's 2022 print date where a naive fuzzy string
-  match would have silently picked the *wrong* school (e.g. "Manston
-  Primary School" nearly matched to the unrelated "Castleton Primary
-  School" on string similarity alone) - resolved correctly by anchoring
-  each rename to its closed/old record's own coordinate and finding the
-  open school at that same site, not by trusting text similarity. All 93
-  pages succeeded (0 failures) and passed the automatic school-inside-
-  own-polygon check; 4 spot-checked visually against the source PDF,
-  pixel-perfect. Imported clean: 93 areas, 0 rejected. Secondary
-  catchments (a separate combined PDF) are the same technique, not yet
-  run - recorded as an open candidate.
+    93 pages, a large efficiency win over BCP's manual approach. School-name
+    matching against the `schools` table surfaced 4 real academy-conversion
+    renames since the map's 2022 print date where a naive fuzzy string
+    match would have silently picked the _wrong_ school (e.g. "Manston
+    Primary School" nearly matched to the unrelated "Castleton Primary
+    School" on string similarity alone) - resolved correctly by anchoring
+    each rename to its closed/old record's own coordinate and finding the
+    open school at that same site, not by trusting text similarity. All 93
+    pages succeeded (0 failures) and passed the automatic school-inside-
+    own-polygon check; 4 spot-checked visually against the source PDF,
+    pixel-perfect. Imported clean: 93 areas, 0 rejected. Secondary
+    catchments (a separate combined PDF) are the same technique, not yet
+    run - recorded as an open candidate.
 - **First real use of the "digitise a published PDF map" acquisition
   method the user explicitly authorised on 2026-08-04, applied to
   Bournemouth, Christchurch and Poole (BCP).** BCP has no GIS/API of any
