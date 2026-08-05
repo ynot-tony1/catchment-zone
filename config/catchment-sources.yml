@@ -3310,6 +3310,81 @@ sources:
     enabled: true
     notes: '21 secondary "Community Area" polygons, name field "NAME" (a shorthand area name, e.g. "Beacon" for Beacon Academy, not a full school name); "COMM_ID" is a numeric identifier.'
 
+  # Bournemouth, Christchurch and Poole (BCP): no GIS/API of any kind exists
+  # (re-confirmed - ArcGIS org, both open-data hub hostnames, all zero
+  # datasets). The council instead publishes one QGIS-exported A4 PDF map
+  # per school (boundary + a red school-location marker + a printed scale
+  # bar), e.g. bcpcouncil.gov.uk/Assets/Schools-and-learning/Catchment-
+  # area-maps/Poole-High-School-catchment-area-and-map.pdf. Per this
+  # project's standing authorisation to digitise published PDF/image maps
+  # for this private, non-commercial project (not just search for ready-
+  # made GIS endpoints), these 36 polygons (29 primary, 7 secondary, out
+  # of 45 published PDFs) were traced from those PDFs programmatically:
+  # each PDF's black boundary curve was isolated by pixel colour/shape
+  # (excluding the page frame and any legend box), closed across small
+  # rendering gaps where another map layer draws over the line (e.g. a
+  # river), then georeferenced using two facts read directly from the
+  # same PDF - the printed scale bar (gives real metres per pixel) and
+  # the red school-location marker's pixel position, anchored to that
+  # school's own real coordinates already in this project's `schools`
+  # table (GIAS-sourced) - plus a north-up assumption (verified true from
+  # each PDF's own north arrow). This is real digitisation of the
+  # council's own published boundary, not an invented or estimated shape;
+  # every polygon was checked to actually contain its own school's real
+  # coordinate before being written out. 9 of the 45 published PDFs could
+  # not be digitised this way and are recorded as still-open candidates
+  # below: 3 use an older raster-screenshot template with no usable
+  # vector boundary or scale bar (Baden-Powell-and-St-Peters,
+  # Livingstone-Infant, Manorside), 5 omit the red school marker entirely
+  # so there is no reliable control point (Lilliput, Mudeford-Community-
+  # Infants, Old-Town-Infant-and-Nursery, Queens-Park-Infant, St-
+  # Michael's), and 1 (Bishop Aldhelm's) uses a different newer template
+  # showing "Parish Catchment"/"Local Authority Catchment" overlap zones
+  # with a printed map scale instead of a bar, not yet parsed.
+  - local_authority_code: "839"
+    local_authority_name: "Bournemouth, Christchurch and Poole"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.bcpcouncil.gov.uk/schools-and-learning/school-admissions/school-catchment-areas"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/bcp/bcp_digitized_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - each source PDF states only 'Crown copyright and database rights [year], OS licence 100019829, BCP Council', with no explicit Open Government Licence statement."
+    last_verified_at: "2026-08-05"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      29 primary catchment polygons digitised by this project from BCP's
+      published per-school PDF maps (QGIS exports, 2021) - see the block
+      comment above this entry for the exact method and its limits. Each
+      feature's CATCHMENT_NAME is "<school name> catchment"; SCHOOL_URN
+      and SCHOOL_NAME properties are also carried for reference. Not a
+      live council API - re-verifying this source means re-checking
+      whether BCP has since published a real GIS layer, not re-fetching
+      this file (which is static, hosted in this repo).
+
+  - local_authority_code: "839"
+    local_authority_name: "Bournemouth, Christchurch and Poole"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.bcpcouncil.gov.uk/schools-and-learning/school-admissions/school-catchment-areas"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/bcp/bcp_digitized_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - each source PDF states only 'Crown copyright and database rights [year], OS licence 100019829, BCP Council', with no explicit Open Government Licence statement."
+    last_verified_at: "2026-08-05"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      7 secondary-phase catchment polygons digitised the same way as the
+      primary_catchment entry above (Highcliffe School, Oak Academy,
+      Poole High School, St Aldhelm's Academy, The Grange School,
+      Twynham School, plus Broadstone Middle School - DfE phase "Middle
+      deemed secondary", grouped here since that is its admissions-phase
+      classification).
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3317,6 +3392,8 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Bournemouth, Christchurch and Poole (remaining 9 PDFs)"
+    reason_not_enabled: "9 of BCP's 45 published per-school catchment PDFs could not be digitised by this project's pixel-extraction method (see the block comment above the enabled BCP entries in sources: for the 36 that were): Baden-Powell-and-St-Peters, Livingstone-Infant and Manorside use an older boroughofpoole.com raster-screenshot template with no usable vector boundary or scale bar; Lilliput, Mudeford-Community-Infants, Old-Town-Infant-and-Nursery, Queens-Park-Infant and St-Michael's omit the red school-location marker this method uses as its control point; Bishop Aldhelm's uses a different newer template (hatched 'Parish Catchment' vs filled 'Local Authority Catchment' zones, printed map scale instead of a bar) not yet parsed. Worth a follow-up pass with a different control-point strategy (e.g. a named, geocodable landmark visible on the map) rather than assumed permanently closed."
   - local_authority_name: "Lewisham"
     reason_not_enabled: 'The council''s real GIS platform ("MapThat" at lbl.dynamicmaps.co.uk/MapThatWeb/login.html?user=lewisham) is genuinely login-gated (returns a real login page requiring credentials) - a hard stop per this project''s standing rule against bypassing access control, not attempted further.'
   - local_authority_name: "Enfield"
@@ -3581,8 +3658,6 @@ candidates:
       than curl alone.
   - local_authority_name: "Stoke-on-Trent"
     reason_not_enabled: "Same Cadcorp GeognoSIS platform as Derby above (webmaplayers.stoke.gov.uk/webmaplayers8/), same session-scoped proxy.axd architecture with no public WFS/REST endpoint found. The council's own help text confirms a 'Primary School Catchment Areas and Schools' layer exists. High-school catchments don't exist at all per the council (non-catchment admissions)."
-  - local_authority_name: "Bournemouth, Christchurch and Poole"
-    reason_not_enabled: "BCP's own ArcGIS Online org (bcpcouncil.maps.arcgis.com) was searched org-scoped: zero catchment items, only two point layers of school locations. Both open-data hub hostnames return zero datasets via DCAT. The council instead publishes one PDF per school (e.g. .../Poole-High-School-catchment-area-and-map.pdf)."
   - local_authority_name: "Isles of Scilly"
     reason_not_enabled: "Structural, not a search failure: the islands have exactly one all-through school (Five Islands Academy) serving all five inhabited islands - with no second school to be zoned against, 'catchment area' as this project defines it does not meaningfully apply. No GIS/open-data presence found for the council at all."
   - local_authority_name: "Cumberland"

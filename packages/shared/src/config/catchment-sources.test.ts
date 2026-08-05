@@ -78,6 +78,11 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "334", name: "Solihull", sourceTypeCount: 2 },
   { code: "381", name: "Calderdale", sourceTypeCount: 6 },
   { code: "845", name: "East Sussex", sourceTypeCount: 2 },
+  {
+    code: "839",
+    name: "Bournemouth, Christchurch and Poole",
+    sourceTypeCount: 2,
+  },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
