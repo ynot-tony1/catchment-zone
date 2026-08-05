@@ -5,6 +5,35 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Oxfordshire: 75 catchments digitised (65 primary, 10 secondary) using
+  the council's own Ordnance Survey grid instead of a scale bar or a
+  school marker + scale bar pair - the most precise digitisation
+  technique used so far.** No GIS/API exists (ArcGIS Server fully
+  enumerated, FOI request for the data refused), but every school
+  publishes a "Location and Designated Area" PDF at a predictable URL
+  keyed by the same numeric code the council's own school-directory
+  pages use (`oxfordshire.gov.uk/sites/default/files/2022-12/{code}_all.pdf`)
+  - checked all 307 Oxfordshire schools' codes, 207 resolve to a real
+    PDF. Of those, 103 use an OS 1:1250-raster basemap with a real 1km
+    grid printed on it: since a grid square is exactly 1000m by
+    definition, measuring its pixel spacing gives an exact scale with no
+    reading of a printed value at all - done via autocorrelation of the
+    grid's cyan-pixel count per row/column (not simple thresholding, since
+    dense map detail breaks individual grid lines up in different places
+    on every file - autocorrelation recovers the periodic spacing from the
+    signal as a whole even when no single line is fully intact end to
+    end). Combined with the school's own real coordinate anchored to its
+    marker's pixel position, that gives the full transform. One template
+    quirk found and handled: primary schools' boundary+marker are drawn in
+    blue, secondary schools' in red - the extractor tries both colours per
+    file. 75 of the 103 grid-template PDFs succeeded; verified
+    pixel-perfect against Didcot Girls' School before running at scale,
+    and every polygon checked to actually contain its own school's real
+    coordinate. Imported clean: 75 areas, 0 rejected, 0 out-of-envelope.
+    The other ~91 PDFs use a different, newer (2014+) non-gridded
+    template with no scale bar found yet, and ~28 of the 103 grid-template
+    ones failed the spacing check - both recorded as an open candidate,
+    not silently dropped. Local authority count: 70 (was 69).
 - **South Tyneside: substantial digitisation R&D done, not yet finished -
   see the detailed `candidates:` entry in `catchment-sources.yml` before
   re-researching this from scratch.** This council publishes primary
