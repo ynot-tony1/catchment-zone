@@ -1,9 +1,62 @@
 # Project status
 
-Updated 2026-08-03. Reflects what has actually been run and verified on
+Updated 2026-08-05. Reflects what has actually been run and verified on
 disk, not what is intended.
 
 ## Completed and verified
+
+- **Leeds: 93 primary catchments digitised from the council's own combined
+  93-page PDF** (`2025 Primary School catchment maps.pdf`, Esri ArcMap
+  export - a different tool and template than BCP's QGIS exports, proving
+  the pixel-extraction method generalises rather than being a BCP-shaped
+  one-off). Two template differences required real code changes, not just
+  reuse: Leeds's scale bar is a tick-mark ruler, not a filled block, and
+  its total value (e.g. "0.7 Miles") is embedded as real text in the PDF
+  - parsed directly via `pdftotext`, no visual reading needed at all for
+  93 pages, a large efficiency win over BCP's manual approach. School-name
+  matching against the `schools` table surfaced 4 real academy-conversion
+  renames since the map's 2022 print date where a naive fuzzy string
+  match would have silently picked the *wrong* school (e.g. "Manston
+  Primary School" nearly matched to the unrelated "Castleton Primary
+  School" on string similarity alone) - resolved correctly by anchoring
+  each rename to its closed/old record's own coordinate and finding the
+  open school at that same site, not by trusting text similarity. All 93
+  pages succeeded (0 failures) and passed the automatic school-inside-
+  own-polygon check; 4 spot-checked visually against the source PDF,
+  pixel-perfect. Imported clean: 93 areas, 0 rejected. Secondary
+  catchments (a separate combined PDF) are the same technique, not yet
+  run - recorded as an open candidate.
+- **First real use of the "digitise a published PDF map" acquisition
+  method the user explicitly authorised on 2026-08-04, applied to
+  Bournemouth, Christchurch and Poole (BCP).** BCP has no GIS/API of any
+  kind (re-confirmed this session), only one QGIS-exported A4 PDF per
+  school (boundary line + red school-location marker + printed scale
+  bar). Wrote a pixel-extraction pipeline rather than eyeballing/tracing
+  by hand: isolate the black boundary curve by shape (excluding the page
+  frame and any legend box, distinguished by fill-ratio - a simple
+  rectangle saturates near 1.0 even at minimal dilation, an irregular
+  catchment boundary never does), close it across small rendering gaps
+  where another map layer draws over the line (e.g. a river crossing -
+  found by an adaptive dilation search, 2 up to 60 iterations), then
+  georeference using two facts read directly from the same PDF: the
+  printed scale bar (real metres per pixel - located precisely by
+  finding the bar's solid fill block, which recurs reliably across ~30
+  rows, then locating the true outer border in the rows immediately
+  above/below it, not by guessing an offset) and the red marker's pixel
+  position, anchored to that school's own real coordinate already in the
+  `schools` table (GIAS-sourced) - plus a north-up assumption verified
+  from each PDF's own north arrow. Every polygon was checked
+  computationally to actually contain its own school's real coordinate
+  before being written out, and the whole pipeline was validated against
+  a pixel-perfect overlay check before being trusted at scale. 36 of 45
+  published PDFs digitised this way (29 primary, 7 secondary); the
+  remaining 9 use a different template this method can't yet handle (3
+  are an older raster-screenshot template with no usable vector boundary
+  or scale bar; 5 omit the red marker; 1 shows a different "Parish vs
+  Local Authority Catchment" overlap concept) - recorded as a documented
+  candidate in `catchment-sources.yml`, not silently dropped. Imported
+  clean: 36 catchment areas, 0 rejected, 0 out-of-envelope in a full
+  project-wide sweep afterward. Local authority count: 68 (was 67).
 
 - **Wales key stage 4 performance metrics added; Scotland investigated
   and found to have no viable public source.** Every StatsWales dataset
