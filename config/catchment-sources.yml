@@ -3698,18 +3698,37 @@ candidates:
       line mask up to 16px still doesn't fully separate the interior
       into one region per zone (stops at ~5 distinct regions), meaning
       there's a real gap or a missing line segment somewhere the network
-      isn't fully closed, not yet isolated. Once that's fixed, the plan
-      is to use each zone's own blue school-marker (matched to its real
-      DB coordinate by checking which resulting region the marker falls
-      inside, then reading that region's zone-ID label and looking it up
-      in the legend) as a georeferencing control point - with ~27 of
-      them available on one page, a single global least-squares affine
-      fit should be more robust than the single-point-plus-scale-bar
-      method used for BCP/Leeds's per-school PDFs. No scale bar exists
-      on this map at all, so this multi-point approach is necessary, not
-      just an improvement. A secondary schools version of this same
-      partition-map format almost certainly exists on the council's
-      admissions pages too (not yet located).
+      isn't fully closed. Follow-up session narrowed this further:
+      colouring the regions that DO close correctly at a 20px dilation
+      (8-connected structuring element - scipy's default is only
+      4-connected, which was independently worth fixing but didn't solve
+      this) shows the ~6 simpler, sparser zones on the map's eastern side
+      close into clean separate regions, while the whole western/central
+      area - denser, many more line intersections - stays one connected
+      "leaked" blob no matter how much the dilation is increased (tested
+      up to 50px, and independently at 400dpi with a rescaled threshold,
+      ruling out a rasterisation/resolution artifact). The leak is
+      therefore concentrated in the geometrically busier part of the
+      network, not a single isolated gap - likely several small breaks
+      near intersections where 3-4 boundary lines cross, compounding
+      across that denser area rather than one fixable spot. Next attempt
+      should try a graph-based approach instead of more dilation: skeletonize
+      the line network, build a graph of skeleton pixels, and explicitly
+      bridge only genuine degree-1 endpoints to their nearest other
+      endpoint within a small radius (already confirmed most
+      endpoint-to-endpoint gaps are under 25px via a skeleton endpoint
+      scan), rather than growing every wall uniformly. Once closed, the
+      plan is still to use each zone's own blue school-marker (matched to
+      its real DB coordinate by checking which resulting region the
+      marker falls inside, then reading that region's zone-ID label and
+      looking it up in the legend) as a georeferencing control point -
+      with ~27 of them available on one page, a single global
+      least-squares affine fit should be more robust than the
+      single-point-plus-scale-bar method used for BCP/Leeds's per-school
+      PDFs. No scale bar exists on this map at all, so this multi-point
+      approach is necessary, not just an improvement. A secondary schools
+      version of this same partition-map format almost certainly exists
+      on the council's admissions pages too (not yet located).
   - local_authority_name: "Barnsley"
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
