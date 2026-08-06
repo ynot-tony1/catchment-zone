@@ -3524,6 +3524,51 @@ sources:
       10 secondary catchment polygons digitised the same way as the
       primary_catchment entry above.
 
+  # Halton: no GIS/catchment map found on the council's own mapping
+  # portal, only a single PDF ("Widnes Secondary-Catchment Zone.pdf")
+  # showing the two Widnes secondary schools' zones on one page - a
+  # scaled-down version of the same "partition map" idea as South
+  # Tyneside's (see that candidate entry) but with only 2 zones and one
+  # dividing line, tractable where South Tyneside's ~27-zone network
+  # wasn't. No scale bar and no OS grid on this one either, so
+  # georeferencing used both schools' own real coordinates as a pair of
+  # control points instead of just one - computing the real-world
+  # distance and direction between them (from this project's own schools
+  # table) and comparing it to their pixel distance/direction on the map
+  # gives an independent x-scale and y-scale that should closely agree
+  # for a true north-up map (they did, within 2%), which both confirms
+  # the north-up assumption and yields a precise scale with no scale bar
+  # needed. The two zones themselves were extracted by treating the
+  # whole cream-filled catchment area (versus the grey area outside it)
+  # as one shape, then splitting it at the internal black dividing line
+  # - not tracing an outline, since this template fills the catchment
+  # rather than just outlining it. The council's own document is dated
+  # 2011 and refers to "The Bankfield School", which closed in 2014;
+  # its site was taken over by Ormiston Chadwick Academy the same year,
+  # so this entry is filed under the successor academy's real URN, not
+  # a school that no longer exists. Verified: both schools' own real
+  # coordinates fall inside their respective extracted polygon.
+  - local_authority_code: "876"
+    local_authority_name: "Halton"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://councillors.halton.gov.uk/documents/s29065/Widnes%20Secondary-Catchment%20Zone.pdf.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/halton/halton_digitized_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - source PDF states only '© Crown copyright and database rights 2011 Ordnance Survey 100018552', no explicit Open Government Licence statement."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      2 secondary catchment polygons (Ormiston Chadwick Academy, the
+      renamed successor to The Bankfield School named on the source
+      document; Wade Deacon High School) covering Widnes - see the block
+      comment above this entry for the digitisation method. Halton's
+      other secondary schools (Runcorn area) and primary schools are not
+      covered by this document; not yet checked for a separate map.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -4070,8 +4115,8 @@ candidates:
     reason_not_enabled: 'Real catchment shapefiles confirmed to exist via WhatDoTheyKnow FOI threads for both councils, but WhatDoTheyKnow now serves a Cloudflare JS challenge ("Just a moment...") to automated requests, confirmed even with a real Playwright Chromium browser context (not just curl/WebFetch, which fail sooner with a plain 403) - genuinely blocked from this environment, not a data-non-existence dead end.'
   - local_authority_name: "Kensington and Chelsea, Merton, Sutton, Westminster, Hammersmith and Fulham, Waltham Forest, Barking and Dagenham (England)"
     reason_not_enabled: "Checked via CKAN (0 results each), ArcGIS Online org-scoped search (0 results each, RBKC/Merton/LBBD/LBHF all have real AGOL orgs but no catchment item; Hammersmith and Fulham's ArcGIS Hub DCAT feed returns 0 datasets), and general web search (only third-party sites like Locrating/School Guide, no official GIS source). No catchment layer found for any of the seven."
-  - local_authority_name: "Rutland, Halton, Warrington, Middlesbrough, Redcar and Cleveland (England)"
-    reason_not_enabled: 'Rutland''s catchment page links only to 3 PDF maps. Halton and Warrington''s admissions pages reference PDF booklets only, no GIS/catchment map found on either council''s mapping portal. Middlesbrough''s one catchment-related ArcGIS item (owner Open_Data3, OGL-licensed) is a PDF ("Secondary School Catchment 2021"), not machine-readable. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. All PDF-only or no-data dead ends, not licensing gaps.'
+  - local_authority_name: "Rutland, Warrington, Middlesbrough, Redcar and Cleveland (England)"
+    reason_not_enabled: 'Rutland''s catchment page links only to 3 PDF maps. Warrington''s admissions page references a PDF booklet only, no GIS/catchment map found on the council''s mapping portal. Middlesbrough''s one catchment-related ArcGIS item (owner Open_Data3, OGL-licensed) is a PDF ("Secondary School Catchment 2021"), not machine-readable. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. All PDF-only or no-data dead ends, not licensing gaps. (Halton, previously grouped here, is now digitised - see the Halton entry in sources: above.)'
   - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
     reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
   - local_authority_name: "Herefordshire (England)"
