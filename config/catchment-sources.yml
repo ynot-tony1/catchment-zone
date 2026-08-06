@@ -3675,13 +3675,20 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      7 catchment polygons, one per Hertfordshire single-sex selective
-      (grammar) school (Verulam School, St Albans Girls' School,
+      7 features written (Verulam School, St Albans Girls' School,
       Presdales School, Richard Hale School, Hitchin Boys' School,
-      Hitchin Girls' School, Bishop's Hatfield Girls' School) - each
-      dissolved from the real per-parish BOYS/GIRLS admissions-priority
-      fields in the council's own SchoolParishes service. See the block
-      comment above this entry for why the rest of Hertfordshire's
+      Hitchin Girls' School, Bishop's Hatfield Girls' School), but only 5
+      catchment_areas rows exist after import - verified live: Verulam/
+      St Albans Girls' and Hitchin Boys'/Hitchin Girls' are each a real
+      paired boys'/girls' school sharing the exact same priority-area
+      boundary (identical dissolved geometry), so the second of each
+      pair is silently dropped by the project's
+      (source_id, geometry_checksum) uniqueness constraint - the same
+      known interaction already documented for Cheshire East/Cheshire
+      West's shared boundary data, not a new bug. Each dissolved from
+      the real per-parish BOYS/GIRLS admissions-priority fields in the
+      council's own SchoolParishes service. See the block comment above
+      this entry for why the rest of Hertfordshire's
       secondary schools (co-educational, shared-pool admissions) are
       deliberately not covered here.
 
