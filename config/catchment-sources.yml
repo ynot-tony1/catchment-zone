@@ -3633,6 +3633,58 @@ sources:
       40 secondary catchment polygons, name field "School" - same
       service family and caveat as the primary_catchment entry above.
 
+  # Hertfordshire: a real, live, current ArcGIS MapServer
+  # (appservices/SchoolParishes, found by browsing the council's own GIS
+  # server folder listing - gis.hertfordshire.gov.uk/webmaps/rest/services
+  # - after a "school catchment" web search surfaced only its unrelated
+  # SEN-areas service) - but structured completely differently from
+  # every other source in this file: one polygon per CIVIL PARISH, not
+  # per school, each carrying which secondary school(s) hold admissions
+  # priority there. Most of Hertfordshire's secondary system is
+  # genuinely not catchment-based at all (each parish's COEDINFO field
+  # lists several co-ed schools sharing that priority pool, allocated by
+  # distance/siblings within it, not an exclusive zone - the same
+  # "shared pool, no single exclusive catchment" pattern already
+  # excluded elsewhere in this project, e.g. Barnsley) - correctly
+  # skipped, not digitised, since drawing one exclusive polygon per
+  # co-ed school there would misrepresent a real shared-pool system as
+  # an exclusive one. Hertfordshire's SEVEN single-sex selective
+  # (grammar) schools are different: each parish's BOYS/GIRLS fields
+  # name exactly one school (or "Not Applicable"), a genuine exclusive
+  # priority area - dissolved into one polygon per school by unioning
+  # every parish naming that school (148 parishes total; one parish,
+  # Aldenham, is a bordering pair with both a BOYS and a GIRLS entry,
+  # counted toward both). Verified every one of the 7 schools' own real
+  # coordinate falls inside its own dissolved polygon before writing
+  # out. This is a genuine transform of real published per-parish
+  # admissions-priority data, not invented geometry - recorded under a
+  # distinct source_type (not plain secondary_catchment) specifically so
+  # it's never mistaken for full comprehensive coverage of
+  # Hertfordshire's ~70 secondary schools, which this is not.
+  - local_authority_code: "919"
+    local_authority_name: "Hertfordshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_selective"
+    source_url: "https://gis.hertfordshire.gov.uk/webmaps/rest/services/appservices/SchoolParishes/MapServer/0"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/hertfordshire/herts_secondary_selective.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo on the MapServer, no licence text found on the council's GIS site."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      7 catchment polygons, one per Hertfordshire single-sex selective
+      (grammar) school (Verulam School, St Albans Girls' School,
+      Presdales School, Richard Hale School, Hitchin Boys' School,
+      Hitchin Girls' School, Bishop's Hatfield Girls' School) - each
+      dissolved from the real per-parish BOYS/GIRLS admissions-priority
+      fields in the council's own SchoolParishes service. See the block
+      comment above this entry for why the rest of Hertfordshire's
+      secondary schools (co-educational, shared-pool admissions) are
+      deliberately not covered here.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
