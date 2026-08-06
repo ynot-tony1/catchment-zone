@@ -4081,6 +4081,24 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Bedford"
+    reason_not_enabled: >
+      No real catchment-polygon GIS presence found. An ArcGIS Online item
+      titled "Bedford Borough Council School Catchment Map" (owned by an
+      Esri UK education/training org, khall@esriuk.com_EsriUkeducation)
+      looked promising and does reference genuine Bedford Borough Council
+      data (LLPG address points, real school locations/roll numbers by
+      year), but its only layers are point geometry - no catchment
+      boundary layer exists in it despite the title. That org's wider
+      service catalogue (services.arcgis.com/XSeYKQzfXnEgju9o) is a large
+      shared student/training space with hundreds of unrelated services
+      (river catchments, other councils' data, dissertation projects) -
+      not evidence of a real Bedford catchment layer elsewhere in it. Both
+      candidate open-data hub hostnames (bedfordborough-opendata and
+      bedford-opendata .hub.arcgis.com) are live but return zero datasets
+      via DCAT feed. No catchment/admission links found via the council's
+      own site search or its schools-education-and-childcare hub page. No
+      Bedford-specific dataset found on data.gov.uk search either.
   - local_authority_name: "Bradford"
     reason_not_enabled: >
       The council's own ArcGIS Server (found by browsing
