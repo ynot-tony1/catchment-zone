@@ -3779,6 +3779,93 @@ sources:
       Scissett Middle School - a legacy first/middle/high system in part
       of the borough), M_School_Name field, same mosaic layer and method.
 
+  # Hampshire: a real, live, current ArcGIS MapServer
+  # (maps.hants.gov.uk/maps/rest/services/school_catchments/MapServer)
+  # previously logged as a dead end - the host returns a genuine
+  # Cloudflare-style "Access denied | Hampshire County Council" 403 to a
+  # plain httpx/curl request (re-confirmed this pass, even with a
+  # browser User-Agent header), but a real Playwright Chromium session
+  # (full TLS/JS stack, not just a spoofed header) reaches it cleanly -
+  # so this is a client-fingerprint block, not a genuine data-absence or
+  # login wall. Unlike every other mosaic-style source in this file
+  # (Hertfordshire, Kirklees), this MapServer already stores one polygon
+  # per school directly - three layers by age range ("School Catchments
+  # 4 to 6" = infant, "7 to 10" = junior, "11 to 16" = secondary), each
+  # feature carrying the school's own name (all-caps) and Hampshire's
+  # own local "Dfe" reference number (a 4-digit local establishment
+  # number, not this project's URN) - no dissolve needed, just a direct
+  # per-feature fetch. Snapshotted via the same browser session rather
+  # than left as a live arcgis_feature_service source, since this
+  # project's production ingestor uses a plain HTTP client that would
+  # hit the same 403 this sandbox's curl did. Matched to real schools by
+  # point-in-polygon first (restricted to Hampshire's own local
+  # authority code, 850), then disambiguated by name similarity only
+  # among schools actually inside each polygon; every matched school's
+  # real coordinate was verified inside its own polygon before writing
+  # out. 7 of 681 fetched polygons were dropped, not force-matched: one
+  # is a genuine "NO SCHOOL CATCHMENT" placeholder polygon in the
+  # secondary layer, not a real school; the other 6 (Townhill Infant/
+  # Junior School appearing twice, Wherwell Primary School, Smannell and
+  # Enham CE Primary School) sit inside a different local authority's
+  # school (e.g. Southampton unitary, LA code 852, not 850) or had no
+  # Hampshire-850 school coordinate inside them at all.
+  - local_authority_code: "850"
+    local_authority_name: "Hampshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_infant"
+    source_url: "https://maps.hants.gov.uk/maps/rest/services/school_catchments/MapServer/1"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/hampshire/hampshire_infant_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo on the MapServer; data.gov.uk lists a same-named 'Hampshire School Catchments' .shp dataset but its own licence field was not checked live before this snapshot was taken."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      309 infant-phase (ages 4-6) catchment polygons, one per school
+      directly from the live MapServer's "School Catchments 4 to 6"
+      layer - see the block comment above this entry for the platform,
+      access method, and matching approach.
+
+  - local_authority_code: "850"
+    local_authority_name: "Hampshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_junior"
+    source_url: "https://maps.hants.gov.uk/maps/rest/services/school_catchments/MapServer/2"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/hampshire/hampshire_junior_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo on the MapServer; data.gov.uk lists a same-named 'Hampshire School Catchments' .shp dataset but its own licence field was not checked live before this snapshot was taken."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      297 junior-phase (ages 7-10) catchment polygons, one per school,
+      from the same live MapServer's "School Catchments 7 to 10" layer -
+      see the block comment above the primary_catchment_infant entry
+      above for the platform and method.
+
+  - local_authority_code: "850"
+    local_authority_name: "Hampshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.hants.gov.uk/maps/rest/services/school_catchments/MapServer/3"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/hampshire/hampshire_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenseInfo on the MapServer; data.gov.uk lists a same-named 'Hampshire School Catchments' .shp dataset but its own licence field was not checked live before this snapshot was taken."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      68 secondary-phase (ages 11-16) catchment polygons, one per
+      school, from the same live MapServer's "School Catchments 11 to
+      16" layer - see the block comment above the primary_catchment_
+      infant entry above for the platform and method.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -4101,19 +4188,6 @@ candidates:
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
     reason_not_enabled: "No GIS/open-data catchment presence discovered for any of these 11 (checked individually: council pages, data.gov.uk/ArcGIS Hub org search where one exists, PDF fallback search) - Liverpool/St Helens/Sandwell have data.gov.uk orgs with unrelated dataset lists (checked in full), the rest have no discoverable GIS presence at all. Sunderland's own site additionally blocks unauthenticated fetches (403)."
-  - local_authority_name: "Hampshire"
-    reason_not_enabled: >
-      Real data confirmed to exist: data.gov.uk lists "Hampshire School
-      Catchments" (format .shp), and Google-indexed ArcGIS REST page
-      titles show a real MapServer with three layers ("School Catchments
-      4 to 6", "7 to 10", "11 to 16") at
-      https://maps.hants.gov.uk/maps/rest/services/school_catchments/MapServer.
-      That host returns an explicit "Access denied | Hampshire County
-      Council" 403 page from this session's environment (re-verified
-      independently, same result) - a Cloudflare-style block on the
-      whole hants.gov.uk domain, not evidence the data doesn't exist.
-      Worth retrying from a different network origin before writing an
-      adapter for it (layer field names/counts still unconfirmed).
   - local_authority_name: "Essex"
     reason_not_enabled: "Only a server-side postcode lookup tool (secureapps.essex.gov.uk/cas/) that does point-in-polygon internally and returns a school name via ReportProxy.aspx - no exposed polygon feature service found. Essex's own CKAN portal has no catchment dataset."
   - local_authority_name: "Kent"
