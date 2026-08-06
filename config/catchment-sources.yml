@@ -4270,7 +4270,7 @@ candidates:
   - local_authority_name: "Blackpool"
     reason_not_enabled: "Has a genuine ArcGIS Online org (blackpool.maps.arcgis.com), searched org-scoped: zero catchment items, only an 'Education Establishments' point layer (school locations, not boundaries)."
   - local_authority_name: "Stockton-on-Tees"
-    reason_not_enabled: "www.stockton.gov.uk (including the specific school-admissions-zones page) is behind a Cloudflare 'Just a moment...' JS challenge on every page tested from this environment, the same category of block already documented for Brighton/Islington's WhatDoTheyKnow pages - an access barrier, not a confirmed data-absence finding. No independent AGOL org or CKAN dataset found either. Worth retrying from a different network origin."
+    reason_not_enabled: "The earlier Cloudflare block on www.stockton.gov.uk cleared this pass (reachable via a real Playwright session, 200 OK) - and with the page actually readable, it's now a confirmed data-absence finding, not an access barrier: the council's own 'Admissions zones' page (stockton.gov.uk/school-admissions-zones) describes its historic zone policy entirely in prose (which schools/postcodes are in-zone), with no map, PDF, or GIS link anywhere on the page or in its own site search results. No AGOL org or CKAN dataset found either."
   - local_authority_name: "Darlington"
     reason_not_enabled: "No AGOL org, no CKAN hit, no resolvable GIS subdomain found. Only third-party sources (School Guide, Locrating, catchment.school) surfaced."
   - local_authority_name: "Hartlepool"
