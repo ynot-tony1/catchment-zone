@@ -3569,6 +3569,54 @@ sources:
       other secondary schools (Runcorn area) and primary schools are not
       covered by this document; not yet checked for a separate map.
 
+  # North Yorkshire: no adapter needed at all, unlike every digitised
+  # entry above - a real, live, current ArcGIS FeatureServer, found by
+  # reverse-engineering the council's own "Schools" ArcGIS Experience
+  # app (experience.arcgis.com/experience/4dd5b97eae514b31a067137ebf7cdd6a)
+  # via a live Playwright session capturing its network requests (the
+  # same technique already used elsewhere this project for Rotherham/
+  # West Sussex) - this exact app had earlier surfaced as a false-
+  # positive lead while searching for Portsmouth's data, which is what
+  # confirmed it was worth checking directly for its actual owner,
+  # North Yorkshire.
+  - local_authority_code: "815"
+    local_authority_name: "North Yorkshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://experience.arcgis.com/experience/4dd5b97eae514b31a067137ebf7cdd6a"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/9e566a3f72394ae383d424b80f254861/rest/services/CYPS/Primary_School_Catchment_Areas/FeatureServer/4"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo on the FeatureServer, no licence text in the Experience app."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      293 primary catchment polygons, name field "School". The service's
+      own description states "Primary School catchment areas across NYC
+      - Updated Sept 2025" and each feature's Note field states "This is
+      for reference only" - preserve that caveat, matching this
+      project's general admissions-safety rule (e.g. Sheffield's
+      illustrative-only caveat above).
+
+  - local_authority_code: "815"
+    local_authority_name: "North Yorkshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://experience.arcgis.com/experience/4dd5b97eae514b31a067137ebf7cdd6a"
+    download_url: "https://utility.arcgis.com/usrsvcs/servers/31b9ee196f8b44d3a71f9602ce214fa9/rest/services/CYPS/Secondary_School_Catchment_Areas/FeatureServer/5"
+    name_field: "School"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:27700"
+    licence: "UNCONFIRMED - no licenseInfo on the FeatureServer, no licence text in the Experience app."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: >
+      40 secondary catchment polygons, name field "School" - same
+      service family and caveat as the primary_catchment entry above.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3916,8 +3964,6 @@ candidates:
     reason_not_enabled: "The council's own school-details tool has a 'View Catchment Area' button but no exposed feature service was found behind it. Staffordshire's public GIS portal (map.staffordshire.gov.uk/publicmap) exposes Boundaries/Planning/RightsOfWay and similar themes but no Schools/Catchments layer."
   - local_authority_name: "Gloucestershire"
     reason_not_enabled: "A real interactive catchment map exists (gcc.dynamicmaps.co.uk/MapThatPublic/) but is gated behind a genuine login page (Angular login form requiring credentials) - a hard stop per this project's standing rule against bypassing authentication, not a licensing question."
-  - local_authority_name: "North Yorkshire"
-    reason_not_enabled: "No GIS/open-data presence found for the county council (distinct from City of London - already covered - and City of York, also already covered separately). Only PDF consultation documents on catchment boundary changes."
   - local_authority_name: "County Durham"
     reason_not_enabled: "No GIS/open-data catchment layer found. maps.durham.gov.uk returns 403 (possibly Cloudflare-gated like Hampshire, worth a re-check from a different network origin) but no independent evidence surfaced that a catchment layer exists there specifically."
   - local_authority_name: "Leicestershire"
