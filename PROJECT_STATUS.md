@@ -1859,3 +1859,91 @@ is just the first worked example:**
    Milton Keynes) from a different network origin if one becomes
    available - all four are confirmed real, licensed-looking data, purely
    blocked by this sandbox's network path.
+
+## Checkpoint - paused here, usage running low (2026-08-06, later same day)
+
+Coverage as of this checkpoint: **79 local authorities** with real, deployed
+catchment sources (verified live against the DB: `select count(distinct
+local_authority_code) from catchment_sources` = 79). Total catchment_areas
+rows: 9,316; 6,152 have a performance_percentile score from
+`refresh-catchment-scores` (the rest are areas whose schools don't yet have
+a matching performance metric, not a scoring failure - not separately
+re-verified this checkpoint).
+
+This session added, in order, all committed/pushed/import-verified/scored:
+BCP, Leeds, Oxfordshire, Halton, North Yorkshire, Hertfordshire, Kirklees
+(132 areas), Hampshire (665 areas, cracked a fingerprint-blocked MapServer),
+Birmingham (5 grammar-school catchments dissolved from real ONS ward
+boundaries), Wigan (1 area, Fred Longworth High School), Cumberland (82
+areas, via a LocalGov Drupal "find a school near you" tool's server-rendered
+Leaflet geofields), Derby (77 areas, cracked Cadcorp GeognoSIS via a real
+Playwright browser session that mints a session id then exposes paginated
+`.geojson` features with real URNs).
+
+**Major finding this session**: a cross-referenced query (DB's enabled
+`catchment_sources` local authorities, plus every `local_authority_name`
+already documented - including comma-grouped and parenthetical-suffixed
+entries - in `catchment-sources.yml`'s candidates section) against all 229
+real local authorities with open schools showed only **one** genuinely
+uninvestigated authority left: Bedford. It has since been checked and
+closed as a dead end (no real catchment-polygon GIS presence, only a
+misleadingly-titled point-location layer from an unrelated shared training
+org). **Broad new-authority discovery is now exhausted** - essentially
+every English/Welsh/Scottish local authority with a meaningful school count
+has either been deployed or genuinely investigated and documented. Future
+sessions should not re-run a fresh "biggest uncovered LA" query without
+first cross-referencing it against every name already in
+`catchment-sources.yml` (both `local_authority_code:` entries under
+`sources:` and `local_authority_name:` entries under `candidates:`) - the
+grouped/parenthetical name formats mean a naive DB-only query undercounts
+what's already been checked, as happened once this session before the
+cross-reference fix.
+
+Also closed this checkpoint: the Scotland national aggregate WFS
+(data.spatialhub.scot, Improvement Service) - re-investigated as a
+promising single-endpoint candidate that could have covered many Scottish
+councils at once, but its own resource page requires genuine account
+registration or an auth key for any bulk download ("browse and preview"
+only without one) - a real credential gate, not a network/fingerprint
+block, so left closed per this project's hard rule against bypassing login
+walls. Documented in the YAML with this specific finding so no future
+session re-attempts it as if it were still just network-blocked.
+
+**In flight when this checkpoint was written**: a fork was retrying three
+already-documented candidates with a real Playwright browser session (the
+technique that cracked Hampshire, Cumberland, and Derby after they were
+first marked network/fingerprint-blocked) - Stoke-on-Trent (shares Derby's
+exact Cadcorp GeognoSIS platform, very likely crackable the same way),
+Durham (previously a plain 403, possibly Cloudflare-gated like Hampshire
+originally was), and Leicestershire (whole-domain Akamai WAF block, a
+promising per-school PDF pattern already found but domain-level 403 even
+via a full browser session - lower odds than the other two). **No new
+commits had landed from this fork as of pausing** (`git log` still shows
+Derby/Bedford as the latest catchment-related commits) - its actual outcome
+is unknown. Next session: check whether that fork is still running or
+completed silently; if unresolved, just re-run the same three-target retry
+from scratch rather than trying to recover partial state.
+
+Working tree was clean at pause time (only the pre-existing, gitignored/
+untracked `services/ingestor/uv.lock`, not a real change). All prior work
+through Derby/Bedford is committed and pushed to `main`.
+
+**Recommended next steps, in order**:
+
+1. Resolve the in-flight Stoke-on-Trent/Durham/Leicestershire retry (see
+   above).
+2. Given broad discovery is exhausted, shift primary effort toward the
+   digitization stragglers already identified as ready-to-resume in earlier
+   checkpoints of this file (search this file for "South Tyneside",
+   "Oxfordshire's 91 non-gridded PDFs", "BCP's 9 stragglers", "Leeds
+   Allerton High") - these are real, already-scoped candidates, not new
+   discovery.
+3. Re-verify performance-metric coverage is still comprehensive UK-wide
+   (England/Wales/Scotland) now that catchment geometry coverage has grown
+   substantially since the last time this was checked - the actual point of
+   the project is the red-to-green score, not geometry alone, per standing
+   user instruction ("remember this is all about rating catchment zones by
+   performance, red to green by results").
+4. Standing user instruction remains in force: keep going autonomously,
+   don't pause for confirmation, Sonnet only (never Opus) for the main
+   session and any forks/subagents.
