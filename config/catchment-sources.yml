@@ -3921,7 +3921,25 @@ candidates:
   - local_authority_name: "County Durham"
     reason_not_enabled: "No GIS/open-data catchment layer found. maps.durham.gov.uk returns 403 (possibly Cloudflare-gated like Hampshire, worth a re-check from a different network origin) but no independent evidence surfaced that a catchment layer exists there specifically."
   - local_authority_name: "Leicestershire"
-    reason_not_enabled: "Only static per-school PDF catchment documents published by the council; no GIS/ArcGIS presence found for the county council (distinct from Leicester city, already a documented dead end)."
+    reason_not_enabled: >
+      Only static per-school PDF catchment documents published (no
+      GIS/ArcGIS presence for the county council, distinct from Leicester
+      city, already a documented dead end) - but a real, promising find:
+      the PDFs are named "catchment_details_{numeric-code}.pdf"
+      (e.g. catchment_details_2045.pdf for Westfield Infant School),
+      the same predictable-numeric-code pattern that worked well for
+      Oxfordshire and Leeds, suggesting hundreds of schools' maps are
+      individually reachable this way if the domain becomes reachable.
+      Not yet digitised because the entire leicestershire.gov.uk domain
+      returns HTTP 403 "Access Denied" (an Akamai edge WAF block, not a
+      login wall) from this sandbox's network - confirmed even for the
+      plain homepage, so it's a network/IP-level block, not a bot-JS
+      challenge a headless browser session can solve (tried both plain
+      curl with browser headers/referer and a full Playwright session,
+      both 403). Same category as the already-documented Ealing/
+      Hampshire/Salford/Milton Keynes network-blocked candidates - worth
+      retrying this whole batch from a different network origin, not
+      assumed permanently closed.
   - local_authority_name: "Stockport"
     reason_not_enabled: "Both ArcGIS Hub portal hostnames (stockport-council-opendata.hub.arcgis.com, stockport.opendata.arcgis.com) are live but return zero datasets via DCAT feed. The council's own catchment tool (stockport.gov.uk/find-your-catchment-area) is a server-side address-lookup form, not a map - no GIS markers in its HTML, no AGOL org search hits."
   - local_authority_name: "Kingston upon Hull"
