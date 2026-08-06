@@ -3587,7 +3587,7 @@ sources:
     download_url: "https://utility.arcgis.com/usrsvcs/servers/9e566a3f72394ae383d424b80f254861/rest/services/CYPS/Primary_School_Catchment_Areas/FeatureServer/4"
     name_field: "School"
     format: "arcgis_feature_service"
-    coordinate_reference_system: "EPSG:27700"
+    coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - no licenseInfo on the FeatureServer, no licence text in the Experience app."
     last_verified_at: "2026-08-06"
     parser_name: "generic_arcgis_feature_service"
@@ -3598,7 +3598,23 @@ sources:
       - Updated Sept 2025" and each feature's Note field states "This is
       for reference only" - preserve that caveat, matching this
       project's general admissions-safety rule (e.g. Sheffield's
-      illustrative-only caveat above).
+      illustrative-only caveat above). Real bug found and fixed on first
+      import: coordinate_reference_system was initially declared as
+      EPSG:27700 (this service's native default CRS with no outSR
+      param), but the ingestor's own arcgis_feature_service adapter
+      always requests outSR=4326 - and this particular service's geojson
+      response omits the crs block entirely (confirmed live: no "crs"
+      key at all), so detected_wkid comes back None and the pipeline
+      fell back to the declared value. With EPSG:27700 declared, the
+      already-correct WGS84 coordinates got reprojected a second time as
+      if they were raw BNG eastings/northings, collapsing every
+      catchment's bbox to a few centimetres around the BNG false origin
+      (-7.557, 49.767, nowhere near North Yorkshire) - caught immediately
+      via the post-import envelope sweep, all 332 corrupted rows deleted
+      and re-imported clean with EPSG:4326 declared instead. The lesson:
+      for any source whose response omits an explicit crs block, declare
+      whatever CRS the adapter's actual query returns, not the service's
+      undecorated default.
 
   - local_authority_code: "815"
     local_authority_name: "North Yorkshire"
@@ -3608,7 +3624,7 @@ sources:
     download_url: "https://utility.arcgis.com/usrsvcs/servers/31b9ee196f8b44d3a71f9602ce214fa9/rest/services/CYPS/Secondary_School_Catchment_Areas/FeatureServer/5"
     name_field: "School"
     format: "arcgis_feature_service"
-    coordinate_reference_system: "EPSG:27700"
+    coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - no licenseInfo on the FeatureServer, no licence text in the Experience app."
     last_verified_at: "2026-08-06"
     parser_name: "generic_arcgis_feature_service"
