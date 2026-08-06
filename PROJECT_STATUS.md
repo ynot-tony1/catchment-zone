@@ -1,9 +1,24 @@
 # Project status
 
-Updated 2026-08-05. Reflects what has actually been run and verified on
+Updated 2026-08-06. Reflects what has actually been run and verified on
 disk, not what is intended.
 
 ## Completed and verified
+
+- **Halton: 2 catchments (Ormiston Chadwick Academy, the renamed
+  successor to the closed "The Bankfield School"; Wade Deacon High
+  School) digitised from the council's one Widnes partition-map PDF,
+  using both schools' own real coordinates as georeferencing control
+  points instead of a scale bar** - no scale bar or grid exists on this
+  map, so the real-world distance/direction between the two schools was
+  compared to their pixel distance/direction, giving independent x/y
+  scale factors that agreed within 2% (confirming north-up) and a
+  precise scale with nothing manually read. The catchment area is filled
+  rather than outlined in this template, so extraction treated the whole
+  filled shape as one region and split it at the internal dividing line,
+  rather than tracing a boundary curve. Verified both schools' real
+  coordinates fall inside their own polygon. Imported clean: 2 areas, 0
+  rejected. Local authority count: 71 (was 70).
 
 - **Oxfordshire: 75 catchments digitised (65 primary, 10 secondary) using
   the council's own Ordnance Survey grid instead of a scale bar or a
