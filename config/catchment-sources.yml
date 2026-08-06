@@ -3866,6 +3866,50 @@ sources:
       16" layer - see the block comment above the primary_catchment_
       infant entry above for the platform and method.
 
+  # Birmingham's own community schools use distance/priority-based
+  # admissions with no published catchment polygons (see the candidates:
+  # entry below), but the King Edward VI Foundation's 6 selective grammar
+  # schools (a separate academy trust, not the council) publish real
+  # catchment-area maps built from named Birmingham/Sandwell/Solihull
+  # electoral wards (schoolsofkingedwardvi.co.uk and
+  # kingedwardvifoundation.co.uk news page "New admissions policy
+  # catchment maps"), the same "named administrative areas" pattern as
+  # Hertfordshire's selective-school parishes elsewhere in this file. Each
+  # school's ward list was read directly off its published map image and
+  # the exact ward polygons were then pulled from the real ONS Open
+  # Geography Portal live FeatureServer (Wards_December_2024_Boundaries_
+  # UK_BGC, services1.arcgis.com/ESMARspQHYMw9BZ9/.../FeatureServer/0,
+  # queried live with WD24NM IN (...) filtered to LAD24CD in Birmingham/
+  # Sandwell/Solihull to avoid same-named-ward collisions elsewhere in the
+  # UK, e.g. a different "Abbey" or "Aston" ward) and dissolved with
+  # shapely.unary_union - not hand-traced pixels, exact published ward
+  # boundaries. Ward counts per school matched exactly what's labelled on
+  # each map (30/18/18/15/17/47), and every school's own DB coordinate
+  # was verified to fall inside its own dissolved polygon before commit.
+  # Camp Hill Boys and Camp Hill Girls share an identical ward list (and
+  # therefore identical geometry) - expect the same
+  # (source_id, geometry_checksum) dedup already documented for
+  # Cheshire East/West and Hertfordshire's paired schools, so 6 features
+  # written but likely 5 catchment_areas rows after import.
+  - local_authority_code: "330"
+    local_authority_name: "Birmingham"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_selective"
+    source_url: "https://kingedwardvifoundation.co.uk/news/new-admissions-policy-catchment-maps/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/birmingham/birmingham_grammar_selective.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licence text on the King Edward VI Foundation's own catchment-map page; ward boundary geometry itself is from the ONS Open Geography Portal (Open Government Licence)."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      6 selective grammar schools only (Aston, Camp Hill Boys, Camp Hill
+      Girls, Five Ways, Handsworth Grammar for Boys, Handsworth [Girls]),
+      not comprehensive coverage of Birmingham's ~330 other schools - see
+      the block comment above for the ward-dissolve method.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3873,6 +3917,21 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Birmingham (community schools)"
+    reason_not_enabled: >
+      Birmingham City Council's own community/voluntary-controlled
+      schools use distance/priority-area admissions with no published
+      catchment polygons found (only individual proposed-catchment PDFs
+      for specific consultation schools, e.g. King Edward VI Five Ways'
+      own council-side consultation map, which duplicates data already
+      covered by the King Edward VI Foundation source above). The
+      "School Catchment Areas" ArcGIS Experience app that surfaces high
+      in search (experience.arcgis.com/experience/de7992d0efe34b1c99c319f39addf3c9)
+      is a false-positive lead confirmed via its own item metadata to
+      belong to Wokingham Borough Council (owner WBC_JamieClarkson,
+      extent centred on Wokingham, not Birmingham), already covered
+      elsewhere in this file - not a Birmingham source despite the
+      generic title.
   - local_authority_name: "Lincolnshire"
     reason_not_enabled: "Only the county's grammar schools have anything catchment-like (the rest are distance/priority-based with no exclusive zones), and even those genuinely aren't published online: Alford Queen Elizabeth's and Caistor Grammar both state their catchment map is only viewable at the school/open evening, not published digitally; Spalding High explicitly has no catchment area at all; Louth King Edward VI references a 'traditional catchment area' by named feeder primary schools, not a map. The council's own 'Find my nearest school' ArcGIS Experience app (experience.arcgis.com/experience/71fb40072b9945f0a4171320c331221f) is backed by a real FeatureServer (FindMyNearestFullSchoolList) but it's point geometry (school locations for a distance calculation), not catchment polygons. Caistor's rule (6.5 miles straight-line from a fixed point) is precise enough to construct as an exact circle if this ever becomes worth doing, but that's a materially different technique from every other source in this file and wasn't pursued for a single school."
   - local_authority_name: "Bournemouth, Christchurch and Poole (remaining 9 PDFs)"
@@ -3941,26 +4000,24 @@ candidates:
       in this file).
   - local_authority_name: "West Sussex"
     reason_not_enabled: >
-      Real data confirmed to exist and partially reverse-engineered via a
-      live Playwright session capturing network requests (the same
-      technique that previously cracked Bridgend's Cadcorp platform):
-      westsussex.statmap.co.uk/map/Earthlight.html runs on a proprietary
-      "StatMap Earthlight" job-queue API (SMJobs.svc/Earthlight/*, not
-      OGC WFS/WMS). An OpenMapJob response confirmed both real vector
-      layers exist server-side - "WSCC Primary Catchments" and "WSCC
-      Secondary Catchments" (VectorLayer type, GeometryType 4/polygon),
-      both backed by the same underlying table `dbo.EDUC_CED_SCHCAT_ALL`,
-      with real internal layer GUIDs (8e935667-683b-42b2-b8b5-081bff1ebbdf
-      for primary, a63ab9c8-ed81-48bf-9f9d-7bb5241c2f27 for secondary).
-      A GetResultSetJob call returned an empty TableSet because no
-      selection/query job had been issued for that layer yet - actually
-      pulling features needs simulating the UI's own
-      select-layer-then-query sequence (a ModifySelectionJob call was
-      observed in the request log but its own response wasn't captured
-      this pass), not just capturing passive page-load traffic. Worth a
-      focused follow-up session driving that specific interaction rather
-      than more general searching - the hard part (finding the real
-      table/layer identifiers) is already done.
+      CONFIRMED DEAD END (2026-08-06 follow-up). Real vector layers exist
+      server-side - "WSCC Primary Catchments" and "WSCC Secondary
+      Catchments" (layer GUIDs 8e935667-683b-42b2-b8b5-081bff1ebbdf and
+      a63ab9c8-ed81-48bf-9f9d-7bb5241c2f27) - and the StatMap Earthlight
+      job API even exposes a direct ExportLayersToGeoJsonJob that would
+      pull the whole layer with no selection step needed (found by
+      reading the deminified Earthlight.js client). But every job call
+      fails with SessionNotFoundException (session
+      00000000-0000-0000-0000-000000000000 not found) because the app
+      never establishes an authenticated session automatically: a live
+      Playwright session rendering the page shows a real username/
+      password login form ("Login: / Password: / [Login]") is required
+      before any job executes, despite the service metadata reporting
+      AutoLogin: true (that flag apparently covers a different token-
+      based flow this project has no token for, not anonymous/guest
+      access). A credential login form is this project's one hard stop -
+      not attempted or worth another session. Genuinely done, not a
+      "needs more digging" case like the earlier note suggested.
   - local_authority_name: "North Somerset"
     reason_not_enabled: >
       Real per-school catchment maps confirmed via official council
