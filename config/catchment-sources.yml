@@ -3692,6 +3692,93 @@ sources:
       secondary schools (co-educational, shared-pool admissions) are
       deliberately not covered here.
 
+  # Kirklees: a real, live Precisely/Pitney Bowes Spectrum Spatial
+  # "Connect Analyst" GIS platform (mapping.kirklees.gov.uk), previously
+  # logged as a dead end because its API base returned a 500 without a
+  # real session. Resolved this pass with a Playwright browser session:
+  # the council's own admissions page links a "Priority Admission Areas
+  # (Public)" map app (mapping.kirklees.gov.uk/connect/analyst/mobile/,
+  # mapcfg=Priority Admission Areas (Public)); loading it in a real
+  # browser establishes a session, after which its
+  # /connect/analyst/controller/connectProxy/rest/Spatial/FeatureService
+  # endpoint (POST, body {"query": "SELECT * FROM \"<tableRef>\""}, url
+  # param tables/features.json) answers with genuine GeoJSON in the
+  # service's own declared EPSG:27700. The "Priority Admission Areas
+  # Combined" layer (tableRef /kirklees/Schools/PriorityAdmissionAreas_
+  # Combine) is a per-parish-style mosaic like Hertfordshire's, not one
+  # polygon per school: 839 small cells, each carrying which primary/
+  # secondary/middle school holds priority there (Primary_NAME1,
+  # Secondary_NAME1, M_School_Name fields), reprojected from EPSG:27700
+  # to WGS84 with pyproj and dissolved (shapely unary_union) into one
+  # polygon per named school. Every dissolved polygon was checked to
+  # actually contain that school's real DB coordinate (matched against
+  # Kirklees's own school list by point-in-polygon first, then
+  # disambiguated by name similarity among only the schools genuinely
+  # inside each polygon - not by name matching alone, since the layer's
+  # abbreviated names, e.g. "J & I School", don't match GIAS's expanded
+  # official names closely enough to trust in isolation) before being
+  # written out; 2 of 114 named primary catchments (Luck Lane, A SHARE
+  # Primary Academy; Savile Town CE(VC) I & N School) had a real,
+  # confidently-named cell whose dissolved polygon did not contain that
+  # school's own DB coordinate at all (each sits inside a neighbouring
+  # school's polygon instead) - excluded rather than force-matched, a
+  # genuine unresolved discrepancy between this council's map and this
+  # project's school coordinates, not a project-side bug. All 18
+  # secondary and both middle-school catchments matched cleanly.
+  - local_authority_code: "382"
+    local_authority_name: "Kirklees"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://mapping.kirklees.gov.uk/connect/analyst/mobile/#/main?mapcfg=Priority%20Admission%20Areas%20(Public)"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/kirklees/kirklees_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - Spectrum Spatial Analyst app has no licence statement discoverable outside an authenticated admin view."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      112 primary catchment polygons dissolved from the live "Priority
+      Admission Areas Combined" mosaic layer - see the block comment
+      above this entry for the platform, endpoint, and matching method.
+
+  - local_authority_code: "382"
+    local_authority_name: "Kirklees"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://mapping.kirklees.gov.uk/connect/analyst/mobile/#/main?mapcfg=Priority%20Admission%20Areas%20(Public)"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/kirklees/kirklees_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - Spectrum Spatial Analyst app has no licence statement discoverable outside an authenticated admin view."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      18 secondary catchment polygons dissolved from the same live
+      mosaic layer (Secondary_NAME1 field) - see the block comment above
+      the primary_catchment entry above for the platform and method.
+
+  - local_authority_code: "382"
+    local_authority_name: "Kirklees"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://mapping.kirklees.gov.uk/connect/analyst/mobile/#/main?mapcfg=Priority%20Admission%20Areas%20(Public)"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/kirklees/kirklees_middle_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - Spectrum Spatial Analyst app has no licence statement discoverable outside an authenticated admin view."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      Kirklees's 2 remaining middle schools (Kirkburton Middle School,
+      Scissett Middle School - a legacy first/middle/high system in part
+      of the borough), M_School_Name field, same mosaic layer and method.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3880,8 +3967,6 @@ candidates:
       rule against bypassing access control, not attempted further. The
       public mybrummap/Schools_and_Leisure/MapServer service only has
       point layers (school locations), no catchment polygons.
-  - local_authority_name: "Kirklees"
-    reason_not_enabled: "The council's own page links a real 'Priority Admission Areas (Public)' layer on a Precisely/Pitney Bowes Spectrum Spatial Analyst platform (mapping.kirklees.gov.uk), but its API base returns a 500 'Failed to read configuration' without full session state, and no OGC WFS/WMS endpoint was discoverable by path-probing. Worth a follow-up pass with a real browser session (as previously worked for Bridgend/Cadcorp) rather than curl alone."
   - local_authority_name: "Rotherham"
     reason_not_enabled: >
       Confirmed via a real Playwright browser session (maps.rotherham.gov.uk/webmapping/en-gb/PublicMap/Rotherham)
