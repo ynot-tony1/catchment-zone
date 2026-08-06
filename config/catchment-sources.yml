@@ -3910,6 +3910,44 @@ sources:
       not comprehensive coverage of Birmingham's ~330 other schools - see
       the block comment above for the ward-dissolve method.
 
+  # Found by browsing Wigan's own ArcGIS Server folder listing directly
+  # (maps.wigan.gov.uk/arcgis/rest/services?f=json -> Education folder ->
+  # School_Criterion MapServer), a small ad-hoc consultation-style service
+  # with one named "Criterion" polygon layer per school rather than a
+  # single combined layer. Only 4 schools are published here at all
+  # (Fred Longworth High, Shevington High, St Mary's CofE Primary,
+  # Standish High), and each layer's own ELIGIBILITY field literally
+  # reads "Within school catchment area" confirming the concept, not
+  # this project's own inference. Standish High's layer returned zero
+  # features (empty, not fetched). Of the remaining 3, only Fred
+  # Longworth High School's own DB coordinate actually falls inside its
+  # named polygon; Shevington High's coordinate is ~2041m outside its
+  # own polygon and St Mary's CofE Primary's is ~274m outside - both
+  # excluded rather than force-matched, the same standard already
+  # applied to Hampshire/Kirklees's confidently-named-but-non-containing
+  # cells elsewhere in this file. Real query confirmed the correct URN
+  # for each excluded school first (ruling out a same-named-school
+  # mismatch like the one caught for Birmingham's ward names) before
+  # concluding the discrepancy is in the council's own data, not this
+  # project's school matching.
+  - local_authority_code: "359"
+    local_authority_name: "Wigan"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.wigan.gov.uk/arcgis/rest/services/Education/School_Criterion/MapServer"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/wigan/wigan_secondary_selective.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licenceInfo found on the MapServer or the council's open data pages for this specific service."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      Just 1 school (Fred Longworth High School) - see the block comment
+      above for why Shevington High and St Mary's CofE Primary were
+      excluded despite being named in the same live service.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -3917,6 +3955,37 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Bradford"
+    reason_not_enabled: >
+      The council's own ArcGIS Server (found by browsing
+      cbmdc.maps.arcgis.com's org content directly, since
+      gis.bradford.gov.uk redirects there) hosts "PrimaryPA_2025" and
+      "SecondaryPA" polygon FeatureServers that looked promising from
+      their names, but their actual features are named "Keighley North",
+      "Wharfe Valley West", "BD5 Outer", "Aire Valley", etc. - these are
+      school-place-SUFFICIENCY PLANNING areas (large multi-school
+      demographic zones the council uses for capacity planning, matching
+      "Bradford District Primary Summary"'s 26 planning areas), not
+      per-school catchment/priority-admission boundaries. Deploying them
+      as if they were school catchments would misrepresent what they
+      actually are - each zone covers many schools' worth of area with no
+      link to which specific school gets admissions priority there. A
+      genuine "School Catchments 2026" ArcGIS Experience app surfaced in
+      search (experience.arcgis.com/experience/3f98912c9da44d8c919f50c1525ac813)
+      but its own item metadata confirms the owner is "Telford" (Telford
+      and Wrekin Council, already covered elsewhere in this file), not
+      Bradford - a false positive from search relevance, the same pattern
+      already seen for Manchester/Portsmouth/Birmingham search results
+      surfacing other councils' generically-titled apps.
+  - local_authority_name: "Manchester"
+    reason_not_enabled: >
+      The "schools and catchment areas" ArcGIS Experience app that
+      surfaces in search (experience.arcgis.com/experience/4dd5b97eae514b31a067137ebf7cdd6a)
+      is the same app already confirmed via its own item metadata to
+      belong to North Yorkshire (already covered elsewhere in this
+      file), not Manchester - a false positive from generic search
+      relevance, not a real lead. No further search attempted this
+      session; genuinely unchecked beyond this one false lead.
   - local_authority_name: "Birmingham (community schools)"
     reason_not_enabled: >
       Birmingham City Council's own community/voluntary-controlled
