@@ -5,6 +5,27 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **North Yorkshire: 333 catchments (293 primary, 40 secondary) from a
+  real, live, current ArcGIS FeatureServer - no digitisation needed,
+  found by reverse-engineering the council's own "Schools" ArcGIS
+  Experience app via a live Playwright network-capture session (same
+  technique already used for Rotherham/West Sussex).** This exact app
+  had earlier surfaced as a false-positive lead while searching for
+  Portsmouth's data - what prompted checking it directly for its real
+  owner. Caught and fixed a real bug on first import: declared the
+  source's `coordinate_reference_system` as EPSG:27700 (the service's
+  undecorated default with no `outSR` param), but the ingestor's
+  adapter always requests `outSR=4326`, and this service's response
+  omits the `crs` block entirely - so `detected_wkid` came back `None`
+  and the pipeline fell back to the wrong declared CRS, reprojecting
+  already-correct WGS84 coordinates a second time as if they were raw
+  British National Grid eastings/northings, collapsing every
+  catchment's bbox to a few centimetres around the BNG false origin.
+  Caught immediately by the standard post-import envelope sweep before
+  it reached anywhere beyond a verification query; all 332 corrupted
+  rows deleted and re-imported clean with the correct CRS declared.
+  Verified: real North Yorkshire bbox, 0 rejected, 0 out-of-envelope
+  project-wide. Local authority count: 72 (was 71).
 - **Halton: 2 catchments (Ormiston Chadwick Academy, the renamed
   successor to the closed "The Bankfield School"; Wade Deacon High
   School) digitised from the council's one Widnes partition-map PDF,
