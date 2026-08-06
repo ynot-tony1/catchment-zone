@@ -4011,6 +4011,69 @@ sources:
       9 secondary catchment polygons - see the block comment on the
       primary entry above for the discovery method.
 
+  # Derby: the earlier dead-end note ("session-scoped GeognoSISRest layer
+  # behind proxy.axd with no public WFS endpoint discoverable from static
+  # HTML/JS inspection") was right that there's no static endpoint, but a
+  # real Playwright browser session cracks it, as it did for Bridgend on
+  # the same Cadcorp GeognoSIS platform. maps.derby.gov.uk/webmap/'s
+  # "Schools" map exposes overlay indices 2 (Primary School Catchments)
+  # and 4 (Secondary School Catchments) once a session is established by
+  # opening the map and triggering one "Local Knowledge" click-query
+  # (which mints a session id embedded in later proxy.axd URLs). Each
+  # overlay's Features.json paginates through per-feature refs
+  # (Features/I{n}.json); appending .geojson instead of .json to each ref
+  # (…/Features/I{n}.geojson) returns real polygon geometry in EPSG:27700
+  # plus a "Reference" property holding the school's DfE URN directly - no
+  # name-matching needed. Reprojected to WGS84 with pyproj/shapely.
+  #
+  # Data-quality checks: all 63 primary features' URNs matched a real
+  # Derby school in this project's DB by URN (after trimming one URN with
+  # leading whitespace, and substituting one early-years registration
+  # number - EY460372 - the source data used for that entry instead of
+  # the school's own DfE URN 148384, both plainly the same school,
+  # Brackensdale Spencer Academy, confirmed by a unique name match) and
+  # all 63 passed this project's standard point-in-polygon check (school's
+  # own DB coordinate falls inside its own polygon) - kept all 63. Of 18
+  # secondary features, 17 matched a DB school by URN and 15 passed the
+  # point-in-polygon check; 3 were excluded (Alvaston Moor Academy 112m
+  # off, Lees Brook Academy 10.4km off, The Long Eaton School 4.1km off -
+  # not investigated further, possibly wrong reference/site pairings in
+  # Derby's own source data).
+  - local_authority_code: "831"
+    local_authority_name: "Derby"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://maps.derby.gov.uk/webmap/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/derby/derby_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found on maps.derby.gov.uk."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      63 primary catchment polygons - see the block comment above for the
+      GeognoSIS session/overlay discovery method. All 63 passed URN
+      matching and the point-in-polygon check.
+
+  - local_authority_code: "831"
+    local_authority_name: "Derby"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.derby.gov.uk/webmap/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/derby/derby_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found on maps.derby.gov.uk."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      15 secondary catchment polygons (of 18 found; 3 excluded for
+      failing the point-in-polygon check) - see the block comment above.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -4434,20 +4497,8 @@ candidates:
     reason_not_enabled: "Council states explicitly that its catchment map is 'a digital map, not a paper map, and so is not available for inspection by the public,' and separately that no Southampton secondary school has a catchment area at all. southampton-opendata.hub.arcgis.com returns zero datasets via DCAT feed. www.southampton.gov.uk is behind an Incapsula bot-mitigation challenge from this environment, blocking direct page inspection."
   - local_authority_name: "Leicester"
     reason_not_enabled: "schoolinfo.leicester.gov.uk is a form-based address-to-school finder with no map/GIS markers. Leicester's real open-data portal (data.leicester.gov.uk, Opendatasoft, 393 datasets) was checked exhaustively - no catchment or school-boundary dataset exists. leicester-opendata.hub.arcgis.com DCAT feed also empty."
-  - local_authority_name: "Derby"
-    reason_not_enabled: >
-      Runs Cadcorp GeognoSIS WebMap (maps.derby.gov.uk/webmap/), the same
-      platform already documented as a dead end for Bridgend and
-      Stoke-on-Trent above - real named catchment data confirmed to
-      exist server-side (the map's info-click template config references
-      'secondary school catchment'/'primary school catchment' layers by
-      name), but only reachable through a session-scoped GeognoSISRest
-      layer behind proxy.axd with no public WFS endpoint discoverable
-      from static HTML/JS inspection (wfs.exe 404s). Worth a follow-up
-      pass with a real browser session (as was done for Bridgend) rather
-      than curl alone.
   - local_authority_name: "Stoke-on-Trent"
-    reason_not_enabled: "Same Cadcorp GeognoSIS platform as Derby above (webmaplayers.stoke.gov.uk/webmaplayers8/), same session-scoped proxy.axd architecture with no public WFS/REST endpoint found. The council's own help text confirms a 'Primary School Catchment Areas and Schools' layer exists. High-school catchments don't exist at all per the council (non-catchment admissions)."
+    reason_not_enabled: "Same Cadcorp GeognoSIS platform as Derby (webmaplayers.stoke.gov.uk/webmaplayers8/, vs Derby's maps.derby.gov.uk/webmap/ - now enabled above), same session-scoped proxy.axd architecture with no public WFS/REST endpoint found via static inspection. Not yet retried with the technique that unlocked Derby (real Playwright session, trigger a map click to mint a session id, then walk Overlays/{n}/Features.json -> Features/I{n}.geojson for the polygon layer) - worth a follow-up pass, since the council's own help text confirms a 'Primary School Catchment Areas and Schools' layer exists server-side. High-school catchments don't exist at all per the council (non-catchment admissions), so only primary would be recoverable."
   - local_authority_name: "Isles of Scilly"
     reason_not_enabled: "Structural, not a search failure: the islands have exactly one all-through school (Five Islands Academy) serving all five inhabited islands - with no second school to be zoned against, 'catchment area' as this project defines it does not meaningfully apply. No GIS/open-data presence found for the council at all."
   - local_authority_name: "Westmorland and Furness"
@@ -4478,19 +4529,23 @@ candidates:
       WFS GetFeature endpoint at the same path once reachable.
   - local_authority_name: "School Catchments - Scotland (national aggregate, Improvement Service)"
     reason_not_enabled: >
-      Real, live, OGL-licensed national WFS aggregate found at
+      Real, live, OGL-licensed national WFS aggregate exists at
       https://data.spatialhub.scot/dataset/school_catchments-is (organization:
-      Improvement Service), covering all of Scotland in 4 layers with
-      per-feature local_authority/la_s_code fields - would likely obsolete
-      most of the individual per-council entries above if it can be reached.
-      The underlying geo.spatialhub.scot WFS endpoint returned a 403 "Access
-      Denied" (Tomcat-level, not a GeoServer auth prompt) from this session's
-      environment even with a browser User-Agent and a Referer header set;
-      the GeoServer admin UI at the same host loads fine, so this looks like
-      a deliberate restriction on the data workspace specifically, not a
-      general network block. Worth trying again from a different network
-      origin (e.g. the user's own machine, matching the GIAS/Azure-block
-      workaround pattern) before spending more effort on individual councils.
+      Improvement Service), covering all of Scotland in 4 layers (Primary
+      non-denominational, Primary denominational, Secondary
+      non-denominational, Secondary denominational). Not a network/
+      fingerprint block: re-checked the dataset's own resource page
+      directly, and its download UI is explicit that bulk data (WFS/CSV/
+      WMTS) requires either signing in, registering a free account, or
+      entering an authentication key issued via one of those - "you can
+      only browse and preview datasets without an account." That is a
+      genuine credential/registration gate on the data itself, not a WAF
+      or Cloudflare-style bot challenge a plain browser session clears -
+      this project's hard rule against bypassing real login walls applies,
+      so this is closed unless the user wants to supply their own account/
+      auth key. The earlier 403 from geo.spatialhub.scot directly is
+      consistent with this: an unauthenticated WFS GetFeature request being
+      correctly rejected, not a network-origin artifact.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: >
       Real reason found this time, not just "no API": Cardiff runs the
