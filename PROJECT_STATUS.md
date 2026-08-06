@@ -5,6 +5,29 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **Hertfordshire: 5 catchments (7 written, 2 dropped by the expected
+  geometry-dedup constraint) for the county's single-sex selective
+  (grammar) schools, dissolved from a real live ArcGIS MapServer
+  structured completely differently from every other source in this
+  project - one polygon per civil parish, not per school.** Found by
+  browsing the council's own GIS server folder listing after a plain
+  web search only surfaced its unrelated SEN-areas service. Most of
+  Hertfordshire's secondary system genuinely isn't catchment-based at
+  all (each parish's co-ed field lists several schools sharing one
+  priority pool with distance/sibling tie-breaks, not an exclusive zone
+  - correctly left uncovered, same as Barnsley's confirmed no-catchment
+    structure). The 7 single-sex selective schools are different: each
+    parish's BOYS/GIRLS field names exactly one exclusive school, so those
+    were dissolved into one polygon per school by unioning every parish
+    naming it - verified every school's own real coordinate falls inside
+    its own result before writing out. Filed under a distinct source_type
+    (`secondary_catchment_selective`) so it's never mistaken for full
+    coverage. Verulam/St Albans Girls' and Hitchin Boys'/Hitchin Girls'
+    are each a real paired boys'/girls' school sharing the exact same
+    priority-area boundary, so 2 of the 7 written features were dropped by
+    the project's existing `(source_id, geometry_checksum)` uniqueness
+    constraint - the same known interaction already documented for
+    Cheshire East/West, not a new bug.
 - **North Yorkshire: 333 catchments (293 primary, 40 secondary) from a
   real, live, current ArcGIS FeatureServer - no digitisation needed,
   found by reverse-engineering the council's own "Schools" ArcGIS
