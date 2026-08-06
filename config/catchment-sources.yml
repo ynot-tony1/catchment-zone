@@ -3607,7 +3607,7 @@ candidates:
       point-in-polygon matching entirely server-side (ASP.NET postcode
       form), returning only a school name, not boundary geometry.
   - local_authority_name: "Barnet"
-    reason_not_enabled: 'Only static JPEG primary catchment maps published. The council''s real Astun-style iShare GIS platform (maps.barnet.gov.uk/barnetwebmap) exposes Elections/HealthAndWellbeing/LocalPlan and similar workspaces but no Schools/Catchments workspace. (A seemingly on-point "School_Catchments_2022_View" FeatureServer found in search is a false positive - verified via item metadata to actually belong to Dundee City, Scotland, not Barnet.)'
+    reason_not_enabled: 'Only static JPEG primary catchment maps published. The council''s real Astun-style iShare GIS platform (maps.barnet.gov.uk/barnetwebmap) exposes Elections/HealthAndWellbeing/LocalPlan and similar workspaces but no Schools/Catchments workspace. (A seemingly on-point "School_Catchments_2022_View" FeatureServer found in search is a false positive - verified via item metadata to actually belong to Dundee City, Scotland, not Barnet.) The catchment-maps page itself (barnet.gov.uk/.../primary-school-catchment-area-maps) is blocked by a genuine Incapsula bot-mitigation challenge (a real JS challenge page, confirmed via both curl and a live Playwright session - not just a slow load), the same pattern already found for Southampton - worth retrying with a more sophisticated browser fingerprint/session if this becomes a priority, not yet worth pursuing further.'
   - local_authority_name: "Bromley"
     reason_not_enabled: "No official interactive catchment tool found. Its ArcGIS Hub hostname resolves to an unpopulated default template (not a real council-populated portal); a second candidate hostname is a private org, not accessible. Uses annually-reviewed distance-based priority areas, not published GIS polygons."
   - local_authority_name: "Croydon"
@@ -3861,9 +3861,22 @@ candidates:
       the *nearest available* background pixel after a still-swallowed
       or merged zone, which is not trustworthy - assigning those would
       risk silently mislabelling a school's catchment, which this
-      project does not do. Stopped here rather than force a
-      partial-confidence result. Once resolved, the plan is still to use
-      each zone's own blue/red school-marker (matched to its real DB
+      project does not do. A further refinement (using each digit's true
+      glyph vertical centre instead of an estimated offset) improved the
+      confident-match count to ~12-15, but also surfaced a more
+      fundamental problem: several of even those "confident" regions
+      contain TWO different schools' zone-ID labels landing in the same
+      merged region (e.g. Toner Avenue's zone 18 and Hebburn Lakes' zone
+      29, two unrelated schools, both matching the same region) - proof
+      that the dilation-75 approach is merging real, distinct zones
+      pairwise in multiple places across the map, not just in the one
+      obvious large "leaked" blob spotted earlier. This means even the
+      seemingly-clean small regions can't be trusted without a genuine
+      fix to the underlying line-network closure - there is no safe
+      partial delivery here; every candidate subset checked so far has
+      turned up at least one real mixed-zone region. Stopped here rather
+      than force a result. Once resolved, the plan is still to use each
+      zone's own blue/red school-marker (matched to its real DB
       coordinate by checking which resulting region the marker falls
       inside, then reading that region's zone-ID label via the mapping
       above and looking it up in the legend) as a georeferencing control
@@ -4115,8 +4128,28 @@ candidates:
     reason_not_enabled: 'Real catchment shapefiles confirmed to exist via WhatDoTheyKnow FOI threads for both councils, but WhatDoTheyKnow now serves a Cloudflare JS challenge ("Just a moment...") to automated requests, confirmed even with a real Playwright Chromium browser context (not just curl/WebFetch, which fail sooner with a plain 403) - genuinely blocked from this environment, not a data-non-existence dead end.'
   - local_authority_name: "Kensington and Chelsea, Merton, Sutton, Westminster, Hammersmith and Fulham, Waltham Forest, Barking and Dagenham (England)"
     reason_not_enabled: "Checked via CKAN (0 results each), ArcGIS Online org-scoped search (0 results each, RBKC/Merton/LBBD/LBHF all have real AGOL orgs but no catchment item; Hammersmith and Fulham's ArcGIS Hub DCAT feed returns 0 datasets), and general web search (only third-party sites like Locrating/School Guide, no official GIS source). No catchment layer found for any of the seven."
-  - local_authority_name: "Rutland, Warrington, Middlesbrough, Redcar and Cleveland (England)"
-    reason_not_enabled: 'Rutland''s catchment page links only to 3 PDF maps. Warrington''s admissions page references a PDF booklet only, no GIS/catchment map found on the council''s mapping portal. Middlesbrough''s one catchment-related ArcGIS item (owner Open_Data3, OGL-licensed) is a PDF ("Secondary School Catchment 2021"), not machine-readable. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. All PDF-only or no-data dead ends, not licensing gaps. (Halton, previously grouped here, is now digitised - see the Halton entry in sources: above.)'
+  - local_authority_name: "Rutland"
+    reason_not_enabled: >
+      Real PDF maps found and actually opened this session (3, at
+      rutland.gov.uk/education-learning/school-admissions/catchment-areas):
+      a county-wide "village -> school" lookup map (each village shown
+      as a point with a number denoting which school's catchment it
+      falls into - no boundary polygons drawn at all, so nothing to
+      trace) and two town-level maps (Oakham, Uppingham) that do use a
+      real OS-gridded basemap with an actual drawn boundary line - but
+      even these don't give a clean closed polygon per school: Oakham's
+      map shows only one boundary (the railway line) with the school's
+      catchment being "everything east of it", not bounded on the other
+      sides by anything drawn on that specific page; Uppingham's key
+      states one school's catchment is "all of Uppingham" (not a traced
+      shape at all) while the other's is "north of the line" (bounded on
+      one side only, same issue as Oakham). Digitising these would mean
+      guessing where the unstated far edges are, which this project does
+      not do. Most of Rutland's 17 primary schools are explicitly marked
+      "no catchment area" in the same source, so this may be close to
+      the practical ceiling for this authority regardless.
+  - local_authority_name: "Warrington, Middlesbrough, Redcar and Cleveland (England)"
+    reason_not_enabled: 'Warrington''s admissions page references a PDF booklet only, no GIS/catchment map found on the council''s mapping portal. Middlesbrough''s one catchment-related ArcGIS item (owner Open_Data3, OGL-licensed) is a PDF ("Secondary School Catchment 2021"), not machine-readable. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. All PDF-only or no-data dead ends, not licensing gaps. (Halton, previously grouped here, is now digitised - see the Halton entry in sources: above.)'
   - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
     reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
   - local_authority_name: "Herefordshire (England)"
