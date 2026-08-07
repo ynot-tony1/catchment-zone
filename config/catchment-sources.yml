@@ -4667,6 +4667,90 @@ sources:
       single-school map; see the borough-wide partition maps discussion
       below for the rest, still unsolved).
 
+  # Herefordshire: reopened from the candidates entry below, which had
+  # found this real, live, OGL v2-licensed REST API
+  # (restservices.herefordshire.gov.uk) but rejected it as "unreliable
+  # for bulk import" after only 4 of 15 sampled primary schools
+  # returned real geometry when queried by their exact current GIAS
+  # name. Two things unblocked it this session, neither a re-run of
+  # the same technique: (1) the earlier session queried the HTML
+  # documentation endpoint directly, which serves a human-readable
+  # snapshot page by default - sending "Accept: application/json"
+  # makes the exact same URL return real GeoJSON instead, which is
+  # what actually made bulk querying practical at all. (2) The
+  # remaining name-mismatch failures turned out to be mostly a real,
+  # structural fact rather than a data-quality problem: cross-
+  # referencing every match/non-match against this project's own
+  # religious_character field showed non-faith ("Does not apply")
+  # schools matched 29/43 (67%) even before further name-variant work,
+  # while Church of England schools matched only 1/36 (3%) and Roman
+  # Catholic 0/4 - Herefordshire's council-administered "priority
+  # admission area" simply does not cover most voluntary
+  # aided/controlled faith schools, which set their own admissions
+  # criteria instead (a real, known feature of English admissions, not
+  # a gap in this API). For the remaining non-faith mismatches, the API
+  # expects each school's OLDER pre-academy-conversion name in most
+  # cases (e.g. "Lord Scudamore Primary Academy" only matches as "Lord
+  # Scudamore Primary School"), plus occasional apostrophe-stripping
+  # ("King's Caple" -> "Kings Caple") and minor wording differences
+  # ("Burghill Community Academy" -> "Burghill Primary School",
+  # "Walford Nursery & Primary School" -> "Walford Primary School") -
+  # systematic substitution rules (Academy->School, apostrophe
+  # stripping, CofE/CE normalisation, dropping joiner words like
+  # "Community"/"Endowed"/"and X") plus a handful of individually
+  # hand-checked names brought the match rate from 4/15 sampled to
+  # 40 of Herefordshire's 93 open primary/secondary schools overall.
+  # Every one of the 40 matched schools' own real DB coordinate was
+  # verified to fall inside its own returned polygon (checked directly
+  # via shapely contains(), not assumed) before deploying - 40/40
+  # passed. The remaining ~53 unmatched schools are believed to
+  # genuinely have no LA-administered catchment in this system (mostly
+  # faith schools, per the finding above, plus a few secondaries like
+  # Wigmore/Kingstone/Whitecross/Aylestone that may use different
+  # admission criteria entirely) rather than an unsolved naming
+  # problem - not chased further given the time already spent and the
+  # strong structural explanation found.
+  - local_authority_code: "884"
+    local_authority_name: "Herefordshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://restservices.herefordshire.gov.uk/opendata/services/schoolservice"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/herefordshire/herefordshire_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v2.0 (stated directly on the REST service's own documentation page)."
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      35 primary catchment polygons, queried live from Herefordshire
+      Council's own REST API by school name (one request per school -
+      see the block comment above for the name-matching method and the
+      finding that most non-matches are genuinely faith schools with
+      no LA catchment, not a data gap). Every polygon verified to
+      contain its own school's real DB coordinate.
+
+  - local_authority_code: "884"
+    local_authority_name: "Herefordshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://restservices.herefordshire.gov.uk/opendata/services/schoolservice"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/herefordshire/herefordshire_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence v2.0 (stated directly on the REST service's own documentation page)."
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      5 secondary catchment polygons (Earl Mortimer College, Fairfield
+      High School, Lady Hawkins' School, Queen Elizabeth High School,
+      Weobley High School), queried the same way as the primary set
+      above - see the block comment there for the full method. Every
+      polygon verified to contain its own school's real DB coordinate.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -5639,27 +5723,3 @@ candidates:
     reason_not_enabled: 'Admissions page references a PDF booklet only - the one real map reference found inside it ("Figure 1" in a single school''s own admissions-policy extract, geographic postcode-district bandings, not a drawn catchment boundary) is thin and per-school, not a borough-wide GIS layer. A PDF-only dead end, not a licensing gap. (Halton, Middlesbrough and Redcar and Cleveland, previously grouped here, are now all digitised - see their entries in sources: above; Redcar and Cleveland''s ArcGIS Hub open-data catalogue genuinely has no catchment dataset, but its separate self-hosted rcbcmaps.redcar-cleveland.gov.uk ArcGIS Server, found via its "School Catchment Area Finder" tool''s own page source, does.)'
   - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
     reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
-  - local_authority_name: "Herefordshire (England)"
-    reason_not_enabled: >
-      Real, live, OGL v2-licensed data confirmed
-      (restservices.herefordshire.gov.uk/opendata/services/schoolservice),
-      but tested directly this session and found unreliable for bulk
-      import, not just "needs an adapter": queried the primary-catchment
-      endpoint for a random sample of 15 of Herefordshire's 78 open
-      primary schools using their exact GIAS school_name, and only 4 of
-      15 (27%) returned real polygon geometry - the rest returned HTTP
-      200 with an empty body (no 404, no error, just nothing), meaning
-      the school name did not match the API's own internal naming
-      closely enough. No name-discovery or "list every school" endpoint
-      was found to learn the API's actual expected names, and attempting
-      fuzzy-matching GIAS names against them risks attributing the wrong
-      catchment to the wrong school - a real data-quality risk this
-      project does not take. The secondary-catchment endpoint is even
-      less reliable: of 4 secondary schools tried, 1 returned a 404 (a
-      name containing an apostrophe, "The Bishop of Hereford's Bluecoat
-      School" - possibly a URL-encoding issue on the server side, not
-      retried further), 1 returned what looks like a school-info record
-      rather than a catchment polygon, and 2 returned empty 200s. Not a
-      licensing gap - the data exists and is licensed, but is not
-      reliably reachable in bulk without a name list this project does
-      not have.
