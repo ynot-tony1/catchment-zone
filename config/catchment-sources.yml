@@ -2814,7 +2814,19 @@ sources:
     last_verified_at: "2026-08-03"
     parser_name: "generic_wfs"
     enabled: true
-    notes: "8 grammar school priority-area polygons."
+    notes: >
+      8 grammar school priority-area polygons. Two of these ("Southern
+      Priority Circle", "Southern Inner Priority Circle") really are
+      near-perfect circles on the map, not a reprojection/ingestion
+      artifact - verified this is exactly what Warwickshire's own live
+      GeoServer WFS returns for those two features (re-fetched directly
+      from wcc_wms:gislive_grammar_school_priority_area_warwickshire_polygon
+      and inspected the raw response). Warwickshire's grammar schools use a
+      genuine straight-line-distance priority radius for part of their
+      admissions area rather than a ward/postcode boundary, and the council
+      has published that radius as an actual circular polygon, same as any
+      other real catchment boundary. Not invented or estimated by this
+      project.
 
   - local_authority_code: "893"
     local_authority_name: "Shropshire"
