@@ -2446,3 +2446,72 @@ network-level retry given this session's marker-controlled-watershed
 technique is now proven to work well when the PDF itself is reachable);
 the other untried PDF-only councils (Enfield, Bedford, Warrington,
 Middlesbrough, Redcar and Cleveland, Suffolk).
+
+## Update: Middlesbrough reopened and solved (2026-08-07, same session)
+
+Enfield's entire domain returns a hard 403 from this sandbox on every
+request, homepage included (curl and Playwright both) - the same
+sandbox-network-level block pattern already documented for
+Leicestershire, not fixable by browser technique. Warrington's PDF
+booklet turned out thin: its only real map reference is one school's own
+admissions-policy extract showing postcode-district bandings ("Figure
+1"), not a borough-wide drawn catchment layer - not worth digitising as
+a standalone source. Suffolk was already correctly confirmed list-only.
+
+Middlesbrough, previously dismissed as a dead end ("PDF... not
+machine-readable"), was re-investigated and found to be a real ArcGIS
+Pro print export ("Secondary School Catchment 2021", OGL-licensed,
+found via the item's real underlying `mbcouncil.maps.arcgis.com` host
+after the custom-domain hub page's `og:image` meta tag revealed it) -
+genuine drawn purple boundary lines, a printed 1:20,000 ratio scale, a
+north arrow, and faint Ordnance Survey National Grid lines. The grid was
+detected the same way as Oxfordshire's (cyan-pixel column/row
+autocorrelation), and its measured ~393.5px spacing matched the printed
+1:20,000 ratio at 200 DPI to within 0.05% - strong independent
+cross-validation that the grid really is at exact 1km intervals.
+
+Zone labels ("Outwood Academy Acklam", "Unity City Academy", etc.) are
+real extractable PDF text (unlike Portsmouth's flattened-raster infant/
+primary map), giving precise seed positions for the same
+marker-controlled watershed technique just proven for Portsmouth -
+applied here for the first time to a boundary network extracted by
+colour (solid purple) rather than by isolating black lines.
+
+Georeferencing the grid to real-world coordinates needed identifying
+which exact BNG grid intersection a given detected pixel corresponds to.
+An initial attempt anchored to the "BILLINGHAM" place-name label's
+approximate pixel position (geocoded via Nominatim) picked the wrong
+intersection - caught by an independent cross-check against a second
+landmark ("MIDDLESBROUGH"'s own label), whose predicted vs. real
+position disagreed by ~928m, almost exactly one grid cell, revealing the
+first anchor was wrong rather than just imprecise. Resolved properly by
+a systematic search over nearby candidate grid anchors, scoring each by
+whether all 5 real school coordinates already in this project's own
+database land inside their own correctly-named watershed region -
+exactly one candidate scored a clean 5/5, an unambiguous result no
+plausible alternative anchor also satisfied.
+
+The King's Academy has two real non-contiguous zones on the source map
+(its own DB coordinate correctly falls inside one and not the other, as
+expected for a genuine split zone, not a digitisation error); one zone
+is a genuine shared/overlap area named "Outwood Academy Acklam / The
+King's Academy (shared)" exactly as printed, left unmatched to a single
+school's URN since it doesn't belong to just one. Macmillan Academy is
+deliberately excluded from the source map itself, not missed by this
+pipeline.
+
+Committed (no Co-Authored-By trailer): `70a1bda`. Imported (dry-run then
+real: 7 built, 0 rejected). Envelope-verified: all coordinates within
+real Middlesbrough bounds (lat 54.503-54.602, lon -1.289 to -1.158).
+`refresh-catchment-scores` (6,249 of 9,420 areas now scored) and
+`refresh-catchment-overview-cache` (9,420 = 9,420, cache in sync) both
+re-run.
+
+**Local authority count: 81 -> 82.**
+
+**Still not reached**: South Tyneside (as above); Bedford (re-checked
+this pass, still no real map found - existing dead-end note stands);
+Redcar and Cleveland (not reached this pass, worth checking the same
+"real underlying ArcGIS org host via og:image" trick that found
+Middlesbrough's real PDF, in case its own catchment page hides a similar
+misdirected hub-page dead end).
