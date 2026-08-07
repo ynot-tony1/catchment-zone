@@ -2190,3 +2190,72 @@ reflects the new areas (this command was added earlier the same day and
 must be re-run after any catchment import, alongside refresh-catchment-
 scores - see this file's other entries from today). BCP's total
 catchment count: 42 (was 39).
+
+## Update: "by any means possible" pass 2 - South Tyneside blocked further, Oxfordshire's non-gridded template cracked (2026-08-07)
+
+Targeted the 3 items left open from the previous pass: South Tyneside's
+region-closure problem, Oxfordshire's 91 non-gridded PDFs, and BCP's
+final 3 stragglers (Mudeford, Old Town, Bishop Aldhelm's).
+
+**South Tyneside: got worse, not better.** The article page
+(southtyneside.gov.uk/article/25376/...) still loads fine via a real
+Playwright session with a real Chrome user-agent (Cloudflare's bot
+challenge clears normally). But the actual PDF resource now hits a
+fresh 403 on every real navigation attempt (plain fetch, context.request,
+page.goto, and a real forced click on the download link all tested) -
+a 307 redirect resolves to a 403 at the same URL every time. This is a
+stricter WAF rule scoped to the media/PDF path specifically, distinct
+from the already-solved article-page Cloudflare challenge, and looks
+like the council tightened access since the region-closure notes were
+written, not a technique regression. The underlying region-closure
+problem (the actual hard part) was never reached this pass since the
+source PDF isn't fetchable at all right now.
+
+**BCP's last 3: real current URLs found, but the landmark technique
+doesn't transfer.** Found the real, currently-live PDF URLs for all 3
+(the old predictable-filename guesses had gone stale; found via a live
+browser session on BCP's own catchment-maps listing page). Bishop
+Aldhelm's is confirmed to use the dual-zone "Parish Catchment"/"Local
+Authority Catchment" template with a precise printed ratio scale
+(1:20000) but still no marker. Mudeford and Old Town have a real
+numeric scale bar (pixel-measured cleanly) but, unlike the 3 recovered
+in the previous pass, have no icon-shaped landmark (railway station,
+hospital) identifiable near the school - only ordinary street clutter.
+Not solved this pass; the `catchment-sources.yml` note now has the real
+URLs and confirmed scale methods so a future session doesn't have to
+re-find them.
+
+**Oxfordshire: the non-gridded template method is now solved and
+proven, 3 schools digitised.** The council's school directory
+(oxfordshire.gov.uk/schools/list, paginated 0-15) was scraped for all
+307 school codes, all 207 real "Location and Designated Area" PDFs were
+re-downloaded, and the ~91 non-gridded ones were confirmed to use a
+cream/yellow OS-OpenData-style basemap where street/place labels are
+raster image content, not extractable text (unlike the gridded
+template). Cracked with a landmark-pair method: the school's own blue
+marker icon (still a real, cleanly-detectable small connected component
+distinct from the long boundary line) anchors position to the school's
+known real coordinate; a second real, independently-geocoded landmark
+(a named venue or roundabout, read visually from the map and looked up
+via OSM Nominatim) gives scale and confirms north-up per file - verified
+true, not assumed, by checking the second landmark's pixel bearing
+against its real geographic bearing (agreed within 0.3-3.5 degrees on
+every file tried). Scale is NOT constant across files (1.07 to 5.57
+m/px measured across 3 files) - each needs its own second landmark, no
+shortcut across files. All 3 digitised schools (Orchard Meadow Primary,
+Oxford Spires Academy, Cheney School) verified pixel-perfect via full
+contour overlay and confirmed to contain their own school's real
+coordinate. The method is real, working, and provenly accurate, but
+inherently manual per file (no automated landmark detection yet) - only
+3 of ~91 candidates done. Full method documented in the block comment
+above the Oxfordshire entries in `catchment-sources.yml` for a future
+session to continue applying directly rather than re-deriving.
+
+Committed and pushed (`4ff3288` for the Oxfordshire geojson + config
+changes, `bc7e1de` and `7824461` for the South Tyneside/BCP note
+updates), imported (dry-run then real: 78 Oxfordshire areas built, 0
+rejected, up from 75), envelope-verified, scored via
+`refresh-catchment-scores` (6,206 of 9,371 total areas now scored), and
+`refresh-catchment-overview-cache` re-run. Oxfordshire's total catchment
+count: 78 (was 75). Tests pass (45 shared, 125 ingestor). No
+`Co-Authored-By` trailer used on any commit this pass.
