@@ -51,6 +51,14 @@ export const MAX_PAGE_SIZE = 100;
 
 export const MAX_MAP_FEATURES = 500;
 
+/** Catchment areas are the map's primary, always-on layer (loaded once in
+ * full, not re-fetched per viewport - see school-map.tsx), so this cap
+ * exists only to stop a pathological request, not to actually limit what's
+ * shown. Set with real headroom above the current dataset size (~9,400
+ * areas as of 2026-08) so ordinary coverage growth doesn't silently start
+ * truncating results again. */
+export const MAX_CATCHMENT_MAP_FEATURES = 20000;
+
 /** Maximum bounding-box area (in square degrees) accepted by map endpoints,
  * to stop a single request from requesting an absurdly wide area. Result
  * size is already separately capped by MAX_MAP_FEATURES (via take:), and

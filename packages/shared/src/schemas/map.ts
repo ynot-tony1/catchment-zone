@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_MAP_FEATURES } from "../constants";
+import { MAX_CATCHMENT_MAP_FEATURES, MAX_MAP_FEATURES } from "../constants";
 import { BboxQuerySchema, firstValue, splitCsv } from "./common";
 import { SchoolStatusEnum } from "./school";
 import type { RawSearchParams } from "./school";
@@ -42,8 +42,8 @@ export const MapCatchmentsQuerySchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(MAX_MAP_FEATURES)
-    .default(MAX_MAP_FEATURES),
+    .max(MAX_CATCHMENT_MAP_FEATURES)
+    .default(MAX_CATCHMENT_MAP_FEATURES),
 });
 export type MapCatchmentsQuery = z.infer<typeof MapCatchmentsQuerySchema>;
 
@@ -54,6 +54,6 @@ export function parseMapCatchmentsQuery(
     bbox: firstValue(raw.bbox),
     academicYear: firstValue(raw.academicYear),
     areaType: firstValue(raw.areaType),
-    limit: firstValue(raw.limit) ?? String(MAX_MAP_FEATURES),
+    limit: firstValue(raw.limit) ?? String(MAX_CATCHMENT_MAP_FEATURES),
   });
 }

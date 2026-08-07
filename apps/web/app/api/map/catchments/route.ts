@@ -23,6 +23,34 @@ type MapCatchmentRow = {
   performance_metric_code: string | null;
 };
 
+// Stored geometry carries ~8 decimal places (sub-millimetre) of precision,
+// far beyond what a map display can render or a user can perceive - and
+// since catchment areas are now loaded in full on every /map visit (see
+// school-map.tsx), that precision was inflating a genuinely large payload
+// for no visual benefit. 5 decimal places is ~1.1m at GB latitudes, well
+// under this data's own real-world accuracy (digitised from paper maps in
+// many cases). Cuts the full-dataset response by roughly half even before
+// gzip compression.
+const COORDINATE_DECIMAL_PLACES = 5;
+
+function roundCoordinates(node: unknown): unknown {
+  if (Array.isArray(node)) {
+    if (
+      node.length >= 2 &&
+      typeof node[0] === "number" &&
+      typeof node[1] === "number"
+    ) {
+      return node.map((value) =>
+        typeof value === "number"
+          ? Number(value.toFixed(COORDINATE_DECIMAL_PLACES))
+          : value,
+      );
+    }
+    return node.map(roundCoordinates);
+  }
+  return node;
+}
+
 export async function GET(request: NextRequest) {
   const requestId = newRequestId();
 
@@ -59,18 +87,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Ordered by a deterministic hash of the id rather than left to the
-    // database's default scan order (effectively arbitrary on CockroachDB):
-    // catchment areas are the map's primary, always-on layer, and a wide
-    // bbox (e.g. the initial /map view, which fits every catchment area in
-    // Great Britain) matches far more rows than MAX_MAP_FEATURES. An
-    // unordered LIMIT returned a different, geographically arbitrary subset
-    // on every near-identical refetch as the user panned, so areas visibly
-    // appeared and disappeared even though the viewport barely moved.
-    // Hashing the id gives the same representative spread across the
-    // matched set every time (the same fix already applied to schools
-    // below, for the same reason), but is stable per catchment across
-    // requests - panning slightly changes only the areas actually
-    // entering/leaving the bbox, not the whole selection.
+    // database's default scan order (effectively arbitrary on CockroachDB).
+    // The map now loads every catchment area in one request on page load
+    // and never re-fetches on pan/zoom (see school-map.tsx), so this
+    // mainly guards against MAX_CATCHMENT_MAP_FEATURES ever being exceeded
+    // as coverage keeps growing - if that ever truncates results, a stable
+    // hash-ordered subset is still far better than an arbitrary one that
+    // could differ between near-identical requests (the flicker this
+    // originally fixed).
     const areas = await prisma.$queryRaw<MapCatchmentRow[]>`
       SELECT id, area_name, area_type, academic_year, simplified_geometry_geojson, performance_percentile, performance_metric_code
       FROM catchment_areas
@@ -81,7 +105,7 @@ export async function GET(request: NextRequest) {
 
     const features = [];
     for (const area of areas) {
-      let geometry: unknown;
+      let geometry: { type: string; coordinates: unknown };
       try {
         geometry = JSON.parse(area.simplified_geometry_geojson);
       } catch {
@@ -94,7 +118,10 @@ export async function GET(request: NextRequest) {
       }
       features.push({
         type: "Feature" as const,
-        geometry,
+        geometry: {
+          type: geometry.type,
+          coordinates: roundCoordinates(geometry.coordinates),
+        },
         properties: {
           id: area.id,
           areaName: area.area_name,
@@ -109,7 +136,11 @@ export async function GET(request: NextRequest) {
     const featureCollection = { type: "FeatureCollection" as const, features };
     return jsonResponse(featureCollection, {
       requestId,
-      cacheControl: "public, max-age=300, stale-while-revalidate=600",
+      // Longer than before: the whole dataset is now identical for every
+      // visitor and every viewport (loaded once, not bbox-scoped), so it's
+      // effectively static until the next catchment import or score
+      // refresh - safe to cache harder both client- and CDN-side.
+      cacheControl: "public, max-age=1800, stale-while-revalidate=3600",
     });
   } catch (error) {
     return internalErrorResponse(requestId, "GET /api/map/catchments", error);

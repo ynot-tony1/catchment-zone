@@ -52,14 +52,15 @@ const GB_BOUNDS: [number, number, number, number] = [-8.7, 49.8, 1.9, 61.0];
 
 // Coalesces bursts of "moveend" events (a mouse-wheel zoom or a drag-pan
 // fires several in quick succession) into a single fetch after the user
-// actually stops moving, instead of firing one full schools+catchments
-// round-trip per intermediate event - verified live this was the main
-// cause of the map feeling slow and of school pins visibly "jumping"
-// between positions (see the request-sequence guards in loadSchoolsInView/
-// loadCatchmentsInView below for the other half of that fix: even with
+// actually stops moving, instead of firing one school-pins round-trip per
+// intermediate event - verified live this was the main cause of school
+// pins visibly "jumping" between positions (see the request-sequence guard
+// in loadSchoolsInView below for the other half of that fix: even with
 // debouncing, a slow request for an earlier viewport can still resolve
-// after a faster request for a later one, so both also drop any response
-// that isn't for the most recent request they themselves issued).
+// after a faster request for a later one, so it also drops any response
+// that isn't for the most recent request it itself issued). Catchment
+// areas are unaffected by any of this - they're loaded once, in full, and
+// never re-fetched on pan/zoom (see loadAllCatchments below).
 const MOVE_DEBOUNCE_MS = 300;
 
 export function SchoolMap({
@@ -78,16 +79,15 @@ export function SchoolMap({
   const showSchoolsRef = useRef(false);
   const moveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const schoolsRequestIdRef = useRef(0);
-  const catchmentsRequestIdRef = useRef(0);
   const [selected, setSelected] = useState<SchoolFeatureProperties | null>(
     null,
   );
   const [selectedCatchment, setSelectedCatchment] =
     useState<CatchmentFeatureProperties | null>(null);
   const [showSchools, setShowSchools] = useState(false);
-  const [catchmentCountInView, setCatchmentCountInView] = useState<
-    number | null
-  >(null);
+  const [catchmentCount, setCatchmentCountInView] = useState<number | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -203,16 +203,23 @@ export function SchoolMap({
         map.getCanvas().style.cursor = "";
       });
 
+      // Catchment areas are fetched once, in full, right here - never
+      // re-fetched on pan/zoom. They used to be loaded per-viewport like
+      // schools below, but with the dataset now covering most of Great
+      // Britain, a wide view matched thousands of areas at once and every
+      // pan re-triggered a fresh fetch; visible latency between "old
+      // viewport's areas cleared" and "new viewport's areas arrived" made
+      // catchments look like they were randomly appearing and disappearing
+      // while zooming, which they are the whole point of this map and
+      // should never do. Loading the complete set once and leaving the
+      // source alone afterwards means every catchment area is on the map,
+      // at every zoom level, from the first paint onward.
+      loadAllCatchments(map, setError, setCatchmentCountInView);
+
       function loadCurrentView() {
         if (showSchoolsRef.current) {
           loadSchoolsInView(map, schoolsRequestIdRef, setError);
         }
-        loadCatchmentsInView(
-          map,
-          catchmentsRequestIdRef,
-          setError,
-          setCatchmentCountInView,
-        );
       }
 
       loadCurrentView();
@@ -272,9 +279,9 @@ export function SchoolMap({
         />
         <span className="text-muted-foreground">no data</span>
       </div>
-      {catchmentCountInView === 0 && (
+      {catchmentCount === 0 && (
         <p className="text-muted-foreground text-xs">
-          No catchment areas are published for this area. See the{" "}
+          No catchment area data could be loaded. See the{" "}
           <Link
             href="/local-authorities"
             className="text-primary underline underline-offset-2"
@@ -388,39 +395,27 @@ async function loadSchoolsInView(
   }
 }
 
-async function loadCatchmentsInView(
+async function loadAllCatchments(
   map: MapLibreMap,
-  requestIdRef: { current: number },
   setError: (message: string | null) => void,
-  setCatchmentCountInView: (count: number | null) => void,
+  setCatchmentCount: (count: number | null) => void,
 ) {
-  const bounds = map.getBounds();
-  const bbox = [
-    bounds.getWest(),
-    bounds.getSouth(),
-    bounds.getEast(),
-    bounds.getNorth(),
-  ].join(",");
-  const requestId = ++requestIdRef.current;
+  const bbox = GB_BOUNDS.join(",");
 
   try {
     const response = await fetch(
       `/api/map/catchments?bbox=${encodeURIComponent(bbox)}`,
     );
-    if (requestIdRef.current !== requestId) return;
     if (!response.ok) {
-      setError("Could not load catchment areas for this area.");
+      setError("Could not load catchment areas.");
       return;
     }
     const featureCollection = await response.json();
-    if (requestIdRef.current !== requestId) return;
     const source = map.getSource("catchments") as GeoJSONSource | undefined;
     source?.setData(featureCollection);
-    setCatchmentCountInView(featureCollection.features?.length ?? 0);
+    setCatchmentCount(featureCollection.features?.length ?? 0);
     setError(null);
   } catch {
-    if (requestIdRef.current === requestId) {
-      setError("Could not load catchment areas for this area.");
-    }
+    setError("Could not load catchment areas.");
   }
 }
