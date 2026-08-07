@@ -4304,8 +4304,9 @@ sources:
   # contour overlays the source boundary closely across the whole map extent
   # (checked visually per file, including at the far edges from the anchor
   # points - not just near the two control points themselves). Portsmouth
-  # also has a combined infant/primary catchment map (~30 schools, one PDF,
-  # has a real printed scale bar) not yet attempted - see PROJECT_STATUS.md.
+  # also has a combined infant/primary catchment map, solved via marker-
+  # controlled watershed segmentation - see the primary_infant entry below
+  # for the full method.
   - local_authority_code: "851"
     local_authority_name: "Portsmouth"
     academic_year: "2025-2026"
@@ -4343,6 +4344,67 @@ sources:
       Trafalgar School (identical boundary for both, per the council's own
       map) - see the block comment above for the two-marker exact
       georeferencing method.
+
+  # Portsmouth's combined infant/primary catchment map
+  # (democracy.portsmouth.gov.uk/documents/s9068/Infant and Primary School
+  # Location with catchment areas.pdf) is one page covering the whole city:
+  # ~35 red school markers plus black catchment-boundary lines, no text
+  # layer at all (Aspose.Pdf-flattened raster, unlike the secondary PDFs'
+  # real vector export), so no per-school labels to OCR. Solved without
+  # needing them: this project's live schools DB already has real
+  # coordinates for every Portsmouth primary/infant school, so an ICP
+  # (iterative closest point) similarity-transform registration - fit
+  # scale+rotation+translation by repeatedly matching each school's
+  # predicted pixel position to its nearest red marker and re-solving via
+  # Umeyama/Procrustes, starting from a bounding-box scale guess - recovers
+  # the map's georeferencing from ~40 real control points at once, with no
+  # scale bar or landmark geocoding needed (though this PDF does also print
+  # a real scale bar, it wasn't precise enough to read reliably and the
+  # ICP fit was more robust anyway). Converged to a 6.2px mean residual (of
+  # 41 matched schools out of 45 candidates; 4 "Junior" schools co-located
+  # with their "Infant" counterpart's marker/catchment were correctly
+  # excluded as 60-75px outliers, not real errors) at a resolved scale of
+  # ~6.9 real metres per pixel and a ~0.24 degree rotation (i.e.
+  # essentially north-up, unlike the ~5-8 degree rotations found on
+  # Portsmouth's secondary PDFs).
+  #
+  # With the map accurately georeferenced, each catchment's actual boundary
+  # was extracted via marker-controlled watershed segmentation (the
+  # technique previously scoped but not implemented for South Tyneside's
+  # still-unsolved equivalent problem): isolated the black boundary-line
+  # network from all other page content (school-name labels, basemap
+  # detail) by keeping only large connected components after light
+  # dilation (>5000px - the real line network and the outer map frame are
+  # both far larger than any text label), then ran skimage's watershed
+  # with each matched school's own now-known pixel position as a seed and
+  # the isolated line network as an effectively-impassable barrier
+  # (elevation 1e6). Every resulting region grows only until it hits a
+  # real printed boundary line, never merging with a neighbouring zone.
+  # Verified two ways: every one of the 41 matched schools' own DB
+  # coordinates fall inside its assigned polygon (checked directly, not
+  # assumed), and a visual overlay of the extracted contours onto the
+  # source page tracks the real printed boundary lines closely across the
+  # whole map, not just near the schools used as control points.
+  - local_authority_code: "851"
+    local_authority_name: "Portsmouth"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://democracy.portsmouth.gov.uk/documents/s9068/Infant%20and%20Primary%20School%20Location%20with%20catchment%20areas.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/portsmouth/portsmouth_primary_infant_watershed.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Not OGL - same older-style OS/HMSO permission notice as Portsmouth's secondary catchment PDFs (Licence No. 100019671), not a current Open Government Licence statement."
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      41 primary/infant catchment polygons covering 37 distinct zones (some
+      zones are shared by co-located Infant and Junior schools, e.g.
+      Meon/King's Academy College Park/King's Academy Northern Parade) -
+      see the block comment above for the ICP-registration +
+      marker-controlled-watershed method. Every polygon verified to contain
+      its own school's real DB coordinate.
 
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
