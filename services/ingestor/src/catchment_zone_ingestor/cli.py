@@ -1329,14 +1329,23 @@ def refresh_catchment_scores(
 
 
 @app.command("backfill-catchment-overview-geometry")
-def backfill_catchment_overview_geometry() -> None:
+def backfill_catchment_overview_geometry(
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            help="Recompute every row, not just NULLs - needed after changing "
+            "OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES itself.",
+        ),
+    ] = False,
+) -> None:
     """One-time backfill of catchment_areas.overview_geometry_geojson for
     every row that predates that column (NULL). Every future import
     populates it directly via build_catchment_areas, so this only ever
     needs to process the backlog left by the migration that added the
     column, not run on a schedule. Safe to re-run: only touches rows
-    still NULL, so a partial/interrupted run just picks up where it left
-    off.
+    still NULL (unless --force), so a partial/interrupted run just picks
+    up where it left off.
     """
     settings = get_settings()
     set_run_context(source="catchment_overview_backfill")
@@ -1348,7 +1357,9 @@ def backfill_catchment_overview_geometry() -> None:
         )
         return
 
-    updated = catchment_overview_backfill.backfill_overview_geometry(conn, settings.batch_size)
+    updated = catchment_overview_backfill.backfill_overview_geometry(
+        conn, settings.batch_size, force=force
+    )
     logger.info("backfilled catchment overview geometry", extra={"rows_updated": updated})
     typer.echo(f"backfilled overview_geometry_geojson for {updated} catchment areas")
 

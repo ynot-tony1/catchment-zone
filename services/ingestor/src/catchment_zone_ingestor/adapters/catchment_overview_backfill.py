@@ -27,15 +27,24 @@ class PendingOverviewRow:
     geometry_geojson: str
 
 
-def load_rows_missing_overview_geometry(conn: db.ConnectionLike) -> list[PendingOverviewRow]:
+def load_rows_missing_overview_geometry(
+    conn: db.ConnectionLike, *, force: bool = False
+) -> list[PendingOverviewRow]:
     """Uses the already-simplified geometry_geojson, not the full-precision
     geometry_geojson column, as input: it's already valid and topology-
     repaired from import time, and simplifying an already-simplified
     geometry further is both faster and produces an equivalent result at
-    this coarser tolerance."""
+    this coarser tolerance.
+
+    force=True recomputes every row regardless of whether
+    overview_geometry_geojson is already set - needed after a change to
+    OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES itself, when existing rows hold a
+    value computed at the old tolerance."""
     with conn.cursor() as cur:
         cur.execute(
-            """
+            "SELECT id, simplified_geometry_geojson FROM catchment_areas"
+            if force
+            else """
             SELECT id, simplified_geometry_geojson
             FROM catchment_areas
             WHERE overview_geometry_geojson IS NULL
@@ -75,8 +84,10 @@ def _write_batch_with_retry(conn: db.ConnectionLike, batch: list[dict[str, objec
         )
 
 
-def backfill_overview_geometry(conn: db.ConnectionLike, batch_size: int) -> int:
-    rows = load_rows_missing_overview_geometry(conn)
+def backfill_overview_geometry(
+    conn: db.ConnectionLike, batch_size: int, *, force: bool = False
+) -> int:
+    rows = load_rows_missing_overview_geometry(conn, force=force)
     updates = [
         {"id": row.id, "overview_geometry_geojson": compute_overview_geometry(row.geometry_geojson)}
         for row in rows

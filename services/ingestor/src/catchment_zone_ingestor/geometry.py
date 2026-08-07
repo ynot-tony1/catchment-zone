@@ -28,12 +28,18 @@ DEFAULT_SIMPLIFY_TOLERANCE_DEGREES = 0.0001
 
 #: Simplification tolerance in degrees for the /map page's whole-of-Great-
 #: Britain overview layer, which loads every catchment area at once.
-#: Roughly 100 metres at England's latitudes - imperceptible at the zoom
+#: Roughly 300 metres at England's latitudes - imperceptible at the zoom
 #: level where a whole-country view is even legible, but a large reduction
-#: in point count (and therefore transfer size) versus
-#: DEFAULT_SIMPLIFY_TOLERANCE_DEGREES. Never used for anything other than
-#: this one bulk display case.
-OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES = 0.001
+#: in point count (and therefore transfer/parse/render cost - confirmed
+#: live this is the actual bottleneck for that layer, not the database
+#: query, once map_catchments_cache made the query itself a single-row
+#: fetch) versus DEFAULT_SIMPLIFY_TOLERANCE_DEGREES. Started at 0.0001
+#: (~10m, too fine, dominated the payload), tried 0.001 (~100m, still a
+#: multi-second client-side parse/render for ~9,000+ real polygons), now
+#: 0.003 roughly halves that again versus 0.001 with still-reasonable
+#: shape fidelity at this zoom. Never used for anything other than this
+#: one bulk display case.
+OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES = 0.003
 
 
 class InvalidGeometryError(ValueError):
