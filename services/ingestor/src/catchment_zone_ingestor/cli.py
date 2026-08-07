@@ -25,6 +25,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from catchment_zone_ingestor import db, pipeline
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
+from catchment_zone_ingestor.adapters import catchment_overview_backfill
 from catchment_zone_ingestor.adapters import catchment_scores as catchment_scores_adapter
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
@@ -928,6 +929,7 @@ _CATCHMENT_AREA_UPDATE_COLUMNS = [
     "academic_year",
     "geometry_geojson",
     "simplified_geometry_geojson",
+    "overview_geometry_geojson",
     "minimum_latitude",
     "maximum_latitude",
     "minimum_longitude",
@@ -1324,6 +1326,31 @@ def refresh_catchment_scores(
 
     updated = catchment_scores_adapter.write_catchment_scores(conn, scores, settings.batch_size)
     typer.echo(f"scored {scored_count} of {updated} catchment areas")
+
+
+@app.command("backfill-catchment-overview-geometry")
+def backfill_catchment_overview_geometry() -> None:
+    """One-time backfill of catchment_areas.overview_geometry_geojson for
+    every row that predates that column (NULL). Every future import
+    populates it directly via build_catchment_areas, so this only ever
+    needs to process the backlog left by the migration that added the
+    column, not run on a schedule. Safe to re-run: only touches rows
+    still NULL, so a partial/interrupted run just picks up where it left
+    off.
+    """
+    settings = get_settings()
+    set_run_context(source="catchment_overview_backfill")
+    conn = _connect_or_none(settings, dry_run=False)
+    if conn is None:
+        _fail(
+            "a database connection is required to backfill overview geometry",
+            source="catchment_overview_backfill",
+        )
+        return
+
+    updated = catchment_overview_backfill.backfill_overview_geometry(conn, settings.batch_size)
+    logger.info("backfilled catchment overview geometry", extra={"rows_updated": updated})
+    typer.echo(f"backfilled overview_geometry_geojson for {updated} catchment areas")
 
 
 # ---------------------------------------------------------------------------

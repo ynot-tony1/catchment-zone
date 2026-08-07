@@ -1,0 +1,13 @@
+-- Adds a much more aggressively simplified geometry than
+-- simplified_geometry_geojson, used only by the /map page's whole-of-Great-
+-- Britain overview layer (which loads every catchment area at once - see
+-- apps/web/components/school-map.tsx). Fetching ~9,000+ areas at the
+-- existing simplification tolerance was transferring tens of megabytes of
+-- text from CockroachDB on every /map visit and made the page take upwards
+-- of ten seconds to load. Nullable and starts NULL for every existing row;
+-- a one-time backfill script populates it for rows that predate this
+-- column, and the ingestor now computes it for every future import
+-- alongside simplified_geometry_geojson. The API route falls back to
+-- simplified_geometry_geojson when this is null, so nothing breaks before
+-- the backfill runs.
+ALTER TABLE "catchment_areas" ADD COLUMN "overview_geometry_geojson" STRING;

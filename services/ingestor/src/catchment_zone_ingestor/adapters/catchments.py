@@ -35,6 +35,7 @@ from shapely.geometry.base import BaseGeometry
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from catchment_zone_ingestor.geometry import (
+    OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES,
     InvalidGeometryError,
     compute_bbox,
     compute_geometry_checksum,
@@ -557,6 +558,7 @@ def build_catchment_areas(
 
         min_lon, min_lat, max_lon, max_lat = compute_bbox(geometry)
         simplified = simplify_geometry(geometry, tolerance=tolerance)
+        overview = simplify_geometry(geometry, tolerance=OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES)
 
         result.areas.append(
             CatchmentArea(
@@ -566,6 +568,7 @@ def build_catchment_areas(
                 academic_year=academic_year,
                 geometry_geojson=geometry_to_geojson_str(geometry),
                 simplified_geometry_geojson=geometry_to_geojson_str(simplified),
+                overview_geometry_geojson=geometry_to_geojson_str(overview),
                 minimum_latitude=min_lat,
                 maximum_latitude=max_lat,
                 minimum_longitude=min_lon,

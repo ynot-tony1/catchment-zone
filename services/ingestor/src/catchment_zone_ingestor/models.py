@@ -218,6 +218,7 @@ class CatchmentArea(_Row):
     academic_year: str
     geometry_geojson: str
     simplified_geometry_geojson: str
+    overview_geometry_geojson: str
     minimum_latitude: float
     maximum_latitude: float
     minimum_longitude: float
@@ -301,9 +302,7 @@ class RawGiasRow(BaseModel):
     statutory_low_age: str | None = Field(default=None, alias="StatutoryLowAge")
     statutory_high_age: str | None = Field(default=None, alias="StatutoryHighAge")
     gender_name: str | None = Field(default=None, alias="Gender (name)")
-    religious_character_name: str | None = Field(
-        default=None, alias="ReligiousCharacter (name)"
-    )
+    religious_character_name: str | None = Field(default=None, alias="ReligiousCharacter (name)")
     street: str | None = Field(default=None, alias="Street")
     locality: str | None = Field(default=None, alias="Locality")
     town: str | None = Field(default=None, alias="Town")

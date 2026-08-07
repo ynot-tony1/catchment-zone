@@ -262,6 +262,15 @@ model CatchmentArea {
   academicYear                String   @map("academic_year")
   geometryGeojson              String   @map("geometry_geojson")
   simplifiedGeometryGeojson    String   @map("simplified_geometry_geojson")
+  // A much more aggressively simplified geometry than
+  // simplifiedGeometryGeojson, for the /map page's whole-of-Great-Britain
+  // overview layer: that page loads every catchment area at once (see
+  // apps/web/components/school-map.tsx), where per-area precision fine
+  // enough to matter at a single-catchment zoom level is both invisible
+  // and prohibitively slow to fetch in bulk. Null for rows imported before
+  // this column existed until the backfill script processes them; the API
+  // falls back to simplifiedGeometryGeojson if null.
+  overviewGeometryGeojson      String?  @map("overview_geometry_geojson")
   minimumLatitude              Float    @map("minimum_latitude")
   maximumLatitude              Float    @map("maximum_latitude")
   minimumLongitude             Float    @map("minimum_longitude")

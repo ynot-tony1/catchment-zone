@@ -26,6 +26,15 @@ from shapely.validation import make_valid
 #: authoritative point-in-polygon check.
 DEFAULT_SIMPLIFY_TOLERANCE_DEGREES = 0.0001
 
+#: Simplification tolerance in degrees for the /map page's whole-of-Great-
+#: Britain overview layer, which loads every catchment area at once.
+#: Roughly 100 metres at England's latitudes - imperceptible at the zoom
+#: level where a whole-country view is even legible, but a large reduction
+#: in point count (and therefore transfer size) versus
+#: DEFAULT_SIMPLIFY_TOLERANCE_DEGREES. Never used for anything other than
+#: this one bulk display case.
+OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES = 0.001
+
 
 class InvalidGeometryError(ValueError):
     """Raised when a geometry cannot be repaired into a valid Polygon or MultiPolygon."""
@@ -57,7 +66,11 @@ def validate_and_repair(geometry: BaseGeometry) -> BaseGeometry:
         # make_valid on a near-degenerate polygon can return a GeometryCollection
         # mixing points/lines with polygons. Only the polygonal parts are usable
         # for a catchment area.
-        polygonal = [g for g in getattr(candidate, "geoms", [candidate]) if g.geom_type in ("Polygon", "MultiPolygon")]
+        polygonal = [
+            g
+            for g in getattr(candidate, "geoms", [candidate])
+            if g.geom_type in ("Polygon", "MultiPolygon")
+        ]
         if not polygonal:
             raise InvalidGeometryError(
                 f"repaired geometry has no polygonal component (got {candidate.geom_type})"
