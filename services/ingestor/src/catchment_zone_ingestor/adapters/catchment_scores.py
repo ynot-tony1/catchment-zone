@@ -19,10 +19,25 @@ area's phase and nation is converted to a percentile rank (0-1, higher
 is better) among every school with that same metric, so metrics on
 different scales (a GCSE Attainment 8 score vs a Wales Capped 9 points
 score vs a percentage) become comparable on one scale. An area with no
-matching school, or a school with no matching metric (e.g. every
-Scottish catchment area right now, since Scotland has no performance
-metrics at all), is left with a null percentile - this service never
-invents a score.
+matching school, or a school with no matching metric (e.g. a served
+school whose own metric row exists but is null/suppressed in the
+current DfE release - not rare for recently-opened academies - or a
+nation/phase combination with no configured metric at all, like
+Wales/Scotland primary or any special-school area), is left with a
+null percentile - this service never invents a score.
+
+Area types whose own name doesn't start with "primary" or "secondary"
+(all_through_catchment, middle_school_catchment,
+catchment_mixed_phase, primary_catchment_partial's postcode-linked-
+area geometry not actually containing the served school's own point,
+...) are also never scored - either because the age range spans both
+England's KS2 and KS4/KS5 accountability measures (so neither a
+"primary" nor a "secondary" metric would honestly describe every
+school such an area might contain, the same reasoning originally
+applied to all_through areas), or because the point-in-polygon test
+this service relies on doesn't hold for that source's data shape. Real,
+audited findings (2026-08-07), not oversights - see PROJECT_STATUS.md
+for the per-area-type unscored breakdown.
 """
 
 from __future__ import annotations
