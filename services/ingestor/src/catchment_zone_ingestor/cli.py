@@ -25,7 +25,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from catchment_zone_ingestor import db, pipeline
 from catchment_zone_ingestor.adapters import admissions as admissions_adapter
-from catchment_zone_ingestor.adapters import catchment_overview_backfill
+from catchment_zone_ingestor.adapters import catchment_overview_backfill, catchment_overview_cache
 from catchment_zone_ingestor.adapters import catchment_scores as catchment_scores_adapter
 from catchment_zone_ingestor.adapters import catchments as catchments_adapter
 from catchment_zone_ingestor.adapters import gias as gias_adapter
@@ -1351,6 +1351,30 @@ def backfill_catchment_overview_geometry() -> None:
     updated = catchment_overview_backfill.backfill_overview_geometry(conn, settings.batch_size)
     logger.info("backfilled catchment overview geometry", extra={"rows_updated": updated})
     typer.echo(f"backfilled overview_geometry_geojson for {updated} catchment areas")
+
+
+@app.command("refresh-catchment-overview-cache")
+def refresh_catchment_overview_cache() -> None:
+    """Rebuilds the /map page's single-row, pre-serialised catchment
+    overview cache (map_catchments_cache) from the current catchment_areas
+    table. Must be re-run after any catchment import or
+    refresh-catchment-scores - this cache is a display optimisation, not a
+    source of truth, and goes stale silently otherwise (the map will keep
+    showing whatever was cached last, not an error).
+    """
+    settings = get_settings()
+    set_run_context(source="catchment_overview_cache")
+    conn = _connect_or_none(settings, dry_run=False)
+    if conn is None:
+        _fail(
+            "a database connection is required to refresh the catchment overview cache",
+            source="catchment_overview_cache",
+        )
+        return
+
+    feature_count = catchment_overview_cache.refresh_catchment_overview_cache(conn)
+    logger.info("refreshed catchment overview cache", extra={"feature_count": feature_count})
+    typer.echo(f"refreshed map_catchments_cache with {feature_count} features")
 
 
 # ---------------------------------------------------------------------------
