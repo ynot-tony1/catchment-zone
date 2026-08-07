@@ -2259,3 +2259,74 @@ rejected, up from 75), envelope-verified, scored via
 `refresh-catchment-overview-cache` re-run. Oxfordshire's total catchment
 count: 78 (was 75). Tests pass (45 shared, 125 ingestor). No
 `Co-Authored-By` trailer used on any commit this pass.
+
+## Update: Portsmouth added - a "PDF-only dead end" reopened by this
+
+## session's digitization pipeline (2026-08-07)
+
+Following the "by any means possible" instruction, re-evaluated several
+local authorities previously marked dead ends specifically because they
+only publish "PDF catchment maps, no GIS" - these were dismissed before
+this session's PDF-digitization pipeline (proven on BCP, Oxfordshire,
+Leeds) existed. **Portsmouth was a real find.**
+
+Portsmouth's per-school secondary catchment PDFs are genuine MapInfo-
+exported vector maps (`Producer: MapInfo PDF Printer` in the PDF's own
+metadata - not a scan or schematic). The Mayfield & Trafalgar shared-
+catchment PDF shows real red markers for BOTH schools, giving two
+independent, already-in-our-database ground-control points - this allows
+an _exact_ similarity-transform (rotation + scale + translation) solve
+with no external landmark geocoding needed at all, the highest-confidence
+georeferencing method used this session. Resolved a real ~5.4 degree
+rotation (grid-north vs the print's north arrow), cross-checked via an
+independent bearing comparison between the two markers' real coordinates
+and their pixel positions (agreed closely, confirming the rotation is
+real, not an artifact). Verified: both schools' own DB coordinates fall
+inside the resulting polygon, and the extracted contour overlays the
+source boundary line pixel-perfectly.
+
+**Portsmouth: 0 -> 1 local authority, 1 catchment (shared by 2 schools).
+Local authority count: 80 -> 81.**
+
+Committed and pushed (`f21a6f0`), imported (dry-run then real: 1 built, 0
+rejected), envelope-verified, scored (6,207 of 9,372 total areas), and
+`refresh-catchment-overview-cache` re-run (9,372 features, matches). No
+`Co-Authored-By` trailer used.
+
+**Real, substantial remaining opportunity found but not completed this
+pass** - all fully documented in `catchment-sources.yml`'s Portsmouth
+block comment for a future session to pick up directly:
+
+1. **Portsmouth's other 5-6 secondary schools' PDFs** (Admiral Lord
+   Nelson, Charter Academy, Castle View, Miltoncross, Springfield,
+   Priory) - confirmed real MapInfo vector maps with one school marker
+   each, but no scale bar/grid, so each needs an external second
+   landmark (the OSM-Nominatim landmark-pair method already proven on
+   Oxfordshire) rather than the exact two-marker method used for
+   Mayfield & Trafalgar. Not attempted this pass due to time - each file
+   is genuinely independent per-file manual work.
+2. **Portsmouth's combined infant/primary catchment map** - one PDF
+   covering ~25-30 named primary/infant school catchments as a single
+   partition map, WITH a real printed scale bar (unlike the secondary
+   PDFs) and school-name labels next to each zone already printed on the
+   map. This is structurally similar to South Tyneside's still-unsolved
+   partition-map problem, but meaningfully easier: labelled zones (not
+   anonymous), a real scale bar (not needing landmark geocoding), and
+   each zone's own red school marker as a natural watershed seed point.
+   If South Tyneside's watershed-segmentation approach (seed points +
+   marker-controlled watershed on the boundary-line raster, rather than
+   the dilation approach that kept mis-merging regions) is ever
+   implemented, this Portsmouth primary map is a strong second
+   application and arguably an easier one to start with, given it has
+   fewer failure modes than South Tyneside's PDF (which is furthermore
+   now blocked by a stricter WAF, per the prior pass's finding).
+3. **Other PDF-only councils not yet re-triaged this pass**: Enfield
+   (confirmed real per-school PDF maps exist), Bedford, Warrington,
+   Middlesbrough, Redcar and Cleveland, Suffolk (existing note suggests
+   this one may be a genuine text-list, not a map - verify first).
+   Inverclyde and Shetland were triaged in an earlier pass this session
+   (both confirmed real maps; Inverclyde's georeferencing wasn't
+   accurate enough to trust and was correctly not deployed - see the
+   entries in `catchment-sources.yml` for exactly what was tried).
+
+Tests pass (45 shared). Working tree clean, all pushed.
