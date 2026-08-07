@@ -64,17 +64,23 @@ export async function GET(request: NextRequest) {
       conditions.push(Prisma.sql`trust_id = ${query.trustId}`);
     }
 
-    // Ordered by random() rather than left to the database's default scan
-    // order: a wide bbox (e.g. the initial /map view, which fits all of
-    // Great Britain) can match far more rows than MAX_MAP_FEATURES, and
-    // an arbitrary/unordered LIMIT consistently returned an unrepresentative
-    // one-region cluster instead of a spread across the whole viewport
-    // (verified live: default order surfaced almost only Scotland).
+    // Ordered by a deterministic hash of the URN rather than left to the
+    // database's default scan order: a wide bbox (e.g. the initial /map
+    // view, which fits all of Great Britain) can match far more rows than
+    // MAX_MAP_FEATURES, and an arbitrary/unordered LIMIT consistently
+    // returned an unrepresentative one-region cluster instead of a spread
+    // across the whole viewport (verified live: default order surfaced
+    // almost only Scotland). A plain ORDER BY random() fixed the spread but
+    // re-shuffled on every single fetch, so pins visibly appeared and
+    // disappeared as the user panned even when the viewport barely moved -
+    // hashing the URN gives the same representative spread but is stable
+    // per school across requests (the same fix applied to catchment areas
+    // in the sibling /api/map/catchments route, for the same reason).
     const schools = await prisma.$queryRaw<MapSchoolRow[]>`
       SELECT urn, nation, school_name, phase_name, status, latitude, longitude, source_extract_date
       FROM schools
       WHERE ${Prisma.join(conditions, " AND ")}
-      ORDER BY random()
+      ORDER BY md5(urn)
       LIMIT ${query.limit}
     `;
 

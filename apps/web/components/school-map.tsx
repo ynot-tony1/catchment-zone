@@ -71,10 +71,10 @@ export function SchoolMap({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  // Catchment areas are the primary view (the whole point of this project is
-  // rating them by performance) and load by default; individual school pins
-  // are a secondary, opt-in overlay - see the checkboxes below.
-  const showCatchmentsRef = useRef(true);
+  // Catchment areas are the whole point of this project (rating them by
+  // performance) and are always on, unconditionally - there is no toggle
+  // for them. Individual school pins are a secondary, opt-in overlay - see
+  // the single checkbox below.
   const showSchoolsRef = useRef(false);
   const moveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const schoolsRequestIdRef = useRef(0);
@@ -84,7 +84,6 @@ export function SchoolMap({
   );
   const [selectedCatchment, setSelectedCatchment] =
     useState<CatchmentFeatureProperties | null>(null);
-  const [showCatchments, setShowCatchments] = useState(true);
   const [showSchools, setShowSchools] = useState(false);
   const [catchmentCountInView, setCatchmentCountInView] = useState<
     number | null
@@ -208,14 +207,12 @@ export function SchoolMap({
         if (showSchoolsRef.current) {
           loadSchoolsInView(map, schoolsRequestIdRef, setError);
         }
-        if (showCatchmentsRef.current) {
-          loadCatchmentsInView(
-            map,
-            catchmentsRequestIdRef,
-            setError,
-            setCatchmentCountInView,
-          );
-        }
+        loadCatchmentsInView(
+          map,
+          catchmentsRequestIdRef,
+          setError,
+          setCatchmentCountInView,
+        );
       }
 
       loadCurrentView();
@@ -232,18 +229,6 @@ export function SchoolMap({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- map is created once; styleUrl/attribution are effectively static config
   }, []);
-
-  useEffect(() => {
-    showCatchmentsRef.current = showCatchments;
-    const map = mapRef.current;
-    if (!map || !showCatchments) return;
-    loadCatchmentsInView(
-      map,
-      catchmentsRequestIdRef,
-      setError,
-      setCatchmentCountInView,
-    );
-  }, [showCatchments]);
 
   function handleShowSchoolsChange(checked: boolean) {
     showSchoolsRef.current = checked;
@@ -262,26 +247,8 @@ export function SchoolMap({
     }
   }
 
-  function handleShowCatchmentsChange(checked: boolean) {
-    setShowCatchments(checked);
-    setCatchmentCountInView(null);
-    if (checked) return;
-    setSelectedCatchment(null);
-    const source = mapRef.current?.getSource("catchments") as
-      GeoJSONSource | undefined;
-    source?.setData({ type: "FeatureCollection", features: [] });
-  }
-
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex w-fit items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={showCatchments}
-          onChange={(event) => handleShowCatchmentsChange(event.target.checked)}
-        />
-        Show catchment areas (where published)
-      </label>
       <label className="flex w-fit items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -290,25 +257,22 @@ export function SchoolMap({
         />
         Show individual school pins
       </label>
-      {showCatchments && (
-        <div className="flex w-fit items-center gap-2 text-xs">
-          <span className="text-muted-foreground">Performance grade:</span>
-          <span
-            className="h-3 w-16 rounded-sm"
-            style={{
-              background:
-                "linear-gradient(to right, #9c1c1c, #ff8787, #2f9e44)",
-            }}
-          />
-          <span className="text-muted-foreground">worst to best</span>
-          <span
-            className="ml-2 h-3 w-3 rounded-sm"
-            style={{ background: UNSCORED_CATCHMENT_COLOR }}
-          />
-          <span className="text-muted-foreground">no data</span>
-        </div>
-      )}
-      {showCatchments && catchmentCountInView === 0 && (
+      <div className="flex w-fit items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Performance grade:</span>
+        <span
+          className="h-3 w-16 rounded-sm"
+          style={{
+            background: "linear-gradient(to right, #9c1c1c, #ff8787, #2f9e44)",
+          }}
+        />
+        <span className="text-muted-foreground">worst to best</span>
+        <span
+          className="ml-2 h-3 w-3 rounded-sm"
+          style={{ background: UNSCORED_CATCHMENT_COLOR }}
+        />
+        <span className="text-muted-foreground">no data</span>
+      </div>
+      {catchmentCountInView === 0 && (
         <p className="text-muted-foreground text-xs">
           No catchment areas are published for this area. See the{" "}
           <Link
