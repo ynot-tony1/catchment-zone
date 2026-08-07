@@ -4406,6 +4406,64 @@ sources:
       marker-controlled-watershed method. Every polygon verified to contain
       its own school's real DB coordinate.
 
+  # Middlesbrough: previously a dead end (only artifact found was a PDF, not
+  # machine-readable). Re-investigated this session and downloaded the real
+  # PDF ("Secondary School Catchment 2021", item 6806a21c98ef48cfa275dc150b7312f0
+  # on mbcouncil.maps.arcgis.com, OGL-licensed) - a genuine ArcGIS Pro print
+  # export with a real 1:20,000 ratio scale, north arrow, and faint Ordnance
+  # Survey National Grid lines at exact 1km spacing (detected via cyan-pixel
+  # column/row autocorrelation, same technique as Oxfordshire; the detected
+  # ~393.5px spacing matches the printed 1:20,000 ratio at 200 DPI to within
+  # 0.05%, a strong independent cross-check). Boundary lines are a
+  # solid-purple colour, isolated by colour threshold. Zone labels ("Outwood
+  # Academy Acklam", "Unity City Academy", etc.) are real extractable PDF
+  # text (via pdftotext -bbox), used as seeds for a marker-controlled
+  # watershed segmentation of the boundary-line raster - each zone's region
+  # grows only until it hits a real printed line, never merging with a
+  # neighbour (the same technique already proven for Portsmouth's combined
+  # infant/primary map above).
+  #
+  # Georeferencing the OS grid to real-world coordinates required identifying
+  # which exact grid intersection (an exact multiple of 1000 in British
+  # National Grid easting/northing) a detected pixel corresponds to. An
+  # initial attempt anchored via the "BILLINGHAM" place-name label's
+  # approximate on-map pixel position (geocoded via Nominatim) picked the
+  # wrong intersection - verified wrong by an independent cross-check
+  # against a second landmark ("MIDDLESBROUGH"'s label), whose predicted vs.
+  # real position disagreed by ~928m (essentially exactly one grid cell).
+  # Resolved properly via a systematic search over nearby candidate grid
+  # anchors, scoring each by whether all 5 real, precisely-known school
+  # coordinates already in this project's own database land inside their
+  # own correctly-named watershed region - exactly one candidate anchor
+  # scored 5/5, a strong, unambiguous result. The King's Academy has two
+  # separate, non-contiguous zones (a genuine feature of the source map,
+  # not a digitisation artifact); the school's own DB coordinate correctly
+  # falls inside one of the two and not the other, as expected for a real
+  # split zone. One zone is a genuine shared/overlap area named "Outwood
+  # Academy Acklam / The King's Academy (shared)" exactly as printed - not
+  # matched to a single school's URN since it doesn't belong to just one.
+  - local_authority_code: "806"
+    local_authority_name: "Middlesbrough"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://middlesbrough-council-middlesbrough.opendata.arcgis.com/documents/6806a21c98ef48cfa275dc150b7312f0/about"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/middlesbrough/middlesbrough_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open Government Licence (stated directly on the ArcGIS item page)."
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      7 secondary catchment polygons (6 named schools, one with 2
+      non-contiguous zones, one genuine shared/overlap zone) covering 6 of
+      Middlesbrough's 7 secondary schools - Macmillan Academy is
+      deliberately excluded from the source map itself (its own admission
+      zone is described on its own website, not drawn on this council map).
+      See the block comment above for the OS-grid + watershed method and
+      the anchor-verification process.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -5161,8 +5219,8 @@ candidates:
       not do. Most of Rutland's 17 primary schools are explicitly marked
       "no catchment area" in the same source, so this may be close to
       the practical ceiling for this authority regardless.
-  - local_authority_name: "Warrington, Middlesbrough, Redcar and Cleveland (England)"
-    reason_not_enabled: 'Warrington''s admissions page references a PDF booklet only, no GIS/catchment map found on the council''s mapping portal. Middlesbrough''s one catchment-related ArcGIS item (owner Open_Data3, OGL-licensed) is a PDF ("Secondary School Catchment 2021"), not machine-readable. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. All PDF-only or no-data dead ends, not licensing gaps. (Halton, previously grouped here, is now digitised - see the Halton entry in sources: above.)'
+  - local_authority_name: "Warrington, Redcar and Cleveland (England)"
+    reason_not_enabled: 'Warrington''s admissions page references a PDF booklet only - the one real map reference found inside it ("Figure 1" in a single school''s own admissions-policy extract, geographic postcode-district bandings, not a drawn catchment boundary) is thin and per-school, not a borough-wide GIS layer. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. Both PDF-only or no-data dead ends, not licensing gaps. (Halton, previously grouped here, is now digitised - see the Halton entry in sources: above. Middlesbrough, also previously grouped here, is now digitised too - its "Secondary School Catchment 2021" PDF turned out to be a real ArcGIS Pro print export with a genuine drawn boundary map - see the Middlesbrough entry in sources: above.)'
   - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
     reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
   - local_authority_name: "Herefordshire (England)"
