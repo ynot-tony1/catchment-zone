@@ -3331,16 +3331,36 @@ sources:
   # each PDF's own north arrow). This is real digitisation of the
   # council's own published boundary, not an invented or estimated shape;
   # every polygon was checked to actually contain its own school's real
-  # coordinate before being written out. 9 of the 45 published PDFs could
-  # not be digitised this way and are recorded as still-open candidates
-  # below: 3 use an older raster-screenshot template with no usable
-  # vector boundary or scale bar (Baden-Powell-and-St-Peters,
-  # Livingstone-Infant, Manorside), 5 omit the red school marker entirely
-  # so there is no reliable control point (Lilliput, Mudeford-Community-
-  # Infants, Old-Town-Infant-and-Nursery, Queens-Park-Infant, St-
-  # Michael's), and 1 (Bishop Aldhelm's) uses a different newer template
-  # showing "Parish Catchment"/"Local Authority Catchment" overlap zones
-  # with a printed map scale instead of a bar, not yet parsed.
+  # coordinate before being written out.
+  #
+  # A later pass added 3 more (Baden-Powell-and-St-Peters, Livingstone-
+  # Infant, Manorside) that a prior session had mis-categorised as an
+  # "older raster-screenshot template with no usable vector boundary or
+  # scale bar" - on inspection these actually have a clean vector
+  # boundary line, a red school-location marker, and a precise numeric
+  # ratio scale ("Scale 1:31000" etc, greyscale OS-2013-vintage template,
+  # visually distinct from but functionally equivalent to the coloured/
+  # scale-bar template). The ratio scale converts to real metres-per-
+  # pixel exactly, given a controlled render DPI (200) and the PDF's own
+  # page size in points (standard 72pt/inch): metres_per_pixel = ratio *
+  # 0.0254 / DPI - no bar-tick pixel detection needed, arguably more
+  # precise than the bar-based method. The boundary itself was isolated
+  # as the single largest black connected component after excluding the
+  # one component whose bounding box covers almost the entire page (the
+  # printed page-frame rectangle) - text labels and street lines are far
+  # smaller. Verified pixel-perfect via a full contour + marker overlay
+  # redrawn onto each source render; each polygon contains its own
+  # school's real coordinate.
+  #
+  # 6 of the 45 published PDFs remain undigitised, recorded as still-open
+  # candidates below: 5 omit the red school marker entirely so there is
+  # no reliable control point (Lilliput, Mudeford-Community-Infants, Old-
+  # Town-Infant-and-Nursery, Queens-Park-Infant, St-Michael's - confirmed
+  # again this pass: the only red pixels present are a main road drawn in
+  # a similar colour, not a marker), and 1 (Bishop Aldhelm's) uses a
+  # different newer template showing "Parish Catchment"/"Local Authority
+  # Catchment" overlap zones with a printed map scale instead of a bar,
+  # and no visible school marker either - not yet parsed.
   - local_authority_code: "839"
     local_authority_name: "Bournemouth, Christchurch and Poole"
     academic_year: "2025-2026"
@@ -3355,9 +3375,11 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      29 primary catchment polygons digitised by this project from BCP's
-      published per-school PDF maps (QGIS exports, 2021) - see the block
-      comment above this entry for the exact method and its limits. Each
+      32 primary catchment polygons digitised by this project from BCP's
+      published per-school PDF maps (29 from QGIS exports, 2021; 3 more -
+      Baden-Powell and St Peter's, Livingstone Road Infant, Manorside -
+      from an older greyscale OS-2013 template) - see the block comment
+      above this entry for the exact methods and their limits. Each
       feature's CATCHMENT_NAME is "<school name> catchment"; SCHOOL_URN
       and SCHOOL_NAME properties are also carried for reference. Not a
       live council API - re-verifying this source means re-checking
@@ -4236,8 +4258,8 @@ candidates:
       generic title.
   - local_authority_name: "Lincolnshire"
     reason_not_enabled: "Only the county's grammar schools have anything catchment-like (the rest are distance/priority-based with no exclusive zones), and even those genuinely aren't published online: Alford Queen Elizabeth's and Caistor Grammar both state their catchment map is only viewable at the school/open evening, not published digitally; Spalding High explicitly has no catchment area at all; Louth King Edward VI references a 'traditional catchment area' by named feeder primary schools, not a map. The council's own 'Find my nearest school' ArcGIS Experience app (experience.arcgis.com/experience/71fb40072b9945f0a4171320c331221f) is backed by a real FeatureServer (FindMyNearestFullSchoolList) but it's point geometry (school locations for a distance calculation), not catchment polygons. Caistor's rule (6.5 miles straight-line from a fixed point) is precise enough to construct as an exact circle if this ever becomes worth doing, but that's a materially different technique from every other source in this file and wasn't pursued for a single school."
-  - local_authority_name: "Bournemouth, Christchurch and Poole (remaining 9 PDFs)"
-    reason_not_enabled: "9 of BCP's 45 published per-school catchment PDFs could not be digitised by this project's pixel-extraction method (see the block comment above the enabled BCP entries in sources: for the 36 that were): Baden-Powell-and-St-Peters, Livingstone-Infant and Manorside use an older boroughofpoole.com raster-screenshot template with no usable vector boundary or scale bar; Lilliput, Mudeford-Community-Infants, Old-Town-Infant-and-Nursery, Queens-Park-Infant and St-Michael's omit the red school-location marker this method uses as its control point; Bishop Aldhelm's uses a different newer template (hatched 'Parish Catchment' vs filled 'Local Authority Catchment' zones, printed map scale instead of a bar) not yet parsed. Worth a follow-up pass with a different control-point strategy (e.g. a named, geocodable landmark visible on the map) rather than assumed permanently closed."
+  - local_authority_name: "Bournemouth, Christchurch and Poole (remaining 6 PDFs)"
+    reason_not_enabled: "6 of BCP's 45 published per-school catchment PDFs still can't be digitised by this project's pixel-extraction method (see the block comment above the enabled BCP entries in sources: for the 39 that now are, including 3 - Baden-Powell-and-St-Peters, Livingstone-Infant, Manorside - recovered this pass after an earlier session mis-categorised them as an unusable raster template when they actually have a clean vector boundary, a marker, and a numeric ratio scale). The remaining 6: Lilliput, Mudeford-Community-Infants, Old-Town-Infant-and-Nursery, Queens-Park-Infant and St-Michael's genuinely omit the red school-location marker (re-confirmed: the only red pixels present are a main road, not a marker) - this method's control point; Bishop Aldhelm's uses a different newer template (hatched 'Parish Catchment' vs filled 'Local Authority Catchment' zones, printed map scale instead of a bar) with no marker either. Worth a follow-up pass with a different control-point strategy (e.g. a named, geocodable landmark visible on the map, or another nearby school's own marker/label appearing on the same base map) rather than assumed permanently closed."
   - local_authority_name: "Lewisham"
     reason_not_enabled: 'The council''s real GIS platform ("MapThat" at lbl.dynamicmaps.co.uk/MapThatWeb/login.html?user=lewisham) is genuinely login-gated (returns a real login page requiring credentials) - a hard stop per this project''s standing rule against bypassing access control, not attempted further.'
   - local_authority_name: "Enfield"
