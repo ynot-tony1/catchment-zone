@@ -5145,6 +5145,61 @@ candidates:
       publication, e.g. the individual-school PDF pattern that worked
       for Harton Academy) or look for an updated/corrected version of
       this specific map.
+
+      Follow-up session: checked both of the two ideas left above, and
+      both are now closed off (not a plain re-statement of "still
+      stuck" - each was genuinely tested this time). (1) No
+      individual-school PDF pattern exists for South Tyneside's primary
+      schools the way it does for Harton Academy's secondary map: the
+      only "Marsden Primary School" document discoverable
+      (southtyneside.gov.uk/media/3734/Marsden-Primary-School-map, a
+      plausible-looking title found via search) turned out on actual
+      inspection to be a "Schools Go Smarter" active-travel leaflet -
+      its one map page shows only 400m/800m walking-distance circles
+      around the school, no catchment boundary at all. The council's
+      "School maps" hub page (article/2462) and every primary
+      catchment-areas article page (current: article/28404; prior
+      years: article/20162, article/18119) were checked for their
+      actual outbound links - only ever the one borough-wide
+      partition-map PDF per year, never per-school files; the old
+      article/17588 URL now 404s. Ruled out, not just unconfirmed. (2)
+      Did find and check a genuinely different, independently-dated
+      edition of the borough-wide map itself: the 2025-admissions
+      version (media/6350/Primary-school-catchment-areas-2025,
+      filename "Primary_School_Catchment_Areas_Sept_2023_minus_29_8_CA.pdf",
+      MapInfo PDF Printer, created Sept 2023 - confirmed via pdfinfo to
+      be a different file from the 2026 edition already in this
+      project's records, distinct MD5, distinct producer version, same
+      page size). Rendered both editions at the same 250dpi and diffed
+      the exact zone 3/4 boundary region pixel-for-pixel (using each
+      edition's own zone-label text position as the crop anchor, since
+      pdftotext -bbox positions are identical between the two editions'
+      coordinate systems): the two editions are visually identical in
+      this area, and both show the same red boundary line stopping
+      short at the same point near "Beacon Hill", leaving the same open
+      gap between zones 3 and 4. This is a real, useful negative result
+      - it confirms the missing line is a persistent feature of the
+      council's own source map across at least 2 independently-dated
+      editions spanning at least one redraw cycle, not a one-off
+      rendering glitch in a single PDF export - which further
+      strengthens (does not just repeat) the case for never inventing
+      that line ourselves. Zone 6 (Laygate)'s own local boundary
+      network looks visually intact and closed in the same side-by-side
+      crop (unlike zone 3/4's genuine gap), suggesting its watershed
+      failure may be a seed-placement/pipeline artifact rather than a
+      second real missing line - but not worth chasing further on its
+      own, since this partition map's all-or-nothing deployment rule
+      (see above) means fixing zone 6 alone still couldn't ship while
+      zone 3/4's gap remains genuinely unresolvable without guessing.
+      Considered a text-based alternative (street/postcode admissions
+      lists rather than a drawn map) but this project's no-guessing
+      rule treats converting a street list into a polygon as exactly
+      the kind of geometry inference it prohibits, not a shortcut
+      around this problem. Stopping here for this LA within this
+      session's time budget; the next genuinely new angle would be
+      contacting the council directly (FOI or a direct data request)
+      rather than further searching its published web presence, which
+      is now believed to be exhausted for this map.
   - local_authority_name: "Barnsley"
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
