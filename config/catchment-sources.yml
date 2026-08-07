@@ -3433,9 +3433,37 @@ sources:
   # Benton Park and Roundhay, also black; Lawnswood uniquely draws its
   # boundary in blue rather than black - the extractor tries both colours
   # per page). The 5th (Allerton High School) shows two semi-transparent
-  # filled priority zones with no outline stroke at all, a different
-  # presentation this pipeline doesn't parse - recorded as an open
-  # candidate below, not silently dropped. This page's PDF also breaks
+  # filled priority zones with no outline stroke at all - initially left
+  # as an open candidate, later solved with a fill-colour-region technique
+  # instead of line-tracing: since the fill is alpha-blended over the
+  # OS basemap, its exact RGB varies by whatever basemap feature sits
+  # underneath, but the (B-R) channel difference for Zone 1's blue tint
+  # and (R-B) for Zone 2's orange tint both come out as an almost
+  # perfectly constant additive shift (~+45) regardless of the underlying
+  # base colour (verified against the legend's own swatches, rendered
+  # over white, and several in-map sample points over white/green/urban
+  # basemap) - because most basemap colours are close to colour-neutral
+  # (R≈G≈B), the alpha-blend's dominant effect on (B-R)/(R-B) is the
+  # additive term, not the multiplicative one. Thresholding each channel
+  # difference at >25, keeping only the single largest connected
+  # component (a thin river with a similar blue cast was initially
+  # misclassified as part of Zone 1 - removed via morphological opening,
+  # which strips thin linear protrusions but preserves the filled zone
+  # blob), then extracting/simplifying the contour the same way as every
+  # other digitised source. Georeferenced with this project's usual
+  # single-marker + scale-bar method (marker: a teal circle icon, colour-
+  # matched and centroided, excluding an identical decoy icon in the
+  # legend; scale bar: 9 tick marks at exactly 0.375-mile spacing,
+  # cross-verified against the "0"/"0.75"/"1.5"/"3 Miles" text labels'
+  # own bounding boxes). Allerton High's own marker sits almost exactly
+  # on the Zone 1/Zone 2 boundary (48-71m outside either polygon, within
+  # this method's expected precision at this map's ~5m/pixel resolution)
+  # - not treated as a data error and both zones kept, since this map's
+  # zone identity comes from its own printed labels, not from a school-
+  # inside-polygon inference the way pooled/shared catchments elsewhere
+  # in this registry are matched. Visually verified pixel-perfect via a
+  # full contour overlay redrawn onto the source render. This page's PDF
+  # also breaks
   # this project's usual "collapse all whitespace, regex the scale label"
   # reading (used successfully for the primary maps) whenever a tick
   # value reaches 1 or more, e.g. "0.75" immediately followed by "1.5"
@@ -3457,11 +3485,13 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      4 secondary catchment polygons digitised from Leeds's combined
-      secondary PDF (Allerton Grange School, Benton Park School,
-      Lawnswood School, Roundhay School) - see the block comment above
-      this entry for the method and for why Allerton High School (the
-      document's 5th school) isn't included.
+      6 secondary catchment polygons digitised from Leeds's combined
+      secondary PDF: Allerton Grange School, Benton Park School,
+      Lawnswood School, Roundhay School (one boundary-line polygon
+      each), plus Allerton High School's two semi-transparent priority
+      zones (Zone 1, Zone 2), added via a fill-colour-region technique -
+      see the block comment above this entry for both methods. All 5 of
+      the document's schools are now covered.
 
   # Oxfordshire: no GIS/API (ArcGIS Server fully enumerated with nothing
   # relevant; a FOI request for the data was refused), but every school
@@ -4410,8 +4440,6 @@ candidates:
     reason_not_enabled: "The council's own 'Schools' ArcGIS Experience app resolves to a real MapServer (maps.wolverhampton.gov.uk/arcgis/rest/services/CWC/MapServer), but its Schools layer is confirmed esriGeometryPoint (locations only) - no catchment polygon layer exists in that MapServer."
   - local_authority_name: "Manchester, Tameside, Wigan"
     reason_not_enabled: "Manchester and Wigan both have live, fully-checked ArcGIS Hub open-data portals (26 and 95 datasets respectively, checked via DCAT feed) with no catchment dataset among them. Tameside's school-map page has no discoverable catchment polygon layer or API. No PDF-only fallback found for any of the three either."
-  - local_authority_name: "Leeds (Allerton High School's two priority zones)"
-    reason_not_enabled: "4 of the 5 schools in Leeds's '2023 Catchment Maps for Secondary.pdf' are now digitised and enabled (see the Leeds secondary_catchment entry above). Allerton High School's page uses a genuinely different presentation - two semi-transparent filled zones (no outline stroke) rather than a single black/blue boundary line - which this project's line-tracing pipeline doesn't handle; would need a fill-colour-region technique instead. Note also that only 5 of Leeds's ~30 secondary schools have a defined priority catchment area at all per this document - the rest use distance-based admissions, a genuine structural fact, not a search gap."
   - local_authority_name: "Bradford"
     reason_not_enabled: "ArcGIS Hub portal (spatialdata-cbmdc.hub.arcgis.com, 62 datasets) checked via DCAT feed - no catchment dataset; the only schools-adjacent dataset is an air-quality interpolation layer, unrelated."
   - local_authority_name: "Wakefield"
