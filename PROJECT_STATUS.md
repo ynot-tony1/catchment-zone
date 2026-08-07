@@ -1982,4 +1982,80 @@ through Stoke-on-Trent first per the target ordering) - still open
 candidates for a future retry with a real Playwright session, per the
 reasoning already documented in their existing `catchment-sources.yml`
 notes.
+
+## Update: Durham/Leicestershire retry outcome, and a performance-metric coverage audit (2026-08-07)
+
+**Durham/Leicestershire retry**: both re-checked with a fresh Playwright
+session. Durham is now a definitive dead end with stronger evidence than
+before - the council's own live admissions pages state Durham's oversubscription
+tiebreaker is purely distance-based (GIS-measured shortest walking route),
+with the word "catchment" appearing nowhere; not a network block at all, a
+genuine no-catchment-concept authority. Leicestershire's whole domain still
+hard-403s under a real browser session, unchanged from the prior finding -
+this looks like a genuine IP/network-origin block specific to this
+sandbox (unlike Hampshire/Derby/Stoke-on-Trent's blocks, which the same
+browser-session technique did clear), so it needs a genuinely different
+network origin to resolve, not another in-sandbox attempt. **Coverage
+remains 80 local authorities.**
+
+**Performance-metric coverage audit**: `refresh-catchment-scores` scores
+6,196 of 9,360 catchment areas (66%) - this ~34% gap was audited in full
+(reading `catchment_scores.py`'s actual scoring algorithm, then querying
+the DB for a per-nation/area_type breakdown, then spot-checking specific
+unscored areas with the real point-in-polygon logic, not just bounding
+boxes) to determine whether it's a real bug or already-explained. Full
+breakdown of the 3,164 unscored areas:
+
+- **1,955 (62% of the gap): Scotland primary-phase areas** (all
+  `primary_catchment*` variants) - zero scored, because Scotland has no
+  configured primary-phase metric at all (`_METRIC_CANDIDATES_BY_NATION_AND_PHASE`
+  has no `("SCOTLAND", "primary")` entry) - the already-documented gap,
+  confirmed still accurate. Scotland _secondary_ areas, by contrast, score
+  fine: 329 scored via `scotland_leaver_tariff_middle60` - the code's own
+  docstring incorrectly claimed "every Scottish catchment area" was
+  unscored, which was stale and has been fixed (see commit `3a3b8b3`).
+- **133: Wales primary-phase areas** - zero scored, same already-documented
+  no-public-source gap (Wales primary).
+- **252 (213 + 39): area types whose name doesn't start with "primary" or
+  "secondary"** (`middle_school_catchment`: Buckinghamshire 141, Dorset 27,
+  Worcestershire 19, Northumberland 14, Somerset 6, North Tyneside 4,
+  Kirklees 2; `catchment_mixed_phase`: Lancashire 39) - deliberately never
+  scored, for the same reason `all_through_catchment` (19 areas, Orkney)
+  already wasn't: these span both England's KS2 and KS4/KS5 accountability
+  measures, so neither a "primary" nor "secondary" metric would honestly
+  describe every school inside. Confirmed deliberate by design (not a code
+  oversight), now documented in the code's own docstring too.
+- **38: North Northamptonshire's `primary_catchment_partial`** - zero
+  scored despite being correctly phase-classified as "primary". Root cause
+  confirmed via direct point-in-polygon check: these are small
+  postcode-_unit_ polygons "linked to" a school (the council's own
+  admissions-priority data model), not polygons drawn around the school
+  itself - most genuinely contain zero school coordinates at all (verified:
+  4 of the first 5 areas checked have 0 schools even in their bounding
+  box). This is the same structural limitation already flagged as
+  "optional polish, not urgent" elsewhere in this file (the
+  `SchoolCatchmentArea` per-source name-matching research note) - fixing
+  it would mean matching served schools by the source's own `name_field`
+  for this specific source type, not point-in-polygon, a real but
+  non-trivial follow-up, not attempted here.
+- **The remaining ~786 unscored areas are ordinary per-school data gaps**
+  spread across England secondary (81/884), Scotland secondary
+  denominations (138+20+14+11 = 183 across its 4 variants), primary
+  infant/junior (31+23), Wales secondary (5/13), etc. - spot-checked one
+  England secondary example directly (a Tower Hamlets-area catchment
+  serving 11 schools, only one of which - Mulberry Academy London Dock,
+  URN 143716 - is actually secondary-phase): its `school_metrics` row for
+  `attainment8_average` exists but `value_numeric` is null in the current
+  2024/25 DfE release, the same "z" (not-applicable) pattern already
+  documented for `progress8_average` - a real per-school/per-release data
+  gap DfE hasn't published yet, not a bug in this service.
+
+**Conclusion: no genuine scoring bug found.** Every unscored bucket traces
+to either an already-documented no-public-source gap, a deliberate and
+now-better-documented phase-ambiguity exclusion, one specific and now-
+diagnosed point-in-polygon/source-shape mismatch (North Northamptonshire's
+linked areas), or ordinary per-school/per-release data absence. The one
+real code change from this audit was fixing the stale Scotland docstring
+claim (commit `3a3b8b3`) - performance-metric coverage itself does not
+need new sourcing work right now.
 session and any forks/subagents.
