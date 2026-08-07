@@ -4530,7 +4530,7 @@ candidates:
   - local_authority_name: "Gloucestershire"
     reason_not_enabled: "A real interactive catchment map exists (gcc.dynamicmaps.co.uk/MapThatPublic/) but is gated behind a genuine login page (Angular login form requiring credentials) - a hard stop per this project's standing rule against bypassing authentication, not a licensing question."
   - local_authority_name: "County Durham"
-    reason_not_enabled: "No GIS/open-data catchment layer found. maps.durham.gov.uk returns 403 (possibly Cloudflare-gated like Hampshire, worth a re-check from a different network origin) but no independent evidence surfaced that a catchment layer exists there specifically."
+    reason_not_enabled: "Re-verified with a real Playwright browser session (retrying the fingerprint/network-block technique that cracked Hampshire/Derby/Stoke-on-Trent): maps.durham.gov.uk still returns a hard IIS-level 403 to a real browser, not just curl - but the council's own public 'How primary/secondary school places are offered' pages (durham.gov.uk/article/27983 and /27965) confirm this is moot: County Durham runs purely distance-based admissions (GIS-measured shortest walking route to nearest school as the tiebreaker criterion), and the word 'catchment' does not appear anywhere on either page. No catchment-zone concept exists here at all, independent of whether the maps subdomain is reachable."
   - local_authority_name: "Leicestershire"
     reason_not_enabled: >
       Only static per-school PDF catchment documents published (no
@@ -4547,10 +4547,20 @@ candidates:
       plain homepage, so it's a network/IP-level block, not a bot-JS
       challenge a headless browser session can solve (tried both plain
       curl with browser headers/referer and a full Playwright session,
-      both 403). Same category as the already-documented Ealing/
-      Hampshire/Salford/Milton Keynes network-blocked candidates - worth
-      retrying this whole batch from a different network origin, not
-      assumed permanently closed.
+      both 403). Re-checked again on 2026-08-07 with a fresh full
+      Playwright session (the exact technique that has since cracked
+      Hampshire, Cumberland, Derby and Stoke-on-Trent after they were
+      similarly first marked blocked) against both www.leicestershire.gov.uk
+      and the bare leicestershire.gov.uk (apps.leicestershire.gov.uk
+      doesn't even resolve) - still a hard 403 "Access Denied" on every
+      path, unchanged. This really does look like an IP/network-origin
+      block specific to this sandbox rather than a browser-fingerprint
+      issue (unlike Hampshire's, which a real session did clear) - worth
+      retrying from a genuinely different network origin (e.g. the user's
+      own machine) rather than another in-sandbox Playwright attempt,
+      since two independent sessions now show the identical failure mode.
+      Same category as the already-documented Ealing/Salford/Milton Keynes
+      network-blocked candidates - not assumed permanently closed.
   - local_authority_name: "Stockport"
     reason_not_enabled: "Both ArcGIS Hub portal hostnames (stockport-council-opendata.hub.arcgis.com, stockport.opendata.arcgis.com) are live but return zero datasets via DCAT feed. The council's own catchment tool (stockport.gov.uk/find-your-catchment-area) is a server-side address-lookup form, not a map - no GIS markers in its HTML, no AGOL org search hits."
   - local_authority_name: "Kingston upon Hull"
