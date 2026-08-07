@@ -3403,18 +3403,28 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      35 primary catchment polygons digitised by this project from BCP's
+      36 primary catchment polygons digitised by this project from BCP's
       published per-school PDF maps (29 from QGIS exports, 2021; 3 more -
       Baden-Powell and St Peter's, Livingstone Road Infant, Manorside -
       from an older greyscale OS-2013 template; 3 more - Lilliput, St
       Michael's, Queen's Park Infant - anchored to a nearby real landmark
-      instead of a school marker) - see the block comment above this
-      entry for the exact methods and their limits. Each
-      feature's CATCHMENT_NAME is "<school name> catchment"; SCHOOL_URN
-      and SCHOOL_NAME properties are also carried for reference. Not a
-      live council API - re-verifying this source means re-checking
-      whether BCP has since published a real GIS layer, not re-fetching
-      this file (which is static, hosted in this repo).
+      instead of a school marker; 1 more - Mudeford Community Infants -
+      solved this pass by anchoring to a real, precisely locatable road
+      junction instead of a missing school marker or place-name landmark:
+      the large A35 Christchurch Bypass / Stony Lane roundabout ("Iford
+      roundabout"), identified visually on the map then geocoded via
+      Overpass (way centroid average of its several roundabout-tagged
+      segments), combined with the map's own printed scale bar (719px =
+      1000m at 300dpi). Verified two ways: the transform lands the
+      school's real DB coordinate within a few pixels of its own printed
+      "Mudeford Community Infants School" label, and a full contour
+      overlay redrawn onto the source render is pixel-perfect) - see the
+      block comment above this entry for the exact methods and their
+      limits. Each feature's CATCHMENT_NAME is "<school name> catchment";
+      SCHOOL_URN and SCHOOL_NAME properties are also carried for
+      reference. Not a live council API - re-verifying this source means
+      re-checking whether BCP has since published a real GIS layer, not
+      re-fetching this file (which is static, hosted in this repo).
 
   - local_authority_code: "839"
     local_authority_name: "Bournemouth, Christchurch and Poole"
