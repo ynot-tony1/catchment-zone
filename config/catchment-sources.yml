@@ -3364,12 +3364,28 @@ sources:
   # redrawn onto each source render; each polygon contains its own
   # school's real coordinate.
   #
-  # 6 of the 45 published PDFs remain undigitised, recorded as still-open
-  # candidates below: 5 omit the red school marker entirely so there is
-  # no reliable control point (Lilliput, Mudeford-Community-Infants, Old-
-  # Town-Infant-and-Nursery, Queens-Park-Infant, St-Michael's - confirmed
-  # again this pass: the only red pixels present are a main road drawn in
-  # a similar colour, not a marker), and 1 (Bishop Aldhelm's) uses a
+  # A further pass solved 3 of the 5 "no red marker" schools (Lilliput,
+  # St Michael's, Queen's Park Infant) by anchoring to a different real,
+  # precisely-locatable point instead of a school marker: a nearby named
+  # landmark visible on the same map (a railway station icon for Lilliput
+  # and St Michael's; the visual pixel-centroid of a hospital's building
+  # cluster for Queen's Park Infant), geocoded via OpenStreetMap Nominatim
+  # for its real coordinate, combined with the map's own printed scale bar
+  # for metres-per-pixel. Same north-up assumption and boundary-extraction
+  # method as the marker-based schools. Each result was independently
+  # verified by checking the served school's own real database coordinate
+  # falls inside the resulting polygon (it does, for all 3) and by a full
+  # contour-overlay redraw onto the source render (pixel-perfect for
+  # Lilliput/St Michael's; Queen's Park Infant's anchor - a building-
+  # cluster centroid rather than a single point - carries a little more
+  # slop, visually ~1-2 pixels/a few metres at this map's scale, still
+  # well inside this method's normal tolerance).
+  #
+  # 3 of the 45 published PDFs remain undigitised: 2 (Mudeford-Community-
+  # Infants, Old-Town-Infant-and-Nursery) - the predictable BCP PDF URL
+  # pattern 404s for both, the correct URLs were not found this pass (the
+  # school-catchment-areas listing page itself would need a live browser
+  # session to enumerate, not attempted) - and 1 (Bishop Aldhelm's) uses a
   # different newer template showing "Parish Catchment"/"Local Authority
   # Catchment" overlap zones with a printed map scale instead of a bar,
   # and no visible school marker either - not yet parsed.
@@ -3383,15 +3399,17 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - each source PDF states only 'Crown copyright and database rights [year], OS licence 100019829, BCP Council', with no explicit Open Government Licence statement."
-    last_verified_at: "2026-08-05"
+    last_verified_at: "2026-08-07"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      32 primary catchment polygons digitised by this project from BCP's
+      35 primary catchment polygons digitised by this project from BCP's
       published per-school PDF maps (29 from QGIS exports, 2021; 3 more -
       Baden-Powell and St Peter's, Livingstone Road Infant, Manorside -
-      from an older greyscale OS-2013 template) - see the block comment
-      above this entry for the exact methods and their limits. Each
+      from an older greyscale OS-2013 template; 3 more - Lilliput, St
+      Michael's, Queen's Park Infant - anchored to a nearby real landmark
+      instead of a school marker) - see the block comment above this
+      entry for the exact methods and their limits. Each
       feature's CATCHMENT_NAME is "<school name> catchment"; SCHOOL_URN
       and SCHOOL_NAME properties are also carried for reference. Not a
       live council API - re-verifying this source means re-checking
