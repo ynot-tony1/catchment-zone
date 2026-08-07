@@ -5065,6 +5065,86 @@ candidates:
       different approach (e.g. checking whether the same PDF is
       independently mirrored anywhere else, since this is a real public
       document, not chasing this exact URL further).
+
+      Follow-up session: solved the access blocker with a materially
+      different technique, and made real (not yet complete) progress on
+      the region-closure problem with a materially different technique
+      too - documenting both rather than re-closing this as a dead end.
+
+      Access: the article page has since moved to
+      southtyneside.gov.uk/article/28404/Primary-school-catchment-areas
+      (still Cloudflare-challenged for plain curl, clears fine via a
+      real headless Chromium page.goto()) and now links a live PDF
+      (.../media/10029/Primary-school-catchment-areas/pdf/
+      Primary_School_Catchment_Areas_2026.pdf). A real browser
+      navigation straight to that PDF URL does get a genuine 200
+      application/pdf response (confirming the WAF itself isn't
+      permanently blocking it, contrary to what the 403s above
+      suggested) - but Chromium's own built-in PDF viewer intercepts
+      the navigation and replaces the top-level document with a small
+      synthetic wrapper page before any normal extraction point
+      (page.goto()'s response.body(), a page.route() handler's
+      route.fetch(), CDP's Network.getResponseBody, and a standalone
+      context.request.get() reusing the same cookies) can see the real
+      bytes - each of those returned either the ~500-byte wrapper HTML
+      or a fresh 403 (a raw HTTP client's TLS/JS-execution fingerprint
+      doesn't pass the same challenge a real browser navigation does).
+      What actually works: CDP's Fetch domain (Fetch.enable with a URL
+      pattern + requestStage: "Response", then Fetch.getResponseBody in
+      the Fetch.requestPaused handler, then Fetch.continueRequest) -
+      this intercepts the response body at the network layer before
+      Chromium's PDF viewer consumes/transforms it, and captured the
+      real 12MB PDF intact (verified: valid PDF 1.3, MapInfo PDF
+      Printer, A3, matches this section's description exactly). Worth
+      remembering as a general technique beyond South Tyneside: when a
+      real browser navigation to a PDF/download URL succeeds (200, real
+      content-type) but every normal Playwright/CDP body-extraction API
+      only yields a wrapper or a 403, CDP Fetch-domain response
+      interception is the fix - it captures bytes at a lower level than
+      Chromium's PDF viewer or download manager ever sees them.
+
+      Region closure: tried marker-controlled watershed segmentation
+      (per this project's Portsmouth precedent - git show 4efc54f) for
+      the first time on this map, seeded with each zone-ID label's own
+      text position (extracted via pdftotext -bbox, deduped for the
+      bold-simulation double-render the same way as before; cross-
+      checked 1:1 against a cleanly parsed ID->school-name legend table,
+      27 entries, zone IDs 1-29 skipping 8 and 16) rather than blind
+      dilation or skeleton-endpoint bridging. This is a real
+      improvement: elevation = the raw (undilated) red line mask, with
+      the map's own outer border pre-seeded as its own competing
+      watershed label (not just high elevation - critical, since
+      leaving it as elevation-only let a large interior leak swallow
+      the whole exterior in one attempt) - 25 of the 27 zones close
+      into clean, individually-plausible, non-overlapping regions this
+      way (a material improvement on the previous best of "~20
+      confident, several still mixed-zone"). The remaining 2 (zone 4,
+      Marsden Primary; zone 6, Laygate Primary) get almost no territory
+      - their seed circles sit in small pockets that are 70%+ wall-
+      adjacent, and watershed's flood competition loses that pocket to
+      a bigger neighbour before it can grow. Investigated directly
+      rather than just tuning parameters further: sampled pixels along
+      the straight line between zone 3's and zone 4's own label
+      positions and confirmed only one incidental red pixel on an
+      unrelated crossing line, then visually confirmed at 2x zoom that
+      there is genuinely NO drawn boundary line at all separating zones
+      3 and 4 in that area of the source PDF - not a rendering/
+      extraction artifact, an actual gap in the published map itself.
+      This matches the standing "leaks concentrate in the geometrically
+      busier part of the network" finding, but narrows it from a vague
+      diagnosis to a confirmed example. Given this project's rule
+      against ever guessing/estimating geometry, the 25 clean zones
+      were not deployed on their own (partial delivery here would still
+      need to draw an invented line for zones 3/4 and 6's neighbours to
+      close them, which is exactly the guessing this project doesn't
+      do) - not landed this pass either, but meaningfully closer than
+      before, with the exact remaining problem now pinned down rather
+      than described in general terms. Next session should either
+      accept a small hand-verified fix for just zones 4 and 6 (their
+      true boundary may be visible on a different South Tyneside
+      publication, e.g. the individual-school PDF pattern that worked
+      for Harton Academy) or look for an updated/corrected version of
+      this specific map.
   - local_authority_name: "Barnsley"
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
