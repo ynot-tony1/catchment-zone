@@ -3381,14 +3381,55 @@ sources:
   # slop, visually ~1-2 pixels/a few metres at this map's scale, still
   # well inside this method's normal tolerance).
   #
-  # 3 of the 45 published PDFs remain undigitised: 2 (Mudeford-Community-
-  # Infants, Old-Town-Infant-and-Nursery) - the predictable BCP PDF URL
-  # pattern 404s for both, the correct URLs were not found this pass (the
-  # school-catchment-areas listing page itself would need a live browser
-  # session to enumerate, not attempted) - and 1 (Bishop Aldhelm's) uses a
-  # different newer template showing "Parish Catchment"/"Local Authority
-  # Catchment" overlap zones with a printed map scale instead of a bar,
-  # and no visible school marker either - not yet parsed.
+  # The last 3 of the 45 published PDFs (Mudeford Community Infants,
+  # Old Town Infant and Nursery, Bishop Aldhelm's) had no red school
+  # marker and no pdftotext-extractable landmark text (place-name/street
+  # labels are raster basemap content on these PDFs, not selectable
+  # text) - solved in a later pass by anchoring to a real, precisely
+  # locatable ROAD FEATURE instead of a point-of-interest icon: Mudeford
+  # via the large A35 Christchurch Bypass / Stony Lane roundabout
+  # ("Iford roundabout", pixel-centroided from the map's own green
+  # roundabout-island fill, then geocoded as the centroid-average of its
+  # several roundabout-tagged Overpass way segments); Old Town via Poole
+  # railway station's own National Rail icon (geocoded via Overpass);
+  # both combined with the map's own printed scale bar (719px = 1000m
+  # for Mudeford, 690px = 1000m for Old Town, both re-measured at this
+  # project's usual 300dpi render). Bishop Aldhelm's uses a different,
+  # newer dual-zone template ("Parish Catchment" as a solid blue
+  # outline+hatching, "Local Authority Catchment" as a semi-transparent
+  # pink fill, both over an OS basemap) with an exact printed ratio
+  # scale ("Scale: 1:20000 True@A4P") instead of a bar and still no
+  # marker - solved by anchoring to St Michael's Roundabout on the
+  # B3066 (pixel-centroided from its visible ring, geocoded via
+  # Overpass), with scale computed exactly from the ratio plus the
+  # PDF's own known page size (595x842pt, i.e. A4) and render DPI rather
+  # than a pixel-measured bar (more precise: no bar-endpoint measurement
+  # error at all). Parish traced the same way as every line-boundary
+  # source in this file (largest black - here, pure-blue (0,0,255) -
+  # connected component, dilated/eroded closed, contour simplified).
+  # The LA zone has no clean outline of its own to trace directly (the
+  # Allerton-High-style alpha-blended-fill technique breaks down here:
+  # this fill sits over a dense urban area including saturated orange
+  # OS building polygons, not the near-neutral basemap colours Allerton
+  # High's fill sat over, so a constant colour-channel-difference
+  # threshold can't distinguish "fill over an orange building" from
+  # "a plain orange building" outside the fill) - instead traced from a
+  # distinct dark reddish-brown border stroke drawn around the fill's
+  # own edge, isolated by an (R>G, R>B, dark) colour test, with small
+  # interior holes (mostly the school's own building footprint, a
+  # cartographic artefact rather than a real exclusion) closed via
+  # contour hierarchy before the final external contour. All 4 new
+  # polygons verified: Mudeford, Old Town and Bishop Aldhelm's Parish
+  # are pixel-perfect on a full contour-overlay redraw and land each
+  # school's real DB coordinate within a few pixels of its own printed
+  # label; Bishop Aldhelm's LA zone visually tracks its source fill
+  # closely but has some genuine extraction jaggedness from the
+  # noisier border-stroke signal, and lands the school's real DB
+  # coordinate 75m outside its extracted boundary - within this
+  # method's established tolerance elsewhere in this file (compare
+  # Harton Academy's 82m and Allerton High's 48-71m) - kept rather than
+  # discarded, with this caveat documented rather than silently passed
+  # over.
   - local_authority_code: "839"
     local_authority_name: "Bournemouth, Christchurch and Poole"
     academic_year: "2025-2026"
@@ -3403,30 +3444,50 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      37 primary catchment polygons digitised by this project from BCP's
+      39 primary catchment polygons digitised by this project from BCP's
       published per-school PDF maps (29 from QGIS exports, 2021; 3 more -
       Baden-Powell and St Peter's, Livingstone Road Infant, Manorside -
       from an older greyscale OS-2013 template; 3 more - Lilliput, St
       Michael's, Queen's Park Infant - anchored to a nearby real landmark
       instead of a school marker; 2 more - Mudeford Community Infants and
-      Old Town Infant and Nursery - solved this pass by anchoring to a
-      real, precisely locatable road feature instead of a missing school
+      Old Town Infant and Nursery - solved by anchoring to a real,
+      precisely locatable road feature instead of a missing school
       marker or place-name landmark: Mudeford via the large A35
       Christchurch Bypass / Stony Lane roundabout ("Iford roundabout",
       centroid-averaged from its several roundabout-tagged Overpass way
       segments), Old Town via Poole railway station's own National Rail
       icon (geocoded via Overpass), each combined with the map's own
       printed scale bar (719px = 1000m for Mudeford, 690px = 1000m for
-      Old Town, both at 300dpi). Each verified two ways: the transform
-      lands the school's real DB coordinate within a few pixels of its
-      own printed name label, and a full contour overlay redrawn onto
-      the source render is pixel-perfect) - see the block comment above
-      this entry for the exact methods and their limits. Each feature's
-      CATCHMENT_NAME is "<school name> catchment"; SCHOOL_URN and
-      SCHOOL_NAME properties are also carried for reference. Not a live
-      council API - re-verifying this source means re-checking whether
-      BCP has since published a real GIS layer, not re-fetching this
-      file (which is static, hosted in this repo).
+      Old Town, both at 300dpi); 2 more - Bishop Aldhelm's own Parish
+      Catchment and Local Authority Catchment zones (this school's map
+      uses a different, newer dual-zone template - see the block
+      comment above this entry for full method detail: anchored to
+      St Michael's Roundabout on the B3066,
+      scale computed exactly from the map's printed "Scale: 1:20000
+      True@A4P" ratio and the PDF's own known page/DPI geometry rather
+      than a pixel-measured bar; Parish zone traced from its solid blue
+      outline+hatching, LA zone traced from a colour-distinct border
+      stroke around its semi-transparent pink fill). All of Mudeford,
+      Old Town and Bishop Aldhelm's Parish verified two ways: the
+      transform lands the school's real DB coordinate within a few
+      pixels of its own printed name label (or, for Bishop Aldhelm's,
+      inside/right at the edge of the extracted zones - inside Parish,
+      75m outside LA's extracted boundary, within this method's
+      established tolerance elsewhere in this file), and a full contour
+      overlay redrawn onto the source render is pixel-perfect (Mudeford,
+      Old Town, Bishop Aldhelm's Parish) or visually close with some
+      genuine jaggedness inherent to the source map (Bishop Aldhelm's
+      LA zone, extracted from a noisier colour-border signal than a
+      clean printed line) - see the block comment above this entry for
+      the exact methods and their limits. Each feature's CATCHMENT_NAME
+      is "<school name> catchment" (or, for Bishop Aldhelm's, "<school
+      name> Parish catchment" / "<school name> Local Authority
+      catchment", both zones kept per this file's Allerton High
+      precedent); SCHOOL_URN and SCHOOL_NAME properties are also carried
+      for reference. Not a live council API - re-verifying this source
+      means re-checking whether BCP has since published a real GIS
+      layer, not re-fetching this file (which is static, hosted in this
+      repo).
 
   - local_authority_code: "839"
     local_authority_name: "Bournemouth, Christchurch and Poole"
@@ -4679,50 +4740,6 @@ candidates:
       generic title.
   - local_authority_name: "Lincolnshire"
     reason_not_enabled: "Only the county's grammar schools have anything catchment-like (the rest are distance/priority-based with no exclusive zones), and even those genuinely aren't published online: Alford Queen Elizabeth's and Caistor Grammar both state their catchment map is only viewable at the school/open evening, not published digitally; Spalding High explicitly has no catchment area at all; Louth King Edward VI references a 'traditional catchment area' by named feeder primary schools, not a map. The council's own 'Find my nearest school' ArcGIS Experience app (experience.arcgis.com/experience/71fb40072b9945f0a4171320c331221f) is backed by a real FeatureServer (FindMyNearestFullSchoolList) but it's point geometry (school locations for a distance calculation), not catchment polygons. Caistor's rule (6.5 miles straight-line from a fixed point) is precise enough to construct as an exact circle if this ever becomes worth doing, but that's a materially different technique from every other source in this file and wasn't pursued for a single school."
-  - local_authority_name: "Bournemouth, Christchurch and Poole (remaining 3 PDFs)"
-    reason_not_enabled: >
-      3 of BCP's 45 published per-school catchment PDFs still can't be
-      digitised by this project's pixel-extraction method (see the block
-      comment above the enabled BCP entries in sources: for the 42 that
-      now are, including 3 - Lilliput, St Michael's, Queen's Park Infant -
-      recovered in a later pass by anchoring to a real nearby landmark
-      instead of a missing school marker: a railway station icon for 2,
-      a hospital building-cluster centroid for 1, both geocoded via OSM
-      Nominatim, combined with each map's own printed scale bar).
-
-      The remaining 3, current real URLs confirmed live (plain curl
-      works, no WAF issue - only the predictable-numbered-filename guess
-      had gone stale):
-      https://www.bcpcouncil.gov.uk/Assets/Schools-and-learning/Catchment-area-maps/Mudeford-Community-Infants-School-catchment-area-map.pdf,
-      .../Old-Town-Infant-School-and-Nursery-catchment-area-map.pdf,
-      .../Bishop-Aldhelms-CE-VA-Primary-School-catchment-area-map.pdf.
-
-      Mudeford and Old Town use the standard boundary-line-plus-scale-bar
-      template (scale bar pixel-measured cleanly on Old Town: 478px =
-      1000m) but have no red school marker AND no other real,
-      pdftotext-extractable landmark text on the page (only the header/
-      footer/copyright text is real; place-name and street labels are
-      raster basemap content, not selectable text) - unlike the landmark
-      technique that worked for Lilliput/St Michael's/Queen's Park
-      (railway/hospital icons + Nominatim), these two have no equivalent
-      icon-shaped landmark identified yet, only ordinary road/label
-      clutter. A real anchor likely still exists (e.g. matching the
-      map's own coastline/harbour shape against real OSM coastline
-      geometry via shape cross-correlation, rather than a single
-      point-landmark) but wasn't built this pass - meaningfully more
-      engineering than the point-landmark method, not attempted.
-
-      Bishop Aldhelm's uses the newer dual-zone template confirmed
-      directly this pass: "Parish Catchment" (blue hatched outline) and
-      "Local Authority Catchment" (pink semi-transparent fill), with an
-      exact printed ratio scale ("Scale: 1:20000 True@A4P" - real text,
-      more precise than a pixel-measured bar) but still no marker. The
-      fill zone would need the same fill-colour-region technique that
-      solved Leeds's Allerton High earlier this session; still needs the
-      same missing-anchor problem solved first. Worth a follow-up pass
-      with the coastline-matching approach for all 3, not assumed
-      permanently closed.
-
   - local_authority_name: "Lewisham"
     reason_not_enabled: 'The council''s real GIS platform ("MapThat" at lbl.dynamicmaps.co.uk/MapThatWeb/login.html?user=lewisham) is genuinely login-gated (returns a real login page requiring credentials) - a hard stop per this project''s standing rule against bypassing access control, not attempted further.'
   - local_authority_name: "Enfield"
