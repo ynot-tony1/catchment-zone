@@ -14,9 +14,10 @@ export default function MapPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Map</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Schools currently in view are loaded as you pan and zoom. Select a
-          school for details, or turn on catchment areas to see published
-          priority admission boundaries where they exist.
+          Catchment areas in view are loaded as you pan and zoom, coloured by
+          performance where a score is available. Select a catchment for
+          details, or turn on individual school pins to see and select schools
+          directly.
         </p>
       </div>
       <SchoolMap styleUrl={mapStyleUrl} attribution={mapAttribution} />

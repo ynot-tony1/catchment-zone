@@ -45,14 +45,6 @@ type CatchmentFeatureProperties = {
 // covered area.
 const UNSCORED_CATCHMENT_COLOR = "#4263eb";
 
-// Individual catchment polygons (typically a few km across) are visually
-// imperceptible at the initial full-GB zoom (around 5) even when real data
-// is loaded and coloured - there just aren't enough pixels per polygon.
-// Below this zoom, the "no data in this view" hint is shown regardless of
-// how many features actually came back, since a non-zero count doesn't
-// mean anything is visible to the user.
-const CATCHMENT_VISIBLE_ZOOM_THRESHOLD = 9;
-
 // Covers Great Britain (England, Scotland and Wales) - west to Scotland's
 // Outer Hebrides, north to Shetland - not just England. Northern Ireland
 // is deliberately excluded from this project (see PROJECT_STATUS.md).
@@ -79,8 +71,11 @@ export function SchoolMap({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const showCatchmentsRef = useRef(false);
-  const onlyCatchmentsRef = useRef(false);
+  // Catchment areas are the primary view (the whole point of this project is
+  // rating them by performance) and load by default; individual school pins
+  // are a secondary, opt-in overlay - see the checkboxes below.
+  const showCatchmentsRef = useRef(true);
+  const showSchoolsRef = useRef(false);
   const moveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const schoolsRequestIdRef = useRef(0);
   const catchmentsRequestIdRef = useRef(0);
@@ -89,12 +84,11 @@ export function SchoolMap({
   );
   const [selectedCatchment, setSelectedCatchment] =
     useState<CatchmentFeatureProperties | null>(null);
-  const [showCatchments, setShowCatchments] = useState(false);
-  const [onlyCatchments, setOnlyCatchments] = useState(false);
+  const [showCatchments, setShowCatchments] = useState(true);
+  const [showSchools, setShowSchools] = useState(false);
   const [catchmentCountInView, setCatchmentCountInView] = useState<
     number | null
   >(null);
-  const [zoom, setZoom] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -104,6 +98,10 @@ export function SchoolMap({
       container: containerRef.current,
       style: styleUrl,
       bounds: GB_BOUNDS,
+      // Hard-clamps panning/zooming-out to Great Britain - without this a
+      // user can scroll or zoom out past the initial view to the whole
+      // world, which isn't useful for a UK-only catchment dataset.
+      maxBounds: GB_BOUNDS,
       attributionControl: { customAttribution: attribution },
     });
     mapRef.current = map;
@@ -171,7 +169,7 @@ export function SchoolMap({
         id: "schools-points",
         type: "circle",
         source: "schools",
-        layout: { visibility: onlyCatchmentsRef.current ? "none" : "visible" },
+        layout: { visibility: showSchoolsRef.current ? "visible" : "none" },
         paint: {
           "circle-radius": 5,
           "circle-color": "#3b5bdb",
@@ -207,7 +205,7 @@ export function SchoolMap({
       });
 
       function loadCurrentView() {
-        if (!onlyCatchmentsRef.current) {
+        if (showSchoolsRef.current) {
           loadSchoolsInView(map, schoolsRequestIdRef, setError);
         }
         if (showCatchmentsRef.current) {
@@ -221,9 +219,7 @@ export function SchoolMap({
       }
 
       loadCurrentView();
-      setZoom(map.getZoom());
       map.on("moveend", () => {
-        setZoom(map.getZoom());
         if (moveDebounceRef.current) clearTimeout(moveDebounceRef.current);
         moveDebounceRef.current = setTimeout(loadCurrentView, MOVE_DEBOUNCE_MS);
       });
@@ -249,20 +245,20 @@ export function SchoolMap({
     );
   }, [showCatchments]);
 
-  function handleOnlyCatchmentsChange(checked: boolean) {
-    onlyCatchmentsRef.current = checked;
-    setOnlyCatchments(checked);
+  function handleShowSchoolsChange(checked: boolean) {
+    showSchoolsRef.current = checked;
+    setShowSchools(checked);
     const map = mapRef.current;
     if (!map || !map.getLayer("schools-points")) return;
     map.setLayoutProperty(
       "schools-points",
       "visibility",
-      checked ? "none" : "visible",
+      checked ? "visible" : "none",
     );
     if (checked) {
-      setSelected(null);
-    } else {
       loadSchoolsInView(map, schoolsRequestIdRef, setError);
+    } else {
+      setSelected(null);
     }
   }
 
@@ -271,7 +267,6 @@ export function SchoolMap({
     setCatchmentCountInView(null);
     if (checked) return;
     setSelectedCatchment(null);
-    if (onlyCatchments) handleOnlyCatchmentsChange(false);
     const source = mapRef.current?.getSource("catchments") as
       GeoJSONSource | undefined;
     source?.setData({ type: "FeatureCollection", features: [] });
@@ -287,19 +282,14 @@ export function SchoolMap({
         />
         Show catchment areas (where published)
       </label>
-      {showCatchments && (
-        <label className="flex w-fit items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={onlyCatchments}
-            onChange={(event) =>
-              handleOnlyCatchmentsChange(event.target.checked)
-            }
-          />
-          Show only catchment zones (hide school pins, faster on slower
-          connections)
-        </label>
-      )}
+      <label className="flex w-fit items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={showSchools}
+          onChange={(event) => handleShowSchoolsChange(event.target.checked)}
+        />
+        Show individual school pins
+      </label>
       {showCatchments && (
         <div className="flex w-fit items-center gap-2 text-xs">
           <span className="text-muted-foreground">Performance grade:</span>
@@ -318,38 +308,18 @@ export function SchoolMap({
           <span className="text-muted-foreground">no data</span>
         </div>
       )}
-      {showCatchments &&
-        zoom !== null &&
-        zoom < CATCHMENT_VISIBLE_ZOOM_THRESHOLD && (
-          <p className="text-muted-foreground text-xs">
-            Catchment area boundaries are too small to see at this zoom level -
-            zoom in to a covered area (try Sheffield, several Scottish council
-            areas, or Powys and Pembrokeshire in Wales) to see them, or check
-            the{" "}
-            <Link
-              href="/local-authorities"
-              className="text-primary underline underline-offset-2"
-            >
-              local authorities page
-            </Link>{" "}
-            for the full coverage list.
-          </p>
-        )}
-      {showCatchments &&
-        zoom !== null &&
-        zoom >= CATCHMENT_VISIBLE_ZOOM_THRESHOLD &&
-        catchmentCountInView === 0 && (
-          <p className="text-muted-foreground text-xs">
-            No catchment areas are published for this area. See the{" "}
-            <Link
-              href="/local-authorities"
-              className="text-primary underline underline-offset-2"
-            >
-              local authorities page
-            </Link>{" "}
-            for the full coverage list.
-          </p>
-        )}
+      {showCatchments && catchmentCountInView === 0 && (
+        <p className="text-muted-foreground text-xs">
+          No catchment areas are published for this area. See the{" "}
+          <Link
+            href="/local-authorities"
+            className="text-primary underline underline-offset-2"
+          >
+            local authorities page
+          </Link>{" "}
+          for the full coverage list.
+        </p>
+      )}
       <div
         ref={containerRef}
         className="border-border h-[70vh] w-full rounded-lg border"
