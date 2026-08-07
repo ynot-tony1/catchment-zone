@@ -2137,3 +2137,56 @@ Committed and pushed (`2fd0914`), imported (dry-run then real: 32 primary
 areas built, 0 rejected, up from 29), envelope-verified, scored via
 `refresh-catchment-scores` (6,200 of 9,365 total areas now scored). BCP's
 total catchment count: 39 (was 36).
+
+## Update: "by any means possible" pass - 3 more BCP no-marker schools solved, network-blocked candidates re-confirmed still blocked (2026-08-07)
+
+Per explicit user instruction to push harder on remaining gaps, this pass
+covered two categories.
+
+**Network/access retries** (Leicestershire, Ealing, Milton Keynes, Salford)
+
+- all re-tested with a fresh Playwright session, all unchanged: Leicestershire
+  still a domain-wide 403 (Akamai WAF) even via a real browser; Ealing's WMS
+  host, Milton Keynes' Astun iShare host, and Salford's map host all still
+  time out with no response at all. These read as genuine sandbox-network-
+  level blocks (not fingerprint/bot-JS challenges, which this technique has
+  cracked repeatedly this session for Hampshire/Cumberland/Derby/Stoke-on-
+  Trent) - worth retrying only from a materially different network origin,
+  not from repeated attempts inside this same sandbox.
+
+**BCP's remaining "no marker" stragglers**: solved 3 of 5 (Lilliput, St
+Michael's, Queen's Park Infant) by anchoring to a different real,
+precisely-locatable landmark visible on the same map instead of a school
+marker - a railway station icon (Lilliput, St Michael's) or a hospital
+building cluster's pixel centroid (Queen's Park Infant), geocoded via
+OpenStreetMap Nominatim for its real coordinate, combined with the map's
+own printed scale bar. Each independently verified: the served school's
+own real database coordinate falls inside the resulting polygon for all
+3, and a full contour overlay redrawn onto the source render matches
+pixel-perfect (Lilliput, St Michael's) or within a few metres (Queen's
+Park Infant). This confirms the earlier "5 omit the marker, no reliable
+control point" finding was too pessimistic - the marker specifically was
+missing, but a usable alternative anchor existed on every map checked.
+
+Not solved this pass: 2 of the 45 published PDFs (Mudeford Community
+Infants, Old Town Infant and Nursery) - the predictable BCP PDF URL
+pattern 404s for both; finding the correct URLs needs a live browser
+session against the school-catchment-areas listing page, not attempted.
+Bishop Aldhelm's (different "Parish/Local Authority Catchment" overlap
+template) also remains unparsed. South Tyneside's region-closure problem
+and Oxfordshire's 91 remaining non-gridded PDFs were not attempted this
+pass - both still need the substantial algorithm work already scoped in
+earlier checkpoints of this file (watershed segmentation guided by zone-
+label positions for South Tyneside; relaxed/alternate grid-detection
+anchoring for Oxfordshire).
+
+Committed and pushed (commit adding 3 features to
+`bcp_digitized_primary_catchments.geojson` plus the corresponding
+`catchment-sources.yml` note update), imported (dry-run then real: 35
+primary areas built, 0 rejected, up from 32), envelope-verified, scored
+via `refresh-catchment-scores` (6,203 of 9,368 total areas now scored),
+and `refresh-catchment-overview-cache` re-run so the live /map page
+reflects the new areas (this command was added earlier the same day and
+must be re-run after any catchment import, alongside refresh-catchment-
+scores - see this file's other entries from today). BCP's total
+catchment count: 42 (was 39).
