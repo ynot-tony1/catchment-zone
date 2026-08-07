@@ -5483,6 +5483,89 @@ candidates:
       confirmed twice now - but a multi-hour undertaking on the scale of
       South Tyneside below, not a quick win; worth a dedicated future
       session rather than more time inside a mixed-target pass.
+
+      Follow-up session: attempted method (1) (multi-point affine fit
+      against this project's own DB coordinates). The georeferencing
+      half is now solved and verified, a real, reusable result even
+      though full deployment wasn't reached this pass. Identified each
+      of the map's marker dots (legend: red=Shetland College,
+      blue=High Schools(2), yellow=Junior High School(6),
+      green=Primary Departments(24)) by exact swatch colour
+      (pure (255,0,0)/(0,0,255)/(255,255,0)/(0,128,0), connected-
+      component-detected, legend box excluded) then visually matched
+      each dot to its adjacent printed "X feeds to Y" label (labels
+      are real legible text baked into the raster even though
+      pdftotext extracts nothing - confirmed readable at 150dpi
+      crops). 26 of the ~29 zones matched a real currently-open school
+      in this project's own DB by name (local_authority_code
+      "S12000027"); Fetlar, Papa Stour and Out Skerries' own primary
+      departments are drawn on the map but do not exist in this
+      project's schools table under any name (apparently fully closed
+      with no successor, unlike e.g. Halton's Bankfield->Ormiston
+      Chadwick case) - excluded as control points, left for a future
+      pass to decide whether to keep as unlinked named zones. Fit a
+      6-parameter least-squares affine (pixel -> lon/lat) across all
+      26 matched points at 150dpi render resolution
+      (lon = 0.00045903208249*px - 0.0000056406064885*py -
+      2.210659221831656; lat = -0.000002031061620538*px -
+      0.00022782537118394564*py + 60.90441880220972). Residual after
+      fitting: RMS 126m, max 418m (Brae), most points under 130m -
+      within this project's established tolerance elsewhere in this
+      file (comparable to Harton Academy's 82m, Allerton High's
+      48-71m). Independently cross-checked the fit's implied ground
+      sample distance (642 m^2/px^2 from the fit's own Jacobian)
+      against the value implied by the PDF's printed "Scale 1:150000"
+      ratio at 150dpi (645 m^2/px^2) - within 0.5%, a strong sanity
+      check that the fit is geometrically sound and not just
+      numerically overfit. One real bug caught and fixed while
+      building the correspondence table: an initial control-point list
+      had Sandness and Happyhansel's pixel coordinates accidentally
+      swapped with their neighbours (a copy-paste indexing slip against
+      the raw detected-dot array), which produced a 7.2km outlier
+      residual for Happyhansel alone - correcting the two coordinates
+      dropped every residual to the sub-450m range reported above, a
+      reminder to sanity-check any single outlier residual against the
+      raw source data before accepting a "good enough" global fit.
+
+      NOT yet deployed: the second half (turning each zone into a
+      closed polygon) is a harder raster-segmentation problem than
+      Middlesbrough/Portsmouth's line-network watershed technique,
+      because this map's zones are semi-transparent colour tints
+      alpha-blended over a full detailed OS basemap (roads, contour
+      lines, place-name text, water) rather than a flat vector fill or
+      a clean outline network - so a single fixed RGB distance
+      threshold per zone does not generalise: at a loose threshold
+      (35) small/isolated-island zones extract almost exactly right
+      (Foula 12.8 sq km vs a real ~12.7 sq km, Papa Stour 8.8 vs ~9.1,
+      Unst/Baltasound 116.3 vs ~120.6 - all near-exact), but the total
+      across all 26 zones comes to ~2253 sq km against Shetland's real
+      ~1466 sq km land area (a ~54% overcount, concentrated in the
+      large contiguous mainland zones where morphological closing
+      bridges across thin shared boundaries between similarly-tinted
+      neighbours); at a tighter threshold (24) several urban/small
+      zones (Scalloway, Bell's Brae, Hamnavoe, Aith, Out Skerries)
+      collapse to near-zero area instead, traced to those specific
+      zones' own reference colour being sampled from a low-confidence,
+      contaminated ring (under 10 consistent samples out of ~150-200
+      at the seed) rather than a genuinely representative fill colour
+      - a per-zone reference-colour problem, not a threshold problem,
+      for those specific zones. Next session should either
+      hand-pick a clean interior sample pixel per low-confidence zone
+      (visually, from a zoomed crop, rather than automatic ring-
+      sampling) before re-running the same closing+connected-
+      component-containing-seed pipeline, or revisit method (2) (ICP
+      coastline registration) purely for the polygon-extraction half,
+      now that method (1) has already solved georeferencing
+      independently - the two methods do not have to be used together.
+      The Fair Isle inset has no OS grid or scale marker of its own and
+      only one control point available (its own primary school), so it
+      cannot be independently georeferenced the same way; since Fair
+      Isle is a single-school island where the entire island is by
+      definition the catchment (confirmed: the inset's own yellow fill
+      covers the full island outline with no internal subdivision),
+      the practical fix is to use Fair Isle's real OSM/Ordnance Survey
+      coastline directly as the catchment polygon rather than
+      georeferencing the inset raster at all - not yet done.
   - local_authority_name: "City of London (England)"
     reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."
   - local_authority_name: "Redbridge (England)"
