@@ -4555,6 +4555,45 @@ sources:
     enabled: true
     notes: "7 primary (Roman Catholic) catchment polygons."
 
+  # South Tyneside: the borough-wide ~27-zone partition maps documented as
+  # unsolved in the disabled candidates section below are still unsolved
+  # (line-network closure problem, not attempted again this session) - but
+  # Harton Academy separately publishes its own single-school catchment
+  # map, the same MapInfo PDF Printer / one-closed-boundary-per-page format
+  # that already worked for BCP/Leeds, and unlike those the school's own
+  # article page was fetchable this session via the Wayback Machine
+  # (web.archive.org/web/20260122043340/https://www.southtyneside.gov.uk/
+  # media/9186/.../Harton_Academy_Catchment_area_2026-27.pdf) even though
+  # the live southtyneside.gov.uk site still blocks plain fetches with a
+  # Cloudflare challenge. No scale bar and no OS grid on this particular
+  # map (unlike Middlesbrough's), so georeferenced instead via a 2-point
+  # similarity transform anchored on two real, precisely-known navigational
+  # landmarks drawn on the map itself - the Tyne North Pier and South Pier
+  # lighthouses (OSM-sourced coordinates) - then independently verified
+  # two ways: (1) a third landmark not used in the fit, Trow Point,
+  # transforms to within ~82m of its real coordinate; (2) of all 8 of
+  # South Tyneside's real open secondary schools' DB coordinates, only
+  # Harton Academy's own falls inside the resulting polygon, none of the
+  # other 7 do.
+  - local_authority_code: "393"
+    local_authority_name: "South Tyneside"
+    academic_year: "2026-2027"
+    source_type: "secondary_catchment"
+    source_url: "https://web.archive.org/web/20260122043340/https://www.southtyneside.gov.uk/media/9186/Harton-Academy-Catchment-area-map-2026-to-2027/pdf/Harton_Academy_Catchment_area_2026-27.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/south-tyneside/harton_academy_catchment.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'UNCONFIRMED - the source PDF states only "Crown Copyright reserved. Licence No. 100019570", with no explicit Open Government Licence statement found on southtyneside.gov.uk.'
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      1 secondary catchment polygon (Harton Academy only - South
+      Tyneside's other 7 secondary schools are not covered by this
+      single-school map; see the borough-wide partition maps discussion
+      below for the rest, still unsolved).
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
