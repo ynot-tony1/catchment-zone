@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { Prisma } from "@catchment-zone/database";
 import { parseMapCatchmentsQuery } from "@catchment-zone/shared";
 import { z } from "zod";
 import {
@@ -8,59 +7,22 @@ import {
   jsonResponse,
   newRequestId,
 } from "@/lib/api-response";
-import { getPrismaClient } from "@/lib/prisma";
-import { logger } from "@/lib/logger";
+import { getCatchmentsFeatureCollection } from "@/lib/catchments";
 
 export const runtime = "nodejs";
 
-type MapCatchmentRow = {
-  id: string;
-  area_name: string;
-  area_type: string;
-  academic_year: string;
-  overview_geometry_geojson: string;
-  performance_percentile: number | null;
-  performance_metric_code: string | null;
-};
-
-// The overview geometry is simplified far more aggressively (~100m
-// tolerance) than simplified_geometry_geojson specifically for this bulk,
-// whole-of-Great-Britain load (see services/ingestor's
-// OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES and the migration that added this
-// column) - fetching ~9,400 areas at the finer, per-catchment tolerance
-// was transferring tens of megabytes from CockroachDB on every /map visit
-// and took upwards of ten seconds. Coordinates still carry ~8 decimal
-// places (sub-millimetre) of stored precision even at this coarser
-// tolerance, far beyond what a map display needs; rounding to 5 (~1.1m at
-// GB latitudes) shrinks the response further with no visible difference.
-const COORDINATE_DECIMAL_PLACES = 5;
-
-function roundCoordinates(node: unknown): unknown {
-  if (Array.isArray(node)) {
-    if (
-      node.length >= 2 &&
-      typeof node[0] === "number" &&
-      typeof node[1] === "number"
-    ) {
-      return node.map((value) =>
-        typeof value === "number"
-          ? Number(value.toFixed(COORDINATE_DECIMAL_PLACES))
-          : value,
-      );
-    }
-    return node.map(roundCoordinates);
-  }
-  return node;
-}
-
+// The map now always requests the whole of Great Britain in one go (see
+// school-map.tsx) and every catchment area fits in the pre-built
+// map_catchments_cache row (see lib/catchments.ts), so bbox/academicYear/
+// areaType are validated for a well-formed request but no longer used to
+// filter - there is only one dataset to serve. Query parsing is kept so
+// this route's contract doesn't silently change shape for any other
+// caller.
 export async function GET(request: NextRequest) {
   const requestId = newRequestId();
 
-  let query;
   try {
-    query = parseMapCatchmentsQuery(
-      Object.fromEntries(request.nextUrl.searchParams),
-    );
+    parseMapCatchmentsQuery(Object.fromEntries(request.nextUrl.searchParams));
   } catch (error) {
     return errorResponse(
       "BAD_REQUEST",
@@ -72,76 +34,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [minLon, minLat, maxLon, maxLat] = query.bbox;
-    const prisma = getPrismaClient();
-
-    const conditions = [
-      Prisma.sql`minimum_latitude <= ${maxLat}`,
-      Prisma.sql`maximum_latitude >= ${minLat}`,
-      Prisma.sql`minimum_longitude <= ${maxLon}`,
-      Prisma.sql`maximum_longitude >= ${minLon}`,
-    ];
-    if (query.academicYear) {
-      conditions.push(Prisma.sql`academic_year = ${query.academicYear}`);
-    }
-    if (query.areaType) {
-      conditions.push(Prisma.sql`area_type = ${query.areaType}`);
-    }
-
-    // Ordered by a deterministic hash of the id rather than left to the
-    // database's default scan order (effectively arbitrary on CockroachDB).
-    // The map now loads every catchment area in one request on page load
-    // and never re-fetches on pan/zoom (see school-map.tsx), so this
-    // mainly guards against MAX_CATCHMENT_MAP_FEATURES ever being exceeded
-    // as coverage keeps growing - if that ever truncates results, a stable
-    // hash-ordered subset is still far better than an arbitrary one that
-    // could differ between near-identical requests (the flicker this
-    // originally fixed).
-    const areas = await prisma.$queryRaw<MapCatchmentRow[]>`
-      SELECT id, area_name, area_type, academic_year, overview_geometry_geojson, performance_percentile, performance_metric_code
-      FROM catchment_areas
-      WHERE ${Prisma.join(conditions, " AND ")}
-      ORDER BY md5(id::text)
-      LIMIT ${query.limit}
-    `;
-
-    const features = [];
-    for (const area of areas) {
-      let geometry: { type: string; coordinates: unknown };
-      try {
-        geometry = JSON.parse(area.overview_geometry_geojson);
-      } catch {
-        // A single malformed stored geometry should not fail the whole map
-        // request; skip it and log for the ingestion team to investigate.
-        logger.warn("Skipping catchment area with malformed stored geometry", {
-          areaId: area.id,
-        });
-        continue;
-      }
-      features.push({
-        type: "Feature" as const,
-        geometry: {
-          type: geometry.type,
-          coordinates: roundCoordinates(geometry.coordinates),
-        },
-        properties: {
-          id: area.id,
-          areaName: area.area_name,
-          areaType: area.area_type,
-          academicYear: area.academic_year,
-          performancePercentile: area.performance_percentile,
-          performanceMetricCode: area.performance_metric_code,
-        },
-      });
-    }
-
-    const featureCollection = { type: "FeatureCollection" as const, features };
+    const featureCollection = await getCatchmentsFeatureCollection();
     return jsonResponse(featureCollection, {
       requestId,
-      // Longer than before: the whole dataset is now identical for every
-      // visitor and every viewport (loaded once, not bbox-scoped), so it's
-      // effectively static until the next catchment import or score
-      // refresh - safe to cache harder both client- and CDN-side.
+      // The cache is identical for every visitor and every viewport, and
+      // only changes when refresh-catchment-overview-cache is next run
+      // (after a catchment import or score refresh) - safe to cache hard
+      // both client- and CDN-side.
       cacheControl: "public, max-age=1800, stale-while-revalidate=3600",
     });
   } catch (error) {

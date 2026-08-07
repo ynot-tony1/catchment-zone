@@ -59,16 +59,23 @@ const GB_BOUNDS: [number, number, number, number] = [-8.7, 49.8, 1.9, 61.0];
 // debouncing, a slow request for an earlier viewport can still resolve
 // after a faster request for a later one, so it also drops any response
 // that isn't for the most recent request it itself issued). Catchment
-// areas are unaffected by any of this - they're loaded once, in full, and
-// never re-fetched on pan/zoom (see loadAllCatchments below).
+// areas are unaffected by any of this - they're never fetched client-side
+// at all, see initialCatchments below.
 const MOVE_DEBOUNCE_MS = 300;
 
 export function SchoolMap({
   styleUrl,
   attribution,
+  initialCatchments,
 }: {
   styleUrl: string;
   attribution: string;
+  // Fetched server-side by app/map/page.tsx and passed in already-resolved,
+  // rather than fetched here after mount - the gap between "map renders
+  // empty" and "client fetch resolves" was exactly what made catchments
+  // look broken/slow to appear. This is the map's only source for them;
+  // there is no client-side catchments fetch anywhere in this component.
+  initialCatchments: { type: "FeatureCollection"; features: unknown[] };
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -85,9 +92,6 @@ export function SchoolMap({
   const [selectedCatchment, setSelectedCatchment] =
     useState<CatchmentFeatureProperties | null>(null);
   const [showSchools, setShowSchools] = useState(false);
-  const [catchmentCount, setCatchmentCountInView] = useState<number | null>(
-    null,
-  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -107,9 +111,12 @@ export function SchoolMap({
     map.addControl(new NavigationControl(), "top-right");
 
     map.on("load", () => {
+      // Seeded directly from the server-rendered prop - no fetch, no empty-
+      // then-populated gap. Every catchment area is present the instant
+      // this source is added.
       map.addSource("catchments", {
         type: "geojson",
-        data: { type: "FeatureCollection", features: [] },
+        data: initialCatchments as GeoJSON.FeatureCollection,
       });
       map.addLayer({
         id: "catchments-fill",
@@ -203,19 +210,6 @@ export function SchoolMap({
         map.getCanvas().style.cursor = "";
       });
 
-      // Catchment areas are fetched once, in full, right here - never
-      // re-fetched on pan/zoom. They used to be loaded per-viewport like
-      // schools below, but with the dataset now covering most of Great
-      // Britain, a wide view matched thousands of areas at once and every
-      // pan re-triggered a fresh fetch; visible latency between "old
-      // viewport's areas cleared" and "new viewport's areas arrived" made
-      // catchments look like they were randomly appearing and disappearing
-      // while zooming, which they are the whole point of this map and
-      // should never do. Loading the complete set once and leaving the
-      // source alone afterwards means every catchment area is on the map,
-      // at every zoom level, from the first paint onward.
-      loadAllCatchments(map, setError, setCatchmentCountInView);
-
       function loadCurrentView() {
         if (showSchoolsRef.current) {
           loadSchoolsInView(map, schoolsRequestIdRef, setError);
@@ -279,7 +273,7 @@ export function SchoolMap({
         />
         <span className="text-muted-foreground">no data</span>
       </div>
-      {catchmentCount === 0 && (
+      {initialCatchments.features.length === 0 && (
         <p className="text-muted-foreground text-xs">
           No catchment area data could be loaded. See the{" "}
           <Link
@@ -392,30 +386,5 @@ async function loadSchoolsInView(
     if (requestIdRef.current === requestId) {
       setError("Could not load schools for this area.");
     }
-  }
-}
-
-async function loadAllCatchments(
-  map: MapLibreMap,
-  setError: (message: string | null) => void,
-  setCatchmentCount: (count: number | null) => void,
-) {
-  const bbox = GB_BOUNDS.join(",");
-
-  try {
-    const response = await fetch(
-      `/api/map/catchments?bbox=${encodeURIComponent(bbox)}`,
-    );
-    if (!response.ok) {
-      setError("Could not load catchment areas.");
-      return;
-    }
-    const featureCollection = await response.json();
-    const source = map.getSource("catchments") as GeoJSONSource | undefined;
-    source?.setData(featureCollection);
-    setCatchmentCount(featureCollection.features?.length ?? 0);
-    setError(null);
-  } catch {
-    setError("Could not load catchment areas.");
   }
 }
