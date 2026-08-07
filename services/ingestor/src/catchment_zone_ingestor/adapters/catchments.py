@@ -73,7 +73,12 @@ class FeatureQueryResult:
     retry=retry_if_exception_type(httpx.TransportError),
 )
 def _query_page(
-    client: httpx.Client, feature_server_url: str, offset: int, where: str
+    client: httpx.Client,
+    feature_server_url: str,
+    offset: int,
+    where: str,
+    *,
+    paginate: bool = True,
 ) -> dict[str, Any]:
     query_url = feature_server_url.rstrip("/") + "/query"
     params: dict[str, str | int] = {
@@ -81,9 +86,10 @@ def _query_page(
         "outFields": "*",
         "f": "geojson",
         "outSR": "4326",
-        "resultOffset": offset,
-        "resultRecordCount": PAGE_SIZE,
     }
+    if paginate:
+        params["resultOffset"] = offset
+        params["resultRecordCount"] = PAGE_SIZE
     response = client.get(query_url, params=params)
     response.raise_for_status()
     payload: dict[str, Any] = response.json()
@@ -92,6 +98,20 @@ def _query_page(
             f"ArcGIS query error for {feature_server_url}: {payload['error']}"
         )
     return payload
+
+
+#: Some older ArcGIS Server installs (e.g. Redcar and Cleveland's
+#: rcbcmaps.redcar-cleveland.gov.uk, currentVersion 10.91) reject
+#: resultOffset/resultRecordCount outright with this exact message,
+#: verified live, regardless of the values passed - not a "count too
+#: large" error, an unconditional "this server predates supportsPagination"
+#: one. query_all_features falls back to a single unpaginated request in
+#: this case rather than treating it as fatal.
+_PAGINATION_UNSUPPORTED_MESSAGE = "pagination is not supported"
+
+
+def _is_pagination_unsupported(exc: CatchmentSourceError) -> bool:
+    return _PAGINATION_UNSUPPORTED_MESSAGE in str(exc).lower()
 
 
 def query_all_features(
@@ -113,9 +133,16 @@ def query_all_features(
     all_features: list[dict[str, Any]] = []
     offset = 0
     detected_wkid: int | None = None
+    paginate = True
 
     while True:
-        payload = _query_page(client, feature_server_url, offset, where)
+        try:
+            payload = _query_page(client, feature_server_url, offset, where, paginate=paginate)
+        except CatchmentSourceError as exc:
+            if paginate and offset == 0 and _is_pagination_unsupported(exc):
+                paginate = False
+                continue
+            raise
         features = payload.get("features", [])
         crs = payload.get("crs") or {}
         wkid = _extract_wkid(crs)
@@ -123,7 +150,7 @@ def query_all_features(
             detected_wkid = wkid
 
         all_features.extend(features)
-        if len(features) < PAGE_SIZE:
+        if not paginate or len(features) < PAGE_SIZE:
             break
         offset += PAGE_SIZE
 
@@ -578,7 +605,49 @@ def build_catchment_areas(
             )
         )
 
+    result.areas = _merge_areas_sharing_geometry(result.areas)
     return result
+
+
+def _merge_areas_sharing_geometry(areas: list[CatchmentArea]) -> list[CatchmentArea]:
+    """Two distinct, real schools occasionally share one drawn catchment
+    polygon exactly (e.g. Redcar and Cleveland's "RAVENSWORTH JUNIOR
+    SCHOOL" and "TEESVILLE INFANT SCHOOL" - a real infant/junior split
+    site, verified live - and its "ESTON PARK SECONDARY SCHOOL" and
+    "GILLBROOK COLLEGE"). The database's own dedup key is (source_id,
+    geometry_checksum) - see CatchmentArea.id's docstring in models.py -
+    so importing both as separate rows would silently drop one of them
+    at upsert time rather than raise, since from the database's point of
+    view they are indistinguishable. Collapse same-checksum features into
+    one row with a combined name instead, the same "A / B (shared)"
+    convention already used for Middlesbrough's genuine shared zone
+    (hand-authored there; this is the same idea applied automatically for
+    ArcGIS-sourced batches, where the collision is discovered per-import
+    rather than at digitisation time)."""
+    grouped: dict[str, list[CatchmentArea]] = {}
+    order: list[str] = []
+    for area in areas:
+        if area.geometry_checksum not in grouped:
+            grouped[area.geometry_checksum] = []
+            order.append(area.geometry_checksum)
+        grouped[area.geometry_checksum].append(area)
+
+    merged: list[CatchmentArea] = []
+    for checksum in order:
+        group = grouped[checksum]
+        if len(group) == 1:
+            merged.append(group[0])
+            continue
+        names = sorted({a.area_name for a in group})
+        combined_name = " / ".join(names) if len(names) > 1 else names[0]
+        first = group[0]
+        merged.append(first.model_copy(update={"area_name": combined_name}))
+        logger.info(
+            "merged catchment areas sharing identical geometry",
+            extra={"area_names": names, "geometry_checksum": checksum},
+        )
+
+    return merged
 
 
 def _extract_name(feature: dict[str, Any], candidates: list[str], index: int) -> str:

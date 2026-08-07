@@ -4464,6 +4464,97 @@ sources:
       See the block comment above for the OS-grid + watershed method and
       the anchor-verification process.
 
+  # Redcar and Cleveland: reopened from the "no ArcGIS Hub DCAT dataset"
+  # dead end recorded elsewhere in this file - that check only covered the
+  # council's published open-data catalogue, not its live GIS backend.
+  # Its own "School Catchment Area Finder" tool
+  # (redcar-cleveland.gov.uk/schools-and-education/school-catchment-area-finder)
+  # is a postcode search box with no visible map, but its page source
+  # embeds a JSONP call straight to a self-hosted ArcGIS Server
+  # (rcbcmaps.redcar-cleveland.gov.uk/maps/rest/services/rcbc/LPG_JOINED/
+  # MapServer/find) - following that hostname to its sibling
+  # rcbc/RCBC_PUBLIC MapServer (services directory browsing is disabled,
+  # but /MapServer?f=json still works) surfaced 4 real, live polygon
+  # layers (ids 31-34) named exactly "Secondary School Catchment Areas",
+  # "Secondary School Catchment Areas (Roman Catholic)", "Primary School
+  # Catchment Areas" and "Primary School Catchment Areas (Roman
+  # Catholic)" - 10 + 2 + 38 + 7 = 57 polygons total, each carrying real
+  # NAME/ADDRESS/POSTCODE/DCSF_Numbe/UPRN fields. Verified against this
+  # project's own database (local_authority_code "807"): of the 57
+  # features, 44 matched an existing GIAS school by name (the other 13
+  # are pre-academisation/pre-merger names not present verbatim in GIAS,
+  # e.g. "TEESVILLE INFANT SCHOOL" vs. the DB's "Teesville Academy" -
+  # not re-attributed, since guessing the mapping risks a wrong
+  # catchment-to-school link) - of those 44, all 44 (100%) have the
+  # school's own real DB coordinate falling inside its own matched
+  # polygon, a strong live-CRS/precision signal for the whole set. Server
+  # is an old ArcGIS Server build (currentVersion 10.91) that
+  # unconditionally rejects resultOffset/resultRecordCount ("Pagination
+  # is not supported.") - a real bug in this project's generic ArcGIS
+  # adapter until this session (it always sent those params); fixed in
+  # query_all_features (src/catchment_zone_ingestor/adapters/catchments.py)
+  # to retry once without them and treat a single unpaginated response as
+  # complete, covered by a new regression test.
+  - local_authority_code: "807"
+    local_authority_name: "Redcar and Cleveland"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.redcar-cleveland.gov.uk/schools-and-education/school-catchment-area-finder"
+    download_url: "https://rcbcmaps.redcar-cleveland.gov.uk/maps/rest/services/rcbc/RCBC_PUBLIC/MapServer/31"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'Open Government Licence (per redcar-cleveland.gov.uk/about-the-council/data-protection/data-transparency-and-open-data: "released under the open government licence").'
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "10 secondary (non-denominational) catchment polygons."
+
+  - local_authority_code: "807"
+    local_authority_name: "Redcar and Cleveland"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://www.redcar-cleveland.gov.uk/schools-and-education/school-catchment-area-finder"
+    download_url: "https://rcbcmaps.redcar-cleveland.gov.uk/maps/rest/services/rcbc/RCBC_PUBLIC/MapServer/32"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'Open Government Licence (per redcar-cleveland.gov.uk/about-the-council/data-protection/data-transparency-and-open-data: "released under the open government licence").'
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "2 secondary (Roman Catholic) catchment polygons."
+
+  - local_authority_code: "807"
+    local_authority_name: "Redcar and Cleveland"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.redcar-cleveland.gov.uk/schools-and-education/school-catchment-area-finder"
+    download_url: "https://rcbcmaps.redcar-cleveland.gov.uk/maps/rest/services/rcbc/RCBC_PUBLIC/MapServer/33"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'Open Government Licence (per redcar-cleveland.gov.uk/about-the-council/data-protection/data-transparency-and-open-data: "released under the open government licence").'
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "38 primary (non-denominational) catchment polygons."
+
+  - local_authority_code: "807"
+    local_authority_name: "Redcar and Cleveland"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://www.redcar-cleveland.gov.uk/schools-and-education/school-catchment-area-finder"
+    download_url: "https://rcbcmaps.redcar-cleveland.gov.uk/maps/rest/services/rcbc/RCBC_PUBLIC/MapServer/34"
+    name_field: "NAME"
+    format: "arcgis_feature_service"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'Open Government Licence (per redcar-cleveland.gov.uk/about-the-council/data-protection/data-transparency-and-open-data: "released under the open government licence").'
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_arcgis_feature_service"
+    enabled: true
+    notes: "7 primary (Roman Catholic) catchment polygons."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -5219,8 +5310,8 @@ candidates:
       not do. Most of Rutland's 17 primary schools are explicitly marked
       "no catchment area" in the same source, so this may be close to
       the practical ceiling for this authority regardless.
-  - local_authority_name: "Warrington, Redcar and Cleveland (England)"
-    reason_not_enabled: 'Warrington''s admissions page references a PDF booklet only - the one real map reference found inside it ("Figure 1" in a single school''s own admissions-policy extract, geographic postcode-district bandings, not a drawn catchment boundary) is thin and per-school, not a borough-wide GIS layer. Redcar and Cleveland''s full ArcGIS Hub DCAT feed (41 datasets) has no school catchment layer. Both PDF-only or no-data dead ends, not licensing gaps. (Halton, previously grouped here, is now digitised - see the Halton entry in sources: above. Middlesbrough, also previously grouped here, is now digitised too - its "Secondary School Catchment 2021" PDF turned out to be a real ArcGIS Pro print export with a genuine drawn boundary map - see the Middlesbrough entry in sources: above.)'
+  - local_authority_name: "Warrington (England)"
+    reason_not_enabled: 'Admissions page references a PDF booklet only - the one real map reference found inside it ("Figure 1" in a single school''s own admissions-policy extract, geographic postcode-district bandings, not a drawn catchment boundary) is thin and per-school, not a borough-wide GIS layer. A PDF-only dead end, not a licensing gap. (Halton, Middlesbrough and Redcar and Cleveland, previously grouped here, are now all digitised - see their entries in sources: above; Redcar and Cleveland''s ArcGIS Hub open-data catalogue genuinely has no catchment dataset, but its separate self-hosted rcbcmaps.redcar-cleveland.gov.uk ArcGIS Server, found via its "School Catchment Area Finder" tool''s own page source, does.)'
   - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
     reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
   - local_authority_name: "Herefordshire (England)"

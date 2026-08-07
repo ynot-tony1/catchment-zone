@@ -19,6 +19,7 @@ from catchment_zone_ingestor.adapters.catchments import (
     CatchmentSourceError,
     build_catchment_areas,
     download_geojson_features,
+    query_all_features,
     reproject_if_needed,
 )
 
@@ -44,6 +45,60 @@ def test_builds_valid_polygon_and_polygon_with_hole() -> None:
     names = {a.area_name for a in result.areas}
     assert "Test Primary Catchment A (fixture)" in names
     assert "Test Primary Catchment B, with hole (fixture)" in names
+
+
+def test_merges_areas_that_share_identical_geometry_into_one_combined_named_row() -> None:
+    """Two distinct schools occasionally share one drawn catchment polygon
+    exactly (verified live for Redcar and Cleveland's Ravensworth Junior /
+    Teesville Infant and Eston Park Secondary / Gillbrook College pairs).
+    The database's own dedup key is (source_id, geometry_checksum), so
+    importing both as separate rows would silently drop one at upsert
+    time; build_catchment_areas must merge them into a single row with a
+    combined name instead, matching the "A / B" convention used elsewhere
+    in this project for hand-digitised shared zones."""
+    shared_polygon = {
+        "type": "Polygon",
+        "coordinates": [[[-1.1, 53.0], [-1.0, 53.0], [-1.0, 53.1], [-1.1, 53.1], [-1.1, 53.0]]],
+    }
+    features = [
+        {
+            "type": "Feature",
+            "properties": {"NAME": "TEESVILLE INFANT SCHOOL"},
+            "geometry": shared_polygon,
+        },
+        {
+            "type": "Feature",
+            "properties": {"NAME": "RAVENSWORTH JUNIOR SCHOOL"},
+            "geometry": shared_polygon,
+        },
+        {
+            "type": "Feature",
+            "properties": {"NAME": "SOME OTHER SCHOOL"},
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[-2.1, 53.0], [-2.0, 53.0], [-2.0, 53.1], [-2.1, 53.1], [-2.1, 53.0]]
+                ],
+            },
+        },
+    ]
+
+    result = build_catchment_areas(
+        features,
+        source_id="807:primary_catchment_nd",
+        area_type="primary_catchment_nd",
+        academic_year="2025-2026",
+        name_field_candidates=["NAME"],
+        detected_wkid=4326,
+        fallback_source_crs="EPSG:4326",
+        valid_from_iso="2025-09-01T00:00:00",
+    )
+
+    assert result.rejected_count == 0
+    assert len(result.areas) == 2
+    names = {a.area_name for a in result.areas}
+    assert "RAVENSWORTH JUNIOR SCHOOL / TEESVILLE INFANT SCHOOL" in names
+    assert "SOME OTHER SCHOOL" in names
 
 
 def test_rejects_non_polygonal_feature() -> None:
@@ -409,3 +464,50 @@ def test_reproject_if_needed_trusts_genuinely_plausible_wgs84_geometry() -> None
     result = reproject_if_needed(real_point, detected_wkid=4326, fallback_source_crs="EPSG:27700")
     assert result.x == real_point.x
     assert result.y == real_point.y
+
+
+def test_query_all_features_falls_back_to_unpaginated_request_when_server_rejects_pagination() -> (
+    None
+):
+    """Redcar and Cleveland's rcbcmaps.redcar-cleveland.gov.uk ArcGIS Server
+    (currentVersion 10.91) returns a JSON error body - HTTP 200, {"error":
+    {"code": 400, "message": "Pagination is not supported.", ...}} - for
+    any request carrying resultOffset/resultRecordCount, regardless of
+    their values. query_all_features must retry once without those params
+    and treat the single unpaginated response as complete, rather than
+    raising or looping forever."""
+    single_feature_body = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"NAME": "Test Primary (fixture)"},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [[-1.1, 53.0], [-1.0, 53.0], [-1.0, 53.1], [-1.1, 53.1], [-1.1, 53.0]]
+                    ],
+                },
+            }
+        ],
+    }
+    calls: list[dict[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        params = dict(request.url.params)
+        calls.append(params)
+        if "resultOffset" in params or "resultRecordCount" in params:
+            return httpx.Response(
+                200,
+                json={"error": {"code": 400, "message": "Pagination is not supported.", "details": []}},
+            )
+        return httpx.Response(200, json=single_feature_body)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        result = query_all_features(client, "https://example.invalid/arcgis/rest/services/x/MapServer/1")
+
+    assert len(calls) == 2
+    assert "resultOffset" in calls[0]
+    assert "resultOffset" not in calls[1]
+    assert len(result.features) == 1
+    assert result.features[0]["properties"]["NAME"] == "Test Primary (fixture)"
