@@ -2387,3 +2387,62 @@ other untried PDF-only councils (Enfield, Bedford, Warrington,
 Middlesbrough, Redcar and Cleveland, Suffolk).
 
 Tests pass (45 shared, 125 ingestor). Working tree clean, all pushed.
+
+## Update: Portsmouth's combined infant/primary map solved via ICP + marker-controlled watershed (2026-08-07)
+
+The item flagged above as "not reached" - Portsmouth's single-page
+combined infant/primary catchment map (`democracy.portsmouth.gov.uk/
+documents/s9068/Infant and Primary School Location with catchment
+areas.pdf`) - is now done: 41 catchment polygons across 37 zones (some
+zones shared by co-located Infant/Junior schools).
+
+This PDF has no text layer at all (Aspose.Pdf-flattened raster), so no
+per-school labels were readable via OCR/pdftotext. Solved without
+needing them: since this project's schools DB already holds real
+coordinates for every Portsmouth primary/infant school, an ICP
+(iterative closest point) similarity-transform registration - repeatedly
+matching each school's predicted pixel position to its nearest of ~35
+detected red markers and re-solving scale+rotation+translation via
+Umeyama/Procrustes, starting from a bounding-box scale guess - recovered
+the map's georeferencing from ~40 real control points at once, with no
+scale bar reading or landmark geocoding required. Converged to a 6.2px
+mean residual (41 of 45 candidate schools matched; 4 "Junior" schools
+co-located with their "Infant" counterpart's own marker were correctly
+excluded as 60-75px outliers, not real errors) at ~6.9 real metres per
+pixel and a ~0.24 degree rotation (essentially north-up).
+
+With accurate georeferencing established, the actual zone boundaries
+were extracted via marker-controlled watershed segmentation - the
+technique previously scoped but never implemented for South Tyneside's
+still-unsolved equivalent problem, here proven end-to-end for the first
+time this session: isolated the black boundary-line network from all
+other page content (labels, basemap detail) by keeping only large
+connected components after light dilation (>5000px - both the real line
+network and the outer map frame are far larger than any text label),
+then ran skimage's watershed with each matched school's own resolved
+pixel position as a seed and the isolated line network as an
+effectively-impassable barrier. Verified two ways: all 41 matched
+schools' own DB coordinates fall inside their assigned polygon (checked
+directly), and a visual overlay of the extracted contours onto the
+source page tracks the real printed boundary lines closely across the
+whole map extent, not just near the control points.
+
+Committed (no Co-Authored-By trailer): `4efc54f`. Imported (dry-run then
+real: 41 built, 0 rejected, 35 persisted after the expected shared-
+polygon dedup - 5-6 Infant/Junior pairs share identical geometry,
+matching the same pattern already documented for Hertfordshire/Cheshire
+East-West). Envelope-verified: all coordinates within real Portsmouth
+bounds (lat 50.772-50.864, lon -1.152 to -0.988). `refresh-catchment-
+scores` (6,244 of 9,413 areas now scored) and `refresh-catchment-
+overview-cache` (9,413 = 9,413, cache in sync) both re-run.
+
+Portsmouth's total catchment coverage is now 41 secondary-phase +
+41 primary/infant-phase (35 persisted) polygons.
+
+**Still not reached**: South Tyneside's own partition-map problem
+(structurally similar to what was just solved for Portsmouth, but still
+blocked by a stricter WAF on the PDF resource itself - worth another
+network-level retry given this session's marker-controlled-watershed
+technique is now proven to work well when the PDF itself is reachable);
+the other untried PDF-only councils (Enfield, Bedford, Warrington,
+Middlesbrough, Redcar and Cleveland, Suffolk).
