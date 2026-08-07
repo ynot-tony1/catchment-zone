@@ -4269,6 +4269,48 @@ sources:
       details. No secondary layer exists (Stoke's high schools are not
       catchment-based per the council).
 
+  # Portsmouth: this council was previously a documented dead end ("only
+  # per-school PDF maps found") from before this project's PDF-digitization
+  # pipeline existed. Its per-school secondary catchment PDFs
+  # (portsmouth.gov.uk/wp-content/uploads/...) are real MapInfo-exported
+  # vector maps (Producer: "MapInfo PDF Printer" in the PDF metadata) with a
+  # clean boundary line and named red school markers - genuinely digitisable.
+  # Mayfield and Trafalgar share one catchment and their PDF map shows BOTH
+  # schools' real markers, giving two independent, DB-verified ground-control
+  # points - an exact similarity-transform (rotation+scale+translation)
+  # georeferencing with no external landmark guessing needed. Solved a
+  # rotation of ~5.4 degrees (a real, consistent grid-north-vs-print
+  # rotation, not an error - confirmed by an independent bearing check
+  # between the two markers' real coordinates vs their pixel positions,
+  # which agreed within ~5 degrees). Verified: both schools' own DB
+  # coordinates fall inside the resulting polygon, and the extracted
+  # contour overlays pixel-perfectly onto the source boundary line.
+  # Portsmouth's other 5-6 secondary schools' PDFs (Admiral Lord Nelson,
+  # Charter Academy, Castle View, Miltoncross, Springfield, Priory) use a
+  # different template with only ONE marker each and no scale bar/grid -
+  # not solved this pass, needs an external second landmark (geocoded via
+  # OpenStreetMap Nominatim) per file, not yet attempted. Portsmouth also
+  # has a combined infant/primary catchment map (~30 schools, one PDF, has
+  # a real printed scale bar) not yet attempted - see PROJECT_STATUS.md.
+  - local_authority_code: "851"
+    local_authority_name: "Portsmouth"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.portsmouth.gov.uk/services/schools-and-learning/schools/secondary-schools-information-and-catchment-areas/trafalgar-school/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/portsmouth/portsmouth_secondary_mayfield_trafalgar.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'Not OGL - the source PDF is printed "Based or reproduced from Ordnance Survey 1:1250 Base Map with the permission of HMSO (C) Crown copyright reserved. Unauthorised reproduction infringes Crown copyright and may lead to prosecution or civil proceedings. Licence No. 100019671 (2015)" - an older-style OS/HMSO permission notice, not a current Open Government Licence statement.'
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      1 shared catchment polygon covering both Mayfield School and
+      Trafalgar School (identical boundary for both, per the council's own
+      map) - see the block comment above for the two-marker exact
+      georeferencing method.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
