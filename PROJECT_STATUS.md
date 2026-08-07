@@ -2103,3 +2103,37 @@ looks like in-progress map UX work, e.g. from a memory note about
 "catchments default-on, pins opt-in, GB-only bounds"). Left untouched and
 uncommitted, out of this task's scope - another session/fork appears to
 own that work.
+
+## Update: 3 more BCP stragglers recovered (2026-08-07)
+
+Of BCP's original 9 undigitised stragglers, 3 (Baden-Powell and St
+Peter's, Livingstone Road Infant, Manorside) turned out to be
+mis-categorised by an earlier session as an "older raster-screenshot
+template with no usable vector boundary or scale bar." On inspection this
+pass, all 3 actually have a clean vector boundary line, a red
+school-location marker, and a precise numeric ratio scale (e.g. "Scale
+1:31000") - a greyscale OS-2013-vintage template, visually different from
+but functionally equivalent to the coloured/scale-bar template already
+used for BCP's other 29. The ratio scale converts to exact metres-per-
+pixel given a controlled render DPI, without needing scale-bar tick
+detection. Boundary isolated as the single largest black connected
+component after excluding the page-frame rectangle (found by its bbox
+covering almost the whole page). Verified pixel-perfect via a full
+contour + marker overlay redrawn onto each source render; each polygon
+confirmed to contain its own school's real coordinate.
+
+The remaining 5 "omits the marker" stragglers (Lilliput, Mudeford-
+Community-Infants, Old-Town-Infant-and-Nursery, Queens-Park-Infant, St-
+Michael's) were re-checked and confirmed to genuinely have no marker -
+the only red pixels present on their maps are a main road rendered in a
+similar colour, not a location marker, ruled out as a false lead this
+pass. Bishop Aldhelm's (different "Parish/Local Authority Catchment"
+overlap template) also has no marker. All 6 remain open candidates,
+still needing a different control-point strategy (e.g. cross-referencing
+another nearby labelled school on the same base map against this
+project's own schools table) not attempted this pass.
+
+Committed and pushed (`2fd0914`), imported (dry-run then real: 32 primary
+areas built, 0 rejected, up from 29), envelope-verified, scored via
+`refresh-catchment-scores` (6,200 of 9,365 total areas now scored). BCP's
+total catchment count: 39 (was 36).
