@@ -18,19 +18,21 @@ type MapCatchmentRow = {
   area_name: string;
   area_type: string;
   academic_year: string;
-  simplified_geometry_geojson: string;
+  overview_geometry_geojson: string;
   performance_percentile: number | null;
   performance_metric_code: string | null;
 };
 
-// Stored geometry carries ~8 decimal places (sub-millimetre) of precision,
-// far beyond what a map display can render or a user can perceive - and
-// since catchment areas are now loaded in full on every /map visit (see
-// school-map.tsx), that precision was inflating a genuinely large payload
-// for no visual benefit. 5 decimal places is ~1.1m at GB latitudes, well
-// under this data's own real-world accuracy (digitised from paper maps in
-// many cases). Cuts the full-dataset response by roughly half even before
-// gzip compression.
+// The overview geometry is simplified far more aggressively (~100m
+// tolerance) than simplified_geometry_geojson specifically for this bulk,
+// whole-of-Great-Britain load (see services/ingestor's
+// OVERVIEW_SIMPLIFY_TOLERANCE_DEGREES and the migration that added this
+// column) - fetching ~9,400 areas at the finer, per-catchment tolerance
+// was transferring tens of megabytes from CockroachDB on every /map visit
+// and took upwards of ten seconds. Coordinates still carry ~8 decimal
+// places (sub-millimetre) of stored precision even at this coarser
+// tolerance, far beyond what a map display needs; rounding to 5 (~1.1m at
+// GB latitudes) shrinks the response further with no visible difference.
 const COORDINATE_DECIMAL_PLACES = 5;
 
 function roundCoordinates(node: unknown): unknown {
@@ -96,7 +98,7 @@ export async function GET(request: NextRequest) {
     // could differ between near-identical requests (the flicker this
     // originally fixed).
     const areas = await prisma.$queryRaw<MapCatchmentRow[]>`
-      SELECT id, area_name, area_type, academic_year, simplified_geometry_geojson, performance_percentile, performance_metric_code
+      SELECT id, area_name, area_type, academic_year, overview_geometry_geojson, performance_percentile, performance_metric_code
       FROM catchment_areas
       WHERE ${Prisma.join(conditions, " AND ")}
       ORDER BY md5(id::text)
@@ -107,7 +109,7 @@ export async function GET(request: NextRequest) {
     for (const area of areas) {
       let geometry: { type: string; coordinates: unknown };
       try {
-        geometry = JSON.parse(area.simplified_geometry_geojson);
+        geometry = JSON.parse(area.overview_geometry_geojson);
       } catch {
         // A single malformed stored geometry should not fail the whole map
         // request; skip it and log for the ingestion team to investigate.
