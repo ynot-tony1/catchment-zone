@@ -4903,11 +4903,62 @@ candidates:
   - local_authority_name: "East Ayrshire (re-checked)"
     reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
   - local_authority_name: "Inverclyde"
-    reason_not_enabled: "Proprietary 'My Inverclyde' viewer (ASP.NET NoticeBoard8 platform using the Google Maps JS API, not ArcGIS/GeoServer) plus a static PDF (inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf) - no structured/bulk-queryable data found."
+    reason_not_enabled: >
+      Proprietary 'My Inverclyde' viewer (ASP.NET NoticeBoard8 platform
+      using the Google Maps JS API, not ArcGIS/GeoServer) - no structured/
+      bulk-queryable data found there. BUT the static PDF
+      (inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf)
+      is a genuinely excellent, real digitization candidate, re-evaluated
+      this session: 4 pages (primary denominational 9 zones, primary
+      non-denominational 11 zones, secondary denominational 3 zones,
+      secondary non-denominational 3 zones = 26 total), produced by Cadcorp
+      SIS Map Modeller as a real vector export (confirmed via PyMuPDF
+      `page.get_drawings()` - each coloured catchment is a genuine vector
+      polygon with a distinct fill colour matching its legend swatch, not
+      a raster/schematic image), with real OS grid lines visible in the
+      basemap and a compass rose confirming north-up. NOT digitized this
+      pass - the blocker is purely georeferencing precision, not data
+      availability: tried a 3-point and 4-point affine fit using real
+      place-name label positions (Greenock, Port Glasgow, Dumbarton
+      Castle, Dunoon) geocoded via Nominatim, cross-checked against known
+      real school coordinates already in this project's own database (all
+      26 schools' real DB coordinates are available, since Inverclyde's
+      schools are already imported via GIAS-equivalent). Residual error
+      was too large (multiple schools landed in the wrong neighbouring
+      catchment zone entirely, not just near a boundary) for the fit to
+      be trustworthy - label-position landmarks are inherently imprecise
+      relative to this map's fine zone boundaries. A future attempt should
+      use the OS grid lines' own periodic spacing (visible, roughly
+      76-79px per 1km at 150 DPI, confirmed via column-wise autocorrelation
+      in a clean/unobstructed part of the basemap) for scale+rotation,
+      combined with a single precise point anchor (e.g. Dumbarton Castle,
+      a specific monument rather than a diffuse settlement label) for
+      absolute position - do not repeat the multi-label-landmark approach
+      that failed here. Licence: not stated in the PDF; "Reproduced from
+      Ordnance Survey digital map data with the permission of the
+      Controller of HMSO. Crown copyright and database right. Inverclyde
+      Council. Licence Number: 100023421" - an OS-derived-data licence
+      number is present, worth checking against OS OpenData terms before
+      enabling if this is completed.
   - local_authority_name: "Na h-Eileanan an Iar (Western Isles)"
     reason_not_enabled: "Catchment areas published only as plain HTML text tables of school-name-to-area-name (cne-siar.gov.uk/education-and-learning/schools/catchment-areas) - not even a PDF map exists, let alone structured boundary data."
   - local_authority_name: "Shetland Islands"
-    reason_not_enabled: "PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map, confirmed via Content-Type: application/pdf) - no ArcGIS Online presence found for the council."
+    reason_not_enabled: >
+      PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map,
+      confirmed via Content-Type: application/pdf) - no ArcGIS Online
+      presence found for the council. Re-evaluated this session: it's a
+      real, single-page colour-coded feeder-catchment map (~20 named
+      zones, "X feeds to Y Junior High/High School"), with visible OS
+      National Grid lines and an explicit printed scale (1:150000) -
+      structurally digitizable, not yet attempted (ran out of time this
+      pass after committing effort to Inverclyde). Two structural
+      complications not present in already-digitized sources: (1) the
+      islands' geography is highly fragmented (many small separate
+      islands, not one contiguous boundary), which the existing pipeline
+      handles fine per-polygon but is worth flagging; (2) a separate inset
+      box for Fair Isle at a different scale needs its own georeferencing
+      pass, not the main map's transform. Worth a dedicated future attempt
+      given the map quality.
   - local_authority_name: "City of London (England)"
     reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."
   - local_authority_name: "Redbridge (England)"
