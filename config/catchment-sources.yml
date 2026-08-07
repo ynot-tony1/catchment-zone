@@ -5228,19 +5228,58 @@ candidates:
     reason_not_enabled: >
       PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map,
       confirmed via Content-Type: application/pdf) - no ArcGIS Online
-      presence found for the council. Re-evaluated this session: it's a
-      real, single-page colour-coded feeder-catchment map (~20 named
-      zones, "X feeds to Y Junior High/High School"), with visible OS
-      National Grid lines and an explicit printed scale (1:150000) -
-      structurally digitizable, not yet attempted (ran out of time this
-      pass after committing effort to Inverclyde). Two structural
-      complications not present in already-digitized sources: (1) the
-      islands' geography is highly fragmented (many small separate
-      islands, not one contiguous boundary), which the existing pipeline
-      handles fine per-polygon but is worth flagging; (2) a separate inset
-      box for Fair Isle at a different scale needs its own georeferencing
-      pass, not the main map's transform. Worth a dedicated future attempt
-      given the map quality.
+      presence found for the council. Re-checked this session for a
+      Spatial Hub Scotland dataset like the one that worked for North
+      Ayrshire/South Ayrshire elsewhere in this file
+      (data.spatialhub.scot/dataset/school_catchments-is is the real
+      Scotland-wide parent listing, enumerating child datasets for 13
+      local authorities) - Shetland is not one of the 13, confirming no
+      such dataset exists for it; not a search-technique failure.
+
+      The PDF itself: single A1 page (1684x2384pt), "Shetland Schools &
+      Catchment Areas", ~20 real colour-coded zones each printed "X
+      feeds to Y Junior High/High School", a legend distinguishing
+      Shetland College/High Schools(2)/Junior High Schools(6)/Primary
+      Departments(24) by marker colour, visible OS National Grid lines,
+      a printed scale (1:150000), a north arrow, and a separate Fair
+      Isle inset box. Inspected properly this session (rendered to PNG
+      via pdftoppm and viewed directly, not just probed for text/vector
+      objects): confirmed via pdfimages -list (329 embedded image
+      objects, mostly small JBIG2/JPX/CCITT tiles) and pdftotext (zero
+      characters extracted) that this is a FULLY RASTERISED composite -
+      unlike Middlesbrough's or South Tyneside's PDFs, there is no real
+      vector line network and no real text to extract via pdftotext
+      -bbox; every zone boundary, label and grid line is baked into
+      pixels. The OS grid lines are also unlabelled in this render (no
+      printed easting/northing at any checked intersection), so the
+      OS-grid-anchor method that worked for Middlesbrough (matching a
+      detected grid intersection to a known BNG value) cannot be used
+      as-is here without first solving that.
+
+      Two viable methods identified, neither attempted yet: (1) multi-
+      point least-squares affine fit using this project's own real DB
+      coordinates for Shetland's ~30 schools (local_authority_code
+      "S12000027", 34 open schools) against each school's coloured
+      marker-dot pixel position - more robust than Inverclyde's failed
+      single/few-landmark approach since Shetland has many more schools
+      to fit against, but requires manually associating each dot to its
+      printed name (no OCR-extractable text) by visual inspection of
+      cropped regions, which is what actually did not fit in this
+      session's time budget; (2) ICP coastline registration (the
+      technique that worked for Portsmouth) between the rasterised
+      land/sea boundary (colour-thresholdable - sea is a distinct pale
+      blue) and a real Shetland coastline pulled from an independent
+      public boundary source, sidestepping the grid-label and dot-
+      labelling problems entirely. Two further structural complications
+      once georeferencing is solved: (a) the islands' geography is
+      highly fragmented (many small separate islands, not one
+      contiguous boundary), which the existing pipeline handles fine
+      per-polygon but is worth flagging; (b) the Fair Isle inset needs
+      its own separate georeferencing pass at its own scale, not the
+      main map's transform. Genuinely tractable, real map quality
+      confirmed twice now - but a multi-hour undertaking on the scale of
+      South Tyneside below, not a quick win; worth a dedicated future
+      session rather than more time inside a mixed-target pass.
   - local_authority_name: "City of London (England)"
     reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."
   - local_authority_name: "Redbridge (England)"
