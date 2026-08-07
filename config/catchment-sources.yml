@@ -4074,6 +4074,65 @@ sources:
       15 secondary catchment polygons (of 18 found; 3 excluded for
       failing the point-in-polygon check) - see the block comment above.
 
+  # Stoke-on-Trent: same Cadcorp GeognoSIS platform as Derby above
+  # (webmaplayers.stoke.gov.uk/webmaplayers8/), cracked the identical way -
+  # a real Playwright session against the landing page mints a session id
+  # automatically (a Map.png tile request fires on page load, no explicit
+  # map click needed here). The session's Map/Overlays.json lists 79
+  # overlays; walking each one's Properties.json for its PropertyMap's
+  # "_name$" field (not a "Name" field at the top level, unlike Derby's
+  # response shape) found overlay 78 = "Primary School Catchment Areas".
+  # Its Features.json paginates through opaque base64-style feature refs
+  # (not Derby's sequential I{n} refs); appending .geojson to each ref
+  # under Overlays/78/Features/{ref}.geojson returns real polygon geometry
+  # in EPSG:27700 plus a "School Name"/"School Number" properties pair (no
+  # DfE URN directly, unlike Derby - matched to this project's schools by
+  # name instead, see below). Reprojected to WGS84 with pyproj/shapely.
+  # No secondary/high-school layer exists in the same 79-overlay list,
+  # consistent with the prior note that Stoke's council states high-school
+  # admissions aren't catchment-based - primary-only is expected, not a
+  # partial result.
+  #
+  # Data-quality checks: of 45 raw features, several source "School Name"
+  # values combine two schools sharing one catchment polygon with a "/" or
+  # "&" separator (e.g. "Jackfield Infant & Moorpark Junior Schools",
+  # "Alexandra Infant & Junior Schools") - split and matched to both
+  # schools individually, each independently passing point-in-polygon. A
+  # handful of source names use pre-rename school names no longer current
+  # in this project's DB (e.g. source "Glebe Academy" / "Clarice Cliff
+  # Primary School" / "Hamilton Academy" / "Northwood Broom Academy" /
+  # "Burnwood Community School" now DB "Co-op Academy Glebe" / "Co-op
+  # Academy Clarice Cliff" / "Co-op Academy Hamilton" / "Co-op Academy
+  # Northwood" / "Burnwood Primary Academy" respectively) - matched via a
+  # small explicit rename table, not fuzzy guessing, each confirmed by a
+  # unique remaining-word match. All 45 raw features name-matched cleanly;
+  # 5 of them describe two schools sharing one polygon (split into 2
+  # matches each), giving 50 total name-matched school entries before the
+  # point-in-polygon check. 2 failed that check and were excluded (a
+  # stray "Co-op Academy Grove" match from the "Hamilton Academy/Grove
+  # Academy" pairing, and "Waterside Primary School" whose own DB
+  # coordinate falls outside its named polygon), leaving 48 kept, all with
+  # unique URNs (no dedup collisions).
+  - local_authority_code: "861"
+    local_authority_name: "Stoke-on-Trent"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://webmaplayers.stoke.gov.uk/webmaplayers8/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/stoke-on-trent/stoke_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found on webmaplayers.stoke.gov.uk."
+    last_verified_at: "2026-08-06"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      48 primary catchment polygons (from 45 raw source features, some
+      covering two schools) - see the block comment above for the
+      GeognoSIS session/overlay discovery method and name-matching
+      details. No secondary layer exists (Stoke's high schools are not
+      catchment-based per the council).
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
