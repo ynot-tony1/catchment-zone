@@ -4285,13 +4285,46 @@ sources:
   # which agreed within ~5 degrees). Verified: both schools' own DB
   # coordinates fall inside the resulting polygon, and the extracted
   # contour overlays pixel-perfectly onto the source boundary line.
-  # Portsmouth's other 5-6 secondary schools' PDFs (Admiral Lord Nelson,
-  # Charter Academy, Castle View, Miltoncross, Springfield, Priory) use a
-  # different template with only ONE marker each and no scale bar/grid -
-  # not solved this pass, needs an external second landmark (geocoded via
-  # OpenStreetMap Nominatim) per file, not yet attempted. Portsmouth also
-  # has a combined infant/primary catchment map (~30 schools, one PDF, has
-  # a real printed scale bar) not yet attempted - see PROJECT_STATUS.md.
+  # Portsmouth's other 6 secondary schools (Admiral Lord Nelson, Charter
+  # Academy, Castle View, Miltoncross, Springfield, Priory) use a different
+  # PDF template with only ONE marker each and no scale bar/grid - solved via
+  # the landmark-pair method: each school's own marker anchors position to
+  # its known DB coordinate, and a SECOND independently-geocoded real
+  # landmark (a roundabout's true centre from live OSM road geometry via
+  # Overpass, or a named building/museum/hospital from OSM Nominatim) on the
+  # same map gives scale and rotation with no external guessing. Landmarks
+  # used: Nelson - Portcreek Junction roundabout; Charter - Mary Rose Museum;
+  # Castle View - Portsbridge Roundabout; Miltoncross - Portsmouth College;
+  # Springfield - Highbury Campus; Priory - St Mary's Hospital. Each
+  # roundabout's real centre was taken from live OSM way geometry (Overpass),
+  # not a fuzzy place-name search, for precision. Rotations found ranged
+  # ~0.3-8.2 degrees (plausible print-vs-grid-north offsets, same phenomenon
+  # as Mayfield/Trafalgar's ~5.4 degrees). Verified per school: the served
+  # school's own DB coordinate falls inside its polygon, and the extracted
+  # contour overlays the source boundary closely across the whole map extent
+  # (checked visually per file, including at the far edges from the anchor
+  # points - not just near the two control points themselves). Portsmouth
+  # also has a combined infant/primary catchment map (~30 schools, one PDF,
+  # has a real printed scale bar) not yet attempted - see PROJECT_STATUS.md.
+  - local_authority_code: "851"
+    local_authority_name: "Portsmouth"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_individual"
+    source_url: "https://www.portsmouth.gov.uk/services/schools-and-learning/schools/secondary-schools-information-and-catchment-areas/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/portsmouth/portsmouth_secondary_individual.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Not OGL - same older-style OS/HMSO permission notice as the Mayfield/Trafalgar entry below (Licence No. 100019671), not a current Open Government Licence statement."
+    last_verified_at: "2026-08-07"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      6 secondary catchment polygons, one per school (Admiral Lord Nelson,
+      Ark Charter Academy, Castle View Academy, Miltoncross Academy,
+      Springfield School, Priory School) - see the block comment above for
+      the landmark-pair georeferencing method used for each.
+
   - local_authority_code: "851"
     local_authority_name: "Portsmouth"
     academic_year: "2025-2026"
