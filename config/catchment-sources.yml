@@ -4593,6 +4593,27 @@ candidates:
       approach is necessary, not just an improvement. A secondary schools
       version of this same partition-map format almost certainly exists
       on the council's admissions pages too (not yet located).
+
+      Follow-up session: the PDF itself is no longer fetchable at all, a
+      new, harder blocker than the region-closure problem above. The
+      article page (southtyneside.gov.uk/article/25376/...) still loads
+      fine via a real Playwright session with a real Chrome user-agent
+      (Cloudflare's challenge clears normally, same as before). But the
+      actual PDF resource - clicking the real download link, or
+      navigating/fetching its URL directly, with real cookies from the
+      cleared article page - now gets a 307 redirect that resolves to a
+      fresh 403 at the same URL, every time, across several distinct
+      techniques tried (plain context.request.get, page.goto, and a real
+      forced click on the actual <a class="media-link--pdf"> element,
+      which is the most human-like request Playwright can make). This is
+      a stricter WAF rule scoped to the media/PDF path specifically, not
+      the same Cloudflare bot-JS challenge the article page uses - it
+      looks like the council tightened access to this specific asset
+      since the prior session's notes above were written, not a technique
+      regression. Not worth further attempts without a materially
+      different approach (e.g. checking whether the same PDF is
+      independently mirrored anywhere else, since this is a real public
+      document, not chasing this exact URL further).
   - local_authority_name: "Barnsley"
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
