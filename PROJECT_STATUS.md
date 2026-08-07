@@ -2330,3 +2330,60 @@ block comment for a future session to pick up directly:
    entries in `catchment-sources.yml` for exactly what was tried).
 
 Tests pass (45 shared). Working tree clean, all pushed.
+
+## Update: Portsmouth's other 6 secondary schools digitized (2026-08-07)
+
+The two leads left open in Portsmouth from the previous pass - 5-6 more
+secondary school PDFs and a combined infant/primary map - were picked
+up. All 6 remaining secondary schools (Admiral Lord Nelson, Ark Charter
+Academy, Castle View Academy, Miltoncross Academy, Springfield School,
+Priory School) were successfully digitized this pass using a new
+**landmark-pair georeferencing method**: each school's own marker
+anchors position to its known DB coordinate (as before), and a SECOND,
+independently-geocoded real landmark visible on the same map gives
+scale and rotation - no scale bar or grid needed. Landmarks used, each
+chosen from what was actually legible on that specific map and verified
+against real, external data before trusting it:
+
+- Nelson: Portcreek Junction roundabout (real centre from live OSM road
+  geometry via Overpass, not a fuzzy place-name search)
+- Charter Academy: Mary Rose Museum (OSM Nominatim, tight bounding box)
+- Castle View Academy: Portsbridge Roundabout (OSM Overpass)
+- Miltoncross Academy: Portsmouth College building (OSM Nominatim)
+- Springfield School: Highbury Campus/City of Portsmouth College (OSM
+  Nominatim)
+- Priory School: St Mary's Hospital building complex (OSM Nominatim)
+
+Rotations found ranged ~0.3 to ~8.2 degrees - all plausible print-vs-
+grid-north offsets (the same phenomenon Mayfield/Trafalgar's ~5.4
+degrees was, not measurement noise). Every school was verified two
+ways: its own DB coordinate falls inside its extracted polygon, and a
+full-map contour overlay was visually checked to track the source
+boundary line closely across the _entire_ map extent (not just near
+the two anchor points) - this catches a bad rotation/scale immediately,
+since error compounds with distance from the anchors. All 6 passed
+clean.
+
+Combined into one new source entry (`secondary_catchment_individual`,
+distinct from the existing shared Mayfield/Trafalgar
+`secondary_catchment` source) since CockroachDB's
+`(local_authority_code, academic_year, source_type)` uniqueness
+constraint requires each on its own type. Portsmouth secondary coverage
+is now 7 catchment polygons covering 8 schools (Mayfield + Trafalgar
+share one; each of the other 6 has its own).
+
+Committed (no Co-Authored-By trailer): `8e13812`. Imported (dry-run
+then real: 6 built, 0 rejected), envelope-verified (all coordinates
+within real Portsmouth bounds, lat 50.777-50.860, lon -1.119 to -1.019),
+`refresh-catchment-scores` (6,213 of 9,378 areas now scored) and
+`refresh-catchment-overview-cache` (9,378 = 9,378, cache in sync) both
+re-run.
+
+**Not reached this pass**: Portsmouth's combined infant/primary map
+(~25-30 schools, one PDF, real scale bar + labelled zones - the
+watershed-segmentation candidate described above); South Tyneside
+(still blocked by a stricter WAF on the PDF resource itself); the
+other untried PDF-only councils (Enfield, Bedford, Warrington,
+Middlesbrough, Redcar and Cleveland, Suffolk).
+
+Tests pass (45 shared, 125 ingestor). Working tree clean, all pushed.
