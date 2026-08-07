@@ -1947,3 +1947,39 @@ through Derby/Bedford is committed and pushed to `main`.
 4. Standing user instruction remains in force: keep going autonomously,
    don't pause for confirmation, Sonnet only (never Opus) for the main
    session and any forks/subagents.
+
+## Update: Stoke-on-Trent recovered from the interrupted fork (2026-08-07)
+
+The in-flight Stoke-on-Trent/Durham/Leicestershire retry fork mentioned
+above was killed mid-task by a session-limit error (confirmed via its
+task-notification: "Agent terminated early due to an API error: You've hit
+your session limit"), right after it had already found and written real
+data for Stoke-on-Trent but before committing. Its uncommitted work
+(`config/catchment-sources.yml` diff plus a complete, verified
+`data/digitized-catchments/stoke-on-trent/stoke_primary_catchments.geojson`)
+was still present in the working tree at the start of the next session,
+inspected for legitimacy (real WGS84 coordinates within Stoke-on-Trent's
+bounds, real URNs, a genuine block-comment explaining the Cadcorp
+GeognoSIS session/overlay discovery method - the same platform and
+technique that cracked Derby), then finished properly: test file updated,
+`sync-config.mjs` run, tests passed, formatted, committed (`ce79137`),
+pushed, imported (dry-run then real: 48 built, 0 rejected, 44 persisted -
+the 4-row difference is the same shared-polygon dedup pattern already seen
+with Hertfordshire/Cheshire East-West, not an error), envelope-verified
+(all coordinates within GB bounds), and scored via
+`refresh-catchment-scores` (6,196 of 9,360 total catchment areas now
+scored). **Local authority count: 79 -> 80.**
+
+**Lesson for future sessions**: if a background fork's task-notification
+reports `status: "failed"` with a session-limit or similar error, always
+check `git status` before assuming the fork's work is lost - it may have
+already produced complete, real, uncommitted output sitting in the working
+tree that just needs inspection and a normal finish (test/commit/import/
+verify/score), not a from-scratch retry.
+
+Durham and Leicestershire were NOT reached by the interrupted fork (it got
+through Stoke-on-Trent first per the target ordering) - still open
+candidates for a future retry with a real Playwright session, per the
+reasoning already documented in their existing `catchment-sources.yml`
+notes.
+session and any forks/subagents.
