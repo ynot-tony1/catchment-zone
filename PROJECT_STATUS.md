@@ -2059,3 +2059,47 @@ real code change from this audit was fixing the stale Scotland docstring
 claim (commit `3a3b8b3`) - performance-metric coverage itself does not
 need new sourcing work right now.
 session and any forks/subagents.
+
+## Update: Leeds's Allerton High School straggler solved (2026-08-07)
+
+The one remaining digitization straggler within Leeds (already partially
+covered: 93 primary + 4 secondary catchments deployed) is now done.
+Allerton High School's page in the council's own "2023 Catchment Maps for
+Secondary.pdf" was the only one of Leeds's 5 secondary schools not yet
+digitised - it shows two semi-transparent filled priority zones with no
+outline stroke, a genuinely different presentation from the boundary-line
+template that worked for the other 4. Solved with a fill-colour-region
+technique: both zones' alpha-blended tint produces an almost-constant
+additive shift in (B-R) [Zone 1, blue] or (R-B) [Zone 2, orange]
+regardless of the OS basemap colour underneath (verified against the
+legend's own swatches plus several in-map sample points over white/green/
+urban basemap - most basemap colours are close to colour-neutral, so the
+blend's dominant visible effect is the additive term). Thresholded each
+channel difference, kept only the largest connected component (a
+similarly-blue-cast river was initially misclassified as part of Zone 1 -
+removed via morphological opening, which strips thin linear protrusions
+without touching the filled zone blob), then contoured/simplified/
+georeferenced with this project's usual single-marker + scale-bar method
+(a 9-tick ruler at exactly 0.375-mile spacing, cross-verified against the
+tick labels' own PDF text bounding boxes). Verified pixel-perfect via a
+full polygon overlay redrawn onto the source render (both zone outlines
+sit exactly on the fill boundary, no spurious extensions). The school's
+own marker sits 48-71m outside both polygons - not treated as an error
+(within this method's expected precision on a ~5m/pixel paper map, and
+this document's zone identity comes from its own printed labels, not a
+school-inside-polygon inference the way pooled/shared catchments
+elsewhere are matched).
+
+Committed and pushed (`556966a`), imported (dry-run then real: 6 built,
+0 rejected for the Leeds secondary source, up from 4), envelope-verified,
+scored via `refresh-catchment-scores` (6,197 of 9,362 total areas now
+scored). All 5 schools in the source document are now covered - this
+straggler is fully closed, not just partially improved.
+
+**Note for the coordinator**: `apps/web/app/map/page.tsx` and
+`apps/web/components/school-map.tsx` were found already modified in the
+working tree at the start of this task (unrelated to catchment sourcing -
+looks like in-progress map UX work, e.g. from a memory note about
+"catchments default-on, pins opt-in, GB-only bounds"). Left untouched and
+uncommitted, out of this task's scope - another session/fork appears to
+own that work.
