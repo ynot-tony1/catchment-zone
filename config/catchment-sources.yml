@@ -1133,6 +1133,72 @@ sources:
     enabled: true
     notes: "3 Welsh-medium secondary catchment polygons, matched 1:1 against all 3 of Cardiff's real Welsh-medium secondary schools with zero ambiguity."
 
+  # Monmouthshire: same Astun iShare platform and same "real geometry,
+  # zero attributes" gap as Cardiff (maps.monmouthshire.gov.uk/GetOWS.ashx,
+  # MAPSOURCE=Monmouthshire/MyHouse, typeNames PrimarySchoolCatchment2025/
+  # NewSecondarySchoolCatchment2021/WelshPrimarySchoolCatchment_2024/
+  # WelshSecondarySchoolCatchment) - see the (resolved) Monmouthshire
+  # candidate note elsewhere in this file for the full history. Attributed
+  # to real schools by the same point-in-polygon containment technique as
+  # Cardiff, against this project's own GIAS-sourced school coordinates.
+  # Unlike Cardiff, Monmouthshire's Church in Wales schools DO get their
+  # own dedicated catchment polygon here; only Roman Catholic schools set
+  # their own admissions with no LA catchment of their own (their real
+  # site instead falls inside a neighbouring community school's zone).
+  # PrimarySchoolCatchment2025 and NewSecondarySchoolCatchment2021 both
+  # matched every polygon 1:1 against every eligible candidate school with
+  # zero ambiguity and zero leftovers; WelshPrimarySchoolCatchment_2024
+  # likewise matched its 3 polygons against Monmouthshire's 3 real
+  # Welsh-medium primaries 1:1. WelshSecondarySchoolCatchment's 2 real
+  # polygons were left out entirely: Monmouthshire has no Welsh-medium
+  # secondary of its own, and the actual serving cross-authority school
+  # (Ysgol Gyfun Gwent Is Coed, sited in Newport) falls outside both
+  # polygons (~9.5km and ~17km away) so could not be verified.
+  - local_authority_code: "W-679"
+    local_authority_name: "Monmouthshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://maps.monmouthshire.gov.uk/?layers=PrimarySchoolCatchment2025&ms=Monmouthshire%2FMyHouse"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/monmouthshire/monmouthshire_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own, the same gap already found for Cardiff's identical platform."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "26 primary catchment polygons, matched 1:1 against all 26 of Monmouthshire's real non-Roman-Catholic, non-Welsh-medium primary-phase schools (including Church in Wales schools and King Henry VIII, an all-through community school ages 3-19) with zero ambiguity."
+
+  - local_authority_code: "W-679"
+    local_authority_name: "Monmouthshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.monmouthshire.gov.uk/?layers=NewSecondarySchoolCatchment2021&ms=Monmouthshire%2FMyHouse"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/monmouthshire/monmouthshire_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own, the same gap already found for Cardiff's identical platform."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "4 secondary catchment polygons, matched 1:1 against all 4 of Monmouthshire's real secondary-age schools (Caldicot School, Chepstow Comprehensive School, Monmouth Comprehensive School, and King Henry VIII, an all-through community school ages 3-19 that also has its own primary-phase catchment above) with zero ambiguity."
+
+  - local_authority_code: "W-679"
+    local_authority_name: "Monmouthshire"
+    academic_year: "2025-2026"
+    source_type: "welsh_primary_catchment"
+    source_url: "https://maps.monmouthshire.gov.uk/?layers=WelshPrimarySchoolCatchment_2024&ms=Monmouthshire%2FMyHouse"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/monmouthshire/monmouthshire_welsh_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own, the same gap already found for Cardiff's identical platform."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "3 Welsh-medium primary catchment polygons, matched 1:1 against all 3 of Monmouthshire's real Welsh-medium primary schools (Ysgol Gymraeg Y Fenni, Ysgol Gymraeg Y Ffin, Ysgol Gymraeg Trefynwy) with zero ambiguity."
+
   # Renfrewshire: one combined layer with a Type attribute holding all
   # four phase/denomination combinations - the same arcgis_where
   # filtering pattern as Argyll and Bute. The layer's own ArcGIS item
@@ -5595,15 +5661,24 @@ candidates:
       pool) and were left out rather than guessed at.
   - local_authority_name: "Monmouthshire (Wales)"
     reason_not_enabled: >
-      Same platform, same exact limitation as Cardiff above: Astun iShare
-      (maps.monmouthshire.gov.uk), real WFS confirmed live
-      (PrimarySchoolCatchment2025, NewSecondarySchoolCatchment2021,
-      WelshPrimarySchoolCatchment_2024, WelshSecondarySchoolCatchment all
-      return real polygon geometry) but DescribeFeatureType confirms zero
-      attribute fields on every layer, including the School point layer
-      itself - the iShare UI's own "info click" attribute lookup clearly
-      uses a separate, non-WFS mechanism this project has not reverse-
-      engineered. Not a licensing gap.
+      RESOLVED - now digitised, see the Monmouthshire entries in sources:
+      above. The original finding stands as real (Astun iShare, same
+      GetOWS.ashx WFS with zero attribute fields on every layer including
+      the School point layer, confirmed by DescribeFeatureType), but as
+      with Cardiff this was not a hard stop: point-in-polygon containment
+      against this project's own GIAS-sourced school coordinates
+      attributed every polygon in 3 of the 4 layers with zero ambiguity
+      (26/26 primary, 4/4 secondary, 3/3 Welsh-medium primary). Unlike
+      Cardiff, restricting the candidate pool here only required
+      excluding Roman Catholic schools (Monmouthshire's Church in Wales
+      schools do get their own dedicated catchment polygon, a genuine
+      platform difference from Cardiff worth remembering for the next
+      Welsh iShare council). WelshSecondarySchoolCatchment's 2 real
+      polygons were left out: Monmouthshire has no Welsh-medium secondary
+      of its own, and the real serving cross-authority school (Ysgol
+      Gyfun Gwent Is Coed, sited in Newport) falls physically outside
+      both polygons, so could not be verified by this project's
+      containment standard.
   - local_authority_name: "Rhondda Cynon Taf (Wales)"
     reason_not_enabled: >
       Also Astun iShare (maps.rctcbc.gov.uk), real catchment layers found
