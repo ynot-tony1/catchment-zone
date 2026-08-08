@@ -4135,6 +4135,45 @@ sources:
       check for this specific confirmed-genuine file, not a threshold
       change to the shared gate.
 
+      2026-08-08 landmark-pair session (later session): added 6 more
+      primary schools via the non-gridded landmark-pair method (Bloxham
+      CE, Aston Rowant CE, St Leonard's CE Banbury, Wolvercote, West
+      Oxford Community), plus Tyndale Community School via the grid
+      method after finding is_grid_template()'s image-count heuristic
+      had mis-classified it (only 8 raster tiles, since it is a lower-
+      detail Oxford-district-wide map, not a hyper-local one) - a direct
+      cyan_mask_broad()/reconcile_grid_period() check found a real,
+      strongly-confirmed grid (line_frac 0.94/0.77) that the standard
+      pipeline had never tried on this file. For the landmark-pair
+      schools, found that the vector-path chaining approach built for
+      the hybrid grid+vector template is NOT safe on this genuinely
+      non-gridded template: on Bloxham's file it picked up parish/
+      administrative boundary linework drawn in the same blue colour as
+      the catchment boundary, producing a plausible-but-wrong ring only
+      caught by overlaying it back on the source page - the pixel/raster
+      contour method (blue-pixel mask, 9x9 dilation to bridge gaps where
+      the boundary crosses other coloured features) is the safer default
+      here. Preferred landmarks that are themselves other real DB
+      schools visible on the same map (Lewknor CE Primary + St Andrew's
+      CE Chinnor for Aston Rowant; Matthew Arnold School + Godstow Lock
+      for West Oxford Community) over Nominatim place lookups where
+      possible, and always cross-checked a candidate landmark's implied
+      scale for physical plausibility against the map's own visible
+      extent - a "Chetwode" label on St Leonard's map was rejected this
+      way (implied an 8x-different scale from a Reservoir-based landmark,
+      revealing it was a different, closer, coincidentally-named feature,
+      not the actual Chetwode village 8km away that could not physically
+      fit on a page whose real extent was already known to be ~3.7km).
+      Every one of the 6 new schools verified via bearing-residual check
+      against a real point not used to derive the scale (residuals
+      0.05-3.65 degrees, all under the project's 5-degree threshold) and
+      visual overlay of the traced ring against the source page image.
+      One further candidate (Sandhills Community Primary School) was
+      investigated but abandoned rather than landed: two different
+      landmark pairs gave mutually inconsistent scales (8.90 vs 3.27,
+      a 2.7x disagreement) with no way to resolve which, if either, was
+      right. Oxfordshire primary total: 101 -> 107.
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
@@ -5801,6 +5840,17 @@ candidates:
       this file also failed the new confirmed_grid_line_fraction() check
       (line_frac_x=0.80, line_frac_y=0.33) so its grid reading is itself
       suspect - resolve that first.
+
+      2026-08-08 update (later session): stands at 130 of 307 (107
+      primary + 23 secondary) after landing 6 more schools via the
+      landmark-pair method (see the primary_catchment entry's own notes
+      above for the full detail). The remaining ~177 schools are a mix
+      of genuinely non-gridded landmark-pair candidates (still the
+      largest bounded pool, proven method, inherently manual per file)
+      and downloaded grid-template PDFs that failed scale detection and
+      need individual debugging. This remains the single largest body
+      of bounded, already-solved-in-principle work in the whole
+      project.
   - local_authority_name: "Reading"
     reason_not_enabled: "Runs Astun iShare (my.reading.gov.uk) with nursery/primary/secondary school layers confirmed live, but verified via GetFeature that these are esriGeometryPoint (school locations only) - no layer with 'catchment' in the name exists on this server."
   - local_authority_name: "Slough"
