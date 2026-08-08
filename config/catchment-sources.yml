@@ -3946,33 +3946,61 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      119 primary catchment polygons digitised from Oxfordshire's
-      per-school "Location and Designated Area" PDFs: 112 using the
-      council's own OS-grid-referenced basemap for georeferencing
-      (across four passes - 90 via a per-column/row cyan-pixel-count
-      autocorrelation approximation using a hand-read scale, 2 more in
-      a later session - Edward Feild Primary, The Blake CE Primary -
-      via a more precise same-technique variant that masks the exact
-      cyan RGB range and uses OpenCV connected-component labelling to
-      separate the marker icon from the boundary line and fills the
-      boundary outline with morphological closing + flood-fill rather
-      than tracing a filled vector region, plus 20 more in a further
-      session using the same pipeline, now committed at
-      data/digitized-catchments/oxfordshire/pipeline/ with a
-      URN-uniqueness guard in batch_process.py to prevent the
-      duplicate-school bug described below from recurring), plus 7
-      (Orchard Meadow Primary School and 6 more in an earlier session:
-      Abbey Woods Academy, Bladon CE Primary, Bampton CofE Primary,
-      Bayards Hill School, Brookside Primary, Buckland CE Primary)
-      from the newer non-gridded cream/yellow basemap template using
-      the landmark-pair method - see the block comment above this
-      entry for both methods. A 2026-08-08 session that ran the same
-      OpenCV pipeline again also re-digitised and re-added King's
-      Meadow Primary, Queen Emma's Primary, West Witney Primary &
-      Nursery and St Kenelm's CE (VC) without checking they already
-      had polygons from the original 90 - each landed as a
-      near-duplicate second row for the same school; caught and
-      removed (geojson feature + stale DB row) in a later session.
+      101 primary catchment polygons digitised from Oxfordshire's
+      per-school "Location and Designated Area" PDFs: 94 using the
+      council's own OS-grid-referenced basemap for georeferencing (90
+      via a per-column/row cyan-pixel-count autocorrelation
+      approximation using a hand-read scale, plus Edward Feild Primary,
+      The Blake CE Primary, South Stoke Primary and Freeland CE Primary
+      in later sessions using an OpenCV-based rebuild of the same
+      technique, now committed at
+      data/digitized-catchments/oxfordshire/pipeline/), plus 7 (Orchard
+      Meadow Primary School and 6 more in an earlier session: Abbey
+      Woods Academy, Bladon CE Primary, Bampton CofE Primary, Bayards
+      Hill School, Brookside Primary, Buckland CE Primary) from the
+      newer non-gridded cream/yellow basemap template using the
+      landmark-pair method - see the block comment above this entry for
+      both methods.
+
+      IMPORTANT 2026-08-08 correction, read before adding more
+      Oxfordshire grid-template schools: a session found that its own
+      OpenCV pipeline (and an equally automated predecessor) had landed
+      18 bad rows across two distinct failure modes, both now caught
+      and removed (geojson feature + stale DB row each): (1) 7 schools
+      (King's Meadow, Queen Emma's, West Witney & Nursery, St Kenelm's
+      CE (VC), Didcot Girls', King Alfred's, Lord Williams's) were
+      re-digitised and re-added without checking they already had a
+      polygon from the original 90/22 - batch_process.py now has a
+      URN-uniqueness guard against this. (2) 18 more (13 primary + a
+      further set caught before ever being committed) were digitised
+      from a THIRD Oxfordshire PDF template never previously documented:
+      a raster basemap with 140+ embedded image tiles just like the
+      real grid template (so the existing "many raster tiles, no vector
+      boundary path" template check wrongly classed it as grid-
+      template), styled similarly to the cream/yellow non-gridded
+      template, but with NO actual cyan grid drawn on it anywhere. The
+      column/row cyan-pixel autocorrelation this pipeline relies on for
+      scale still finds a plausible-looking periodic peak on these
+      files from scattered unrelated cyan content (anti-aliasing,
+      water features) across its wide 180-950px search range, and nothing
+      about marker-inside-boundary, GB-bounds or plausible-area checks
+      catches a wrong SCALE (only a wrong anchor point) - this was only
+      caught by literally rendering the claimed grid spacing back over
+      the source page image and seeing no real gridlines under it.
+      process_one.py's process() now has a mandatory
+      confirmed_grid_line_fraction() gate (in oxon_lib.py) that checks
+      for real near-continuous grid lines at the claimed spacing before
+      accepting any result - verified live to score ~1.0 on genuine grid
+      files and 0.0 on every instance of this false-positive template
+      found so far, with no ambiguous middle ground observed. Two
+      pre-existing schools from the original 90 (King's Meadow, Queen
+      Emma's - re-checked using their still-available PDFs) were
+      spot-verified against this new gate and passed, some reassurance
+      that the original 90/22 are not affected by this specific bug,
+      but they were not exhaustively re-checked - a good next-session
+      task, now cheap since the check just needs each school's PDF
+      re-downloaded and run through is_grid_template() +
+      confirmed_grid_line_fraction().
 
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
@@ -3988,14 +4016,17 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      22 secondary catchment polygons: 20 digitised the same way as the
-      primary_catchment entry above (across three passes using the
-      OpenCV connected-component variant); Didcot Girls' School, King
-      Alfred's and Lord Williams's School were already present from an
-      earlier pass, and a 2026-08-08 re-run of finalize.py accidentally
-      re-digitised and re-added all three without checking - each
-      landed as a near-duplicate second polygon for the same school,
-      caught and removed (geojson feature + stale DB row) in a later
+      22 secondary catchment polygons (unchanged this session - no new
+      secondary schools cleared the hardened verification described in
+      the primary_catchment entry's notes above): 20 digitised the same
+      way as the primary_catchment entry above (across three passes
+      using the OpenCV connected-component variant); Didcot Girls'
+      School, King Alfred's and Lord Williams's School were already
+      present from an earlier pass, and a 2026-08-08 re-run of
+      finalize.py accidentally re-digitised and re-added all three
+      without checking - each landed as a near-duplicate second polygon
+      for the same school, caught and removed (geojson feature + stale
+      DB row) in a later
       session, plus 2 (Oxford Spires Academy, Cheney School) from the newer
       non-gridded template using the landmark-pair method - see the
       block comment above this entry.
@@ -5477,29 +5508,36 @@ candidates:
     reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published.'
   - local_authority_name: "Luton"
     reason_not_enabled: "The council's catchment tool fetches a flat tab-separated text file (road name to primary/secondary school) - no geometry of any kind, fails the polygon requirement entirely."
-  - local_authority_name: "Oxfordshire (remaining ~186 of 307 schools)"
+  - local_authority_name: "Oxfordshire (remaining ~184 of 307 schools)"
     reason_not_enabled: >
-      121 of Oxfordshire's 307 schools are now digitised and enabled
+      123 of Oxfordshire's 307 schools are now digitised and enabled
       (see the Oxfordshire entries in sources: above) - see the block
-      comment there for both digitisation methods now proven and the
-      2026-08-08 update notes for the autocorrelation harmonic-rejection
-      and marker-selection fixes that unlocked most of the grid-template
-      additions. IMPORTANT correction: a 2026-08-08 session's finalize.py
-      re-ran the OpenCV pipeline over 9 schools without checking whether
-      they already had a catchment feature from an earlier pass - 7 of
-      those 9 (King's Meadow Primary, Queen Emma's Primary, West Witney
-      Primary & Nursery, St Kenelm's CE (VC), Didcot Girls' School, King
-      Alfred's, Lord Williams's School) were already done and got
-      landed as near-duplicate second polygons for the same school (same
-      bounds/size to 3-4 decimal places, both a geojson feature and a DB
-      row each); a later session caught this via a URN-uniqueness check
-      against the geojson files, removed the 7 duplicate features and
-      the 7 stale DB rows, and confirmed only the other 2 of that 9
-      (Edward Feild Primary, The Blake CE Primary) were genuinely new.
-      120 of the true 121 done schools were unaffected. Any future
-      session adding Oxfordshire schools MUST check the target school's
-      URN isn't already present in either geojson file before
-      digitising it - the pipeline itself has no such guard.
+      comment there for both digitisation methods now proven. A
+      2026-08-08 session found and fixed two distinct correctness bugs
+      that had landed a total of 18 bad rows across earlier passes that
+      same day (7 accidental re-digitisation duplicates of already-done
+      schools, and a newly-discovered THIRD Oxfordshire PDF template -
+      many raster tiles like the real grid template, but no actual grid
+      drawn on it - that fooled the automated pipeline into fabricating
+      a plausible-but-wrong scale on files it should have rejected) -
+      full detail in the primary_catchment entry's notes above,
+      including the specific new confirmed_grid_line_fraction() safety
+      check now gating every future digitisation. Net result of that
+      session: 18 bad rows removed, 4 new genuinely-verified schools
+      added (Edward Feild Primary, The Blake CE Primary, South Stoke
+      Primary, Freeland CE Primary), leaving 123 correct.
+      IMPORTANT for any future session: two of the pre-existing original
+      90/22 schools (King's Meadow, Queen Emma's) were spot-checked
+      against the new hardened pipeline and passed, but the other ~110
+      were not re-checked - re-running is_grid_template() +
+      confirmed_grid_line_fraction() from oxon_lib.py against each
+      already-deployed grid-template school's PDF (re-downloadable via
+      the URL pattern below) is now cheap and is the single most
+      important integrity task before adding more schools, since a
+      wrong-scale row from this bug would not be caught by any of the
+      pipeline's other checks (marker-inside-boundary, GB bounds,
+      plausible area) or by this project's general
+      catchment_area-vs-known-school-coordinate verification step.
       The council's own ArcGIS Server was fully enumerated (~80 named
       services) with no schools/catchment layer found anywhere in it and
       a FOI request for GIS data was refused, but every school's own
@@ -5513,29 +5551,48 @@ candidates:
       designated area published, e.g. a school with distance-based
       admissions, or a different/missing code - not individually
       distinguished). Of the 207 real PDFs, roughly 88 use the newer
-      (2011-2014+) cream/yellow OS-OpenData-style basemap with no grid
-      and no scale bar - a working landmark-pair method for this
-      template was found and proven on 3 real schools and has now been
-      applied to 6 more (9 of ~91 done overall) - inherently manual per
-      file, but fully proven and the best next target for a future
-      session to simply keep applying. The remaining ~119 use an OS
-      1:1250-raster template with a 1km cyan grid (or a fainter variant
-      of it): 112 have now been digitised (75 in the original pass, 35
-      in a second session after fixing two bugs in the automated
-      pipeline, 2 more in a later session with a rebuilt pipeline - see
-      the block comment's 2026-08-08 notes and the duplicate-removal
-      correction above). The reusable pipeline (rendering, grid-spacing
-      autocorrelation, OpenCV marker/boundary connected-component
+      (2011-2014+) cream/yellow OS-OpenData-style basemap with a real
+      vector-drawn boundary path but no grid and no scale bar - a
+      working landmark-pair method for this template was found and
+      proven on 9 real schools (inherently manual per file, but fully
+      proven and the best next target for a future session to simply
+      keep applying: identify a second real-world landmark near the
+      school, geocode it via OSM Nominatim, verify via an independent
+      bearing/distance check, then use the two anchors to scale the
+      PDF's own real vector boundary path - no pixel-grid guessing
+      needed at all for this template, which is a more reliable method
+      than anything grid-based). The remaining ~119 use the OS
+      1:1250-raster grid template (or the newly-discovered fake-grid
+      lookalike - not reliably distinguishable from the real one without
+      downloading and running confirmed_grid_line_fraction() per file):
+      94 confirmed-real ones have now been digitised (90 in the original
+      pass, 4 more across later sessions - see the block comment's
+      2026-08-08 notes). Of this session's 97 freshly-downloaded
+      candidate PDFs for not-yet-done schools, 62 were the raster grid
+      or grid-lookalike template (35 of those turned out to be the fake-
+      grid variant once checked, 2 were genuine and got digitised, the
+      remaining ~25 failed grid x/y agreement or marker/boundary
+      detection and need further per-file work) and 35 were the
+      non-gridded vector template (candidates for the landmark-pair
+      method above). The reusable, now-hardened pipeline (rendering,
+      grid-spacing autocorrelation, is_grid_template() template
+      detection, confirmed_grid_line_fraction() real-grid-line
+      verification, OpenCV marker/boundary connected-component
       separation, pixel-to-OSGB36-to-WGS84 anchoring) is committed at
       data/digitized-catchments/oxfordshire/pipeline/ (oxon_lib.py,
       process_one.py, match_schools.py, batch_process.py) rather than
-      left in a scratch directory this time, precisely so it survives
-      between sessions. Dry Sandford Primary School remains unresolved:
-      at 300dpi its marker icon's connected component merges directly
-      into the boundary line's component, so the simple size/fill-ratio
-      marker/boundary split doesn't separate them - would need a
-      per-file custom approach (e.g. erosion before labelling, or a
-      higher render DPI) to revisit.
+      left in a scratch directory, precisely so it survives between
+      sessions - this is now the third time the pipeline had to be
+      rebuilt from scratch when it wasn't committed, so treat this
+      commit as important to keep intact. Dry Sandford Primary School
+      remains unresolved: at 300dpi its marker icon's connected
+      component merges directly into the boundary line's component, so
+      the simple size/fill-ratio marker/boundary split doesn't separate
+      them - would need a per-file custom approach (e.g. erosion before
+      labelling, or a higher render DPI) to revisit, and in any case
+      this file also failed the new confirmed_grid_line_fraction() check
+      (line_frac_x=0.80, line_frac_y=0.33) so its grid reading is itself
+      suspect - resolve that first.
   - local_authority_name: "Reading"
     reason_not_enabled: "Runs Astun iShare (my.reading.gov.uk) with nursery/primary/secondary school layers confirmed live, but verified via GetFeature that these are esriGeometryPoint (school locations only) - no layer with 'catchment' in the name exists on this server."
   - local_authority_name: "Slough"

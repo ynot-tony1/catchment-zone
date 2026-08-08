@@ -54,6 +54,129 @@ def grid_spacing_px(arr):
     return px, py
 
 
+def grid_spacing_joint(arr, min_p=180, max_p=950, min_quality=0.08):
+    """NOT SAFE TO USE for production digitisation - kept only as a
+    documented dead end. Tried as a fallback grid-spacing detector for
+    files where the independent per-axis autocorrelation peak search
+    (grid_spacing_px) disagrees between x and y, on the theory that a
+    genuine square grid should show *some* signal in both axes at the
+    same period even when it isn't either axis's own tallest peak.
+
+    Tested live (2026-08-08) against Oxfordshire's non-gridded vector
+    template (which has no real grid at all): it confidently returned a
+    plausible-looking period from scattered unrelated cyan pixels
+    (anti-aliasing, water features) on every file tried, none of which
+    lined up with anything real when the claimed grid was drawn back
+    over the actual page image. It cannot tell "weak but real grid
+    signal" apart from "no grid, coincidental noise" - process_one.py's
+    is_grid_template() (a get_images()/get_drawings() check on the PDF
+    itself, not a pixel heuristic) is the correct way to decide whether
+    a file has a grid at all, and must run before any pixel-based scale
+    detection is attempted, joint or otherwise.
+
+    Searches for the period p that maximises the SUM of the normalised
+    column and row autocorrelation at p (each divided by that axis's
+    zero-lag autocorrelation, i.e. total variance, so the two axes are on
+    a comparable scale regardless of image size/contrast), among p that
+    are local maxima of that combined curve. Returns (period, quality) or
+    (None, None) if no candidate clears min_quality on both axes.
+    """
+    r = arr[:, :, 0].astype(int)
+    g = arr[:, :, 1].astype(int)
+    b = arr[:, :, 2].astype(int)
+    cyan = (b > 200) & (g > 140) & (g < 230) & (r < 160) & (r > 10)
+    colsum = cyan.sum(axis=0).astype(float)
+    rowsum = cyan.sum(axis=1).astype(float)
+
+    def autocorr(signal):
+        s = signal - signal.mean()
+        n = len(s)
+        ac = np.correlate(s, s, mode="full")[n - 1 :]
+        zero = ac[0] if ac[0] != 0 else 1.0
+        return ac / zero
+
+    ac_col = autocorr(colsum)
+    ac_row = autocorr(rowsum)
+    upper = min(max_p, len(ac_col) - 1, len(ac_row) - 1)
+    combined = ac_col[:upper] + ac_row[:upper]
+
+    best_p, best_score = None, -1.0
+    for p in range(min_p, upper - 1):
+        if combined[p] <= combined[p - 1] or combined[p] <= combined[p + 1]:
+            continue
+        if ac_col[p] < min_quality or ac_row[p] < min_quality:
+            continue
+        if combined[p] > best_score:
+            best_p, best_score = p, combined[p]
+    if best_p is None:
+        return None, None
+    return best_p, best_score
+
+
+def _best_phase(signal, p, band=2):
+    n = len(signal)
+    p_int = int(round(p))
+    best_off, best_mass = 0, -1.0
+    for off in range(p_int):
+        mass = 0.0
+        x = off
+        while x < n:
+            lo, hi = max(0, x - band), min(n, x + band + 1)
+            mass += signal[lo:hi].sum()
+            x += p_int
+        if mass > best_mass:
+            best_mass, best_off = mass, off
+    return best_off
+
+
+def confirmed_grid_line_fraction(cyan_mask, px, py, band=2, min_coverage=0.3):
+    """The single most important safety check in this pipeline - see the
+    long comment in process_one.py's process() for why. A detected
+    (px, py) period can pass every other check (x/y agreement, marker-
+    inside-boundary, GB bounds, plausible area) while being completely
+    fabricated, because none of those checks confirm an actual grid LINE
+    exists at the claimed spacing - they only check aggregate pixel
+    counts, which scattered unrelated cyan content can satisfy by
+    coincidence across a wide search range.
+
+    This checks the real thing: at the best-fitting phase for each axis,
+    what fraction of the candidate grid-line positions have cyan pixels
+    covering at least `min_coverage` of the full row/column length (i.e.
+    an actual near-continuous line spanning most of the page, not a
+    handful of scattered points that happen to sum up right). Verified
+    live: real grid files score at or near 1.0 on both axes; the "many
+    raster tiles but no real grid" false-positive template this check
+    was built to catch scores 0.0 on both axes, with no ambiguous middle
+    ground observed across Oxfordshire's ~100 confirmed-grid-template
+    candidate files. Returns (vertical_fraction, horizontal_fraction).
+    """
+    h, w = cyan_mask.shape
+    colsum = cyan_mask.sum(axis=0).astype(float)
+    rowsum = cyan_mask.sum(axis=1).astype(float)
+
+    off_x = _best_phase(colsum, px, band)
+    positions_x = list(range(off_x, w, int(round(px))))
+    confirmed_x = 0
+    for x in positions_x:
+        lo, hi = max(0, x - band), min(w, x + band + 1)
+        coverage = cyan_mask[:, lo:hi].any(axis=1).sum() / h
+        if coverage >= min_coverage:
+            confirmed_x += 1
+    frac_x = confirmed_x / len(positions_x) if positions_x else 0.0
+
+    off_y = _best_phase(rowsum, py, band)
+    positions_y = list(range(off_y, h, int(round(py))))
+    confirmed_y = 0
+    for y in positions_y:
+        lo, hi = max(0, y - band), min(h, y + band + 1)
+        coverage = cyan_mask[lo:hi, :].any(axis=0).sum() / w
+        if coverage >= min_coverage:
+            confirmed_y += 1
+    frac_y = confirmed_y / len(positions_y) if positions_y else 0.0
+
+    return frac_x, frac_y
+
+
 def find_marker_and_boundary(arr, color="blue", min_boundary_pixels=500):
     r = arr[:, :, 0].astype(int)
     g = arr[:, :, 1].astype(int)
