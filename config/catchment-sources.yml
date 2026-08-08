@@ -3789,6 +3789,36 @@ sources:
   # School before running at scale; every polygon was also checked to
   # actually contain its own school's real coordinate.
   #
+  # 2026-08-08 update: the ~28 grid-template files that had previously
+  # failed the autocorrelation confidence check were revisited with two
+  # fixes, not just a lower threshold. (1) The autocorrelation peak
+  # search was picking a harmonic (2x/3x/4x the true grid spacing) over
+  # the fundamental on some files, since a harmonic's peak can outscore
+  # the fundamental's - fixed by taking the smallest period among all
+  # peaks within 50% of the tallest peak's height, not just the single
+  # tallest. (2) Marker-icon selection previously took the first
+  # plausible small coloured blob in raster-scan order, which could pick
+  # an unrelated small feature elsewhere on the page (e.g. a highlighted
+  # building outline near a different village) instead of the school's
+  # own marker - fixed by requiring the candidate marker's centroid to
+  # fall inside the boundary polygon's own filled interior, then taking
+  # the largest such candidate (real marker icons are consistently
+  # bigger than the small blobs of noise - dash/text-edge fragments -
+  # that also land inside the polygon by chance). Both fixes were
+  # verified by re-deriving full contour overlays for several files
+  # (Benson CE Primary, The Marlborough CE School, John Blandy Primary,
+  # The Bicester School, Sonning Common Primary) and visually confirming
+  # the traced boundary matches the source PDF's own line pixel-for-
+  # pixel and the marker lands on the school's own icon, not just that
+  # the resulting polygon happens to contain the school's coordinate
+  # (which is true by construction for any in-polygon marker choice and
+  # so cannot alone prove the marker was the *right* one). Of the ~28
+  # candidates, 36 files actually turned out gridded once re-examined at
+  # 150dpi (some of the original ~28 count was approximate); 35 were
+  # digitised this pass, 1 (Dry Sandford Primary School) skipped - its
+  # true marker icon is only ~3px at this render resolution, too small
+  # to distinguish from noise with this method.
+  #
   # A second, newer (2011-2014+) Oxfordshire PDF template - cream/yellow
   # OS-OpenData-style basemap, no cyan grid, no scale bar - was
   # previously undigitised (~91 candidate files). A working method was
@@ -3848,16 +3878,16 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - each source PDF states only '© Crown Copyright. All rights reserved 100023343 [year]', no explicit Open Government Licence statement."
-    last_verified_at: "2026-08-05"
+    last_verified_at: "2026-08-08"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      66 primary catchment polygons digitised from Oxfordshire's
+      91 primary catchment polygons digitised from Oxfordshire's
       per-school "Location and Designated Area" PDFs using the council's
-      own OS-grid-referenced basemap for georeferencing (65), plus 1
-      (Orchard Meadow Primary School) from the newer non-gridded
-      cream/yellow basemap template using the landmark-pair method - see
-      the block comment above this entry for both methods.
+      own OS-grid-referenced basemap for georeferencing (90 across two
+      passes), plus 1 (Orchard Meadow Primary School) from the newer
+      non-gridded cream/yellow basemap template using the landmark-pair
+      method - see the block comment above this entry for both methods.
 
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
@@ -3869,14 +3899,15 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - each source PDF states only '© Crown Copyright. All rights reserved 100023343 [year]', no explicit Open Government Licence statement."
-    last_verified_at: "2026-08-07"
+    last_verified_at: "2026-08-08"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      12 secondary catchment polygons: 10 digitised the same way as the
-      primary_catchment entry above, plus 2 (Oxford Spires Academy,
-      Cheney School) from the newer non-gridded template using the
-      landmark-pair method - see the block comment above this entry.
+      22 secondary catchment polygons: 20 digitised the same way as the
+      primary_catchment entry above (across two passes), plus 2 (Oxford
+      Spires Academy, Cheney School) from the newer non-gridded template
+      using the landmark-pair method - see the block comment above this
+      entry.
 
   # Halton: no GIS/catchment map found on the council's own mapping
   # portal, only a single PDF ("Widnes Secondary-Catchment Zone.pdf")
@@ -5159,15 +5190,18 @@ candidates:
     reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published.'
   - local_authority_name: "Luton"
     reason_not_enabled: "The council's catchment tool fetches a flat tab-separated text file (road name to primary/secondary school) - no geometry of any kind, fails the polygon requirement entirely."
-  - local_authority_name: "Oxfordshire (remaining ~129 of 307 schools)"
+  - local_authority_name: "Oxfordshire (remaining ~94 of 307 schools)"
     reason_not_enabled: >
-      78 of Oxfordshire's 307 schools are now digitised and enabled (see
-      the Oxfordshire entries in sources: above) - see the block comment
-      there for both digitisation methods now proven. The council's own
-      ArcGIS Server was fully enumerated (~80 named services) with no
-      schools/catchment layer found anywhere in it and a FOI request for
-      GIS data was refused, but every school's own "Location and
-      Designated Area" PDF is published at a predictable URL
+      113 of Oxfordshire's 307 schools are now digitised and enabled
+      (see the Oxfordshire entries in sources: above) - see the block
+      comment there for both digitisation methods now proven, and the
+      2026-08-08 update note for the autocorrelation harmonic-rejection
+      and marker-selection fixes that unlocked most of this session's
+      additions. The council's own ArcGIS Server was fully enumerated
+      (~80 named services) with no schools/catchment layer found
+      anywhere in it and a FOI request for GIS data was refused, but
+      every school's own "Location and Designated Area" PDF is
+      published at a predictable URL
       (oxfordshire.gov.uk/sites/default/files/2022-12/{school-code}_all.pdf,
       where school-code is the same number used in the council's own
       school-directory URLs, e.g. oxfordshire.gov.uk/schools/list/4139;
@@ -5176,20 +5210,23 @@ candidates:
       codes resolve to a real PDF, 100 don't (either genuinely no
       designated area published, e.g. a school with distance-based
       admissions, or a different/missing code - not individually
-      distinguished). Of the 207 real PDFs, 103 use an OS 1:1250-raster
-      template with a precise 1km cyan grid (the technique already
-      described); the other ~91 use a different, newer (2011-2014+)
-      cream/yellow OS-OpenData-style basemap with no grid and no scale
-      bar - a working landmark-pair method for this template was found
-      and proven on 3 real schools (see the block comment above the
-      Oxfordshire sources: entries for the full method), but it's
-      inherently manual per file and only 3 of ~91 are done. Of the 103
-      grid-template PDFs, 75 succeeded; the remaining ~28 failed the
-      grid-spacing autocorrelation check (either a genuinely faint/short
-      grid on a tightly-zoomed small catchment, or another read failure
-      not yet individually diagnosed) - worth another pass with a lower
-      confidence threshold or a manual per-file check rather than
-      assumed unfixable.
+      distinguished). Of the 207 real PDFs, roughly 88 use the newer
+      (2011-2014+) cream/yellow OS-OpenData-style basemap with no grid
+      and no scale bar - a working landmark-pair method for this
+      template was found and proven on 3 real schools (see the block
+      comment above the Oxfordshire sources: entries for the full
+      method), but it's inherently manual per file and only 3 of ~91
+      are done (this session focused on the grid-template backlog
+      instead - see below - so this bucket is untouched and remains the
+      single best next target). The remaining ~119 use an OS
+      1:1250-raster template with a 1km cyan grid (or a fainter variant
+      of it): 110 have now been digitised (75 in the original pass, 35
+      more this session after fixing two bugs in the automated
+      pipeline - see the 2026-08-08 block-comment note); 1 more
+      (Dry Sandford Primary School) was attempted but skipped because
+      its marker icon is only ~3px at 150dpi render resolution, too
+      small to reliably distinguish from noise - would need a
+      higher-resolution render (300dpi+) to revisit.
   - local_authority_name: "Reading"
     reason_not_enabled: "Runs Astun iShare (my.reading.gov.uk) with nursery/primary/secondary school layers confirmed live, but verified via GetFeature that these are esriGeometryPoint (school locations only) - no layer with 'catchment' in the name exists on this server."
   - local_authority_name: "Slough"
