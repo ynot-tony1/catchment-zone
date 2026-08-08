@@ -1054,6 +1054,85 @@ sources:
     enabled: true
     notes: "63 primary catchment polygons. No secondary catchment layer found on this server."
 
+  # Cardiff: real polygon geometry confirmed live on the council's Astun
+  # iShare WFS (ishare.cardiff.gov.uk/GetOWS.ashx, MAPSOURCE=mapsources/
+  # maps_en, typeNames catchprimary/catchsecondary/catchprimarywelsh/
+  # catchsecondarywelsh) but with zero attribute fields on every layer -
+  # see the (resolved) Cardiff candidate note elsewhere in this file for
+  # the full history. Attributed to real schools by point-in-polygon
+  # containment against this project's own GIAS-sourced school
+  # coordinates rather than a name field, restricting each layer's
+  # candidate pool to the schools actually eligible for that layer's
+  # kind of catchment first (non-faith/non-Welsh-medium for the plain
+  # layers, Welsh-medium only for the *welsh layers - Cardiff's faith
+  # schools set their own admissions with no LA catchment of their own).
+  # catchsecondary/catchsecondarywelsh matched their real secondary
+  # schools 1:1 with zero ambiguity; catchprimary/catchprimarywelsh
+  # matched cleanly 1:1 for all but two genuine two-school shared zones
+  # each (kept as one combined-name row) and a handful of polygons with
+  # no matching non-faith/Welsh-medium school inside them (left out
+  # rather than guessed at). Every output polygon re-verified to contain
+  # its assigned school's(') real DB coordinate before deploying.
+  - local_authority_code: "W-681"
+    local_authority_name: "Cardiff"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://ishare.cardiff.gov.uk/?layers=catchprimary&ms=mapsources%2Fmaps_en"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/cardiff/cardiff_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own and Cardiff Council's open-data pages returned a 403 to unauthenticated fetches from this environment; not individually confirmed OGL."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "57 primary catchment polygons (56 single-school + 1 two-school shared zone, Marlborough Primary / Howardian Primary School). 4 of the source layer's 61 polygons had no matching non-faith, non-Welsh-medium primary school inside them and were left out."
+
+  - local_authority_code: "W-681"
+    local_authority_name: "Cardiff"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://ishare.cardiff.gov.uk/?layers=catchsecondary&ms=mapsources%2Fmaps_en"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/cardiff/cardiff_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own and Cardiff Council's open-data pages returned a 403 to unauthenticated fetches from this environment; not individually confirmed OGL."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "10 secondary catchment polygons, matched 1:1 against all 10 of Cardiff's real non-faith, non-Welsh-medium secondary schools with zero ambiguity."
+
+  - local_authority_code: "W-681"
+    local_authority_name: "Cardiff"
+    academic_year: "2025-2026"
+    source_type: "welsh_primary_catchment"
+    source_url: "https://ishare.cardiff.gov.uk/?layers=catchprimarywelsh&ms=mapsources%2Fmaps_en"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/cardiff/cardiff_welsh_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own and Cardiff Council's open-data pages returned a 403 to unauthenticated fetches from this environment; not individually confirmed OGL."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "15 Welsh-medium primary catchment polygons (13 single-school + 2 two-school shared zones). 2 of the source layer's 17 polygons had no matching Welsh-medium primary school inside them and were left out."
+
+  - local_authority_code: "W-681"
+    local_authority_name: "Cardiff"
+    academic_year: "2025-2026"
+    source_type: "welsh_secondary_catchment"
+    source_url: "https://ishare.cardiff.gov.uk/?layers=catchsecondarywelsh&ms=mapsources%2Fmaps_en"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/cardiff/cardiff_welsh_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own and Cardiff Council's open-data pages returned a 403 to unauthenticated fetches from this environment; not individually confirmed OGL."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "3 Welsh-medium secondary catchment polygons, matched 1:1 against all 3 of Cardiff's real Welsh-medium secondary schools with zero ambiguity."
+
   # Renfrewshire: one combined layer with a Type attribute holding all
   # four phase/denomination combinations - the same arcgis_where
   # filtering pattern as Argyll and Bute. The layer's own ArcGIS item
@@ -5480,18 +5559,40 @@ candidates:
       correctly rejected, not a network-origin artifact.
   - local_authority_name: "Cardiff (Wales)"
     reason_not_enabled: >
-      Real reason found this time, not just "no API": Cardiff runs the
-      Astun Technology iShare platform (ishare.cardiff.gov.uk), whose
-      GetOWS.ashx proxy is a genuine WFS 1.1.0 endpoint in front of a real
-      MapServer instance (confirmed live: GetCapabilities lists real
-      typeNames catchprimary/catchsecondary/catchprimarywelsh/
-      catchsecondarywelsh) - but DescribeFeatureType on every one of those
-      layers returns only a single msGeometry element, no attribute
-      fields at all. GetFeature confirms this: real polygon geometry
-      comes back, but with zero properties, so there is no way to name
-      which school each polygon belongs to in bulk. Licensing is not the
-      blocker here - this is a genuine "no identifying data" gap, same
-      category as the City of London candidate elsewhere in this list.
+      RESOLVED - now digitised, see the Cardiff entries in sources: above.
+      The original finding stands as real (Astun Technology iShare's
+      GetOWS.ashx WFS 1.1.0 endpoint, catchprimary/catchsecondary/
+      catchprimarywelsh/catchsecondarywelsh layers, real polygon geometry
+      but zero attribute fields - DescribeFeatureType confirms only a
+      single msGeometry element on every layer), but "no identifying
+      data" turned out not to be a hard stop: since this project already
+      holds every Cardiff school's own real DB coordinate (from GIAS),
+      each polygon can be attributed to its school by point-in-polygon
+      containment instead of by a name field that doesn't exist server-
+      side. Candidate schools were split by phase and, critically, by
+      religious character and Welsh-medium naming first - Cardiff's
+      voluntary aided/controlled faith schools (Church in Wales, Roman
+      Catholic) set their own admissions with no LA-administered
+      catchment of their own, the same structural fact already found for
+      Herefordshire's faith schools elsewhere in this file, and Welsh-
+      medium ("Ysgol"-named) schools are served by the separate
+      catchprimarywelsh/catchsecondarywelsh layers rather than the plain
+      ones. Restricting each layer's candidate pool this way turned a
+      confusing many-schools-per-polygon result (community and faith
+      schools' real sites both happening to sit inside the same broad
+      community catchment) into a near-bijective one: catchsecondary (10
+      polygons) and catchsecondarywelsh (3) matched their exact 10 and 3
+      real non-faith/Welsh-medium secondary schools with zero ambiguity,
+      the strongest possible cross-check that the attribution logic
+      itself is sound. catchprimary matched 57 of 61 polygons 1:1 plus 1
+      genuine two-school shared zone (Marlborough Primary and Howardian
+      Primary School, both real, both independently verified inside the
+      same polygon - kept as one combined-name row, not a dedup
+      artifact); catchprimarywelsh matched 15 of 17 1:1 plus 2 shared
+      pairs. The remaining 4 primary and 2 Welsh-medium primary polygons
+      matched zero candidate schools (their nearest real school in every
+      case was a faith school just outside the layer's own candidate
+      pool) and were left out rather than guessed at.
   - local_authority_name: "Monmouthshire (Wales)"
     reason_not_enabled: >
       Same platform, same exact limitation as Cardiff above: Astun iShare
