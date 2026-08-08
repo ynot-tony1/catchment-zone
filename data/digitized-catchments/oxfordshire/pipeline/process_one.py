@@ -84,9 +84,11 @@ from shapely.ops import transform as shp_transform
 
 from oxon_lib import (
     confirmed_grid_line_fraction,
+    cyan_mask_broad,
     fill_boundary,
     find_marker_and_boundary,
     polygon_from_mask,
+    reconcile_grid_period,
     render,
 )
 
@@ -244,4 +246,68 @@ def process(pdf_path, lat, lon, color, dpi=300, page_index=0):
         "marker_px": (mx_px, my_px),
         "boundary_bbox": boundary["bbox"],
         "area_km2": area_km2,
+    }
+
+
+def reverify_grid(pdf_path, dpi=300, page_index=0):
+    """Re-verify that an ALREADY-DIGITISED grid-template school's source
+    PDF genuinely has a real grid, without redoing full digitisation.
+    Added 2026-08-08 during a systematic re-check of every currently-
+    deployed Oxfordshire grid-template catchment against
+    confirmed_grid_line_fraction() (the same audit that motivated adding
+    that function in the first place - see its docstring and
+    catchment-sources.yml's Oxfordshire notes for the original
+    false-positive discovery).
+
+    Uses cyan_mask_broad() + reconcile_grid_period() (see oxon_lib.py)
+    rather than process()'s plain grid_spacing_px()/narrow cyan_mask:
+    that narrow mask, calibrated against vivid urban 1:1250 basemaps,
+    was found DURING this exact re-verification pass to score 0.0/0.0 -
+    the documented fake-grid signature - on several genuinely real grid
+    files that turned out to use a paler cyan grid-line rendering on a
+    more rural/topographic basemap sub-variant. Direct pixel-strip crops
+    confirmed real, continuous, page-spanning grid lines under the
+    claimed period for every one of these before this broader check was
+    written and trusted - do not "fix" a low narrow-mask score by
+    lowering its threshold; broaden the colour detection instead, as
+    this function does, and validate any change against BOTH directions
+    (known-real geometry and the known-fake rows removed in the
+    immediately prior session) before trusting it, same as this
+    function's own validation described in oxon_lib.py.
+
+    Returns {"ok": True/False, "reason"/diagnostics}. Does NOT redo
+    marker/boundary/anchor extraction - this function only re-confirms
+    the grid itself is real, which is the specific, narrow question a
+    re-verification audit (as opposed to first-time digitisation) needs
+    answered for a school whose polygon is already committed and
+    deployed."""
+    is_grid, diag = is_grid_template(pdf_path, page_index=page_index)
+    if not is_grid:
+        return {"ok": False, "reason": f"not a grid-template file ({diag})", "applicable": False}
+
+    arr = render(pdf_path, dpi=dpi, page_index=page_index)
+    mask = cyan_mask_broad(arr)
+    colsum = mask.sum(axis=0).astype(float)
+    rowsum = mask.sum(axis=1).astype(float)
+    px, py = reconcile_grid_period(colsum, rowsum)
+    if px is None:
+        return {
+            "ok": False,
+            "reason": "no consistent grid period found on either axis, even allowing harmonics (broad mask)",
+            "applicable": True,
+        }
+    frac_x, frac_y = confirmed_grid_line_fraction(mask, px, py)
+    if frac_x < 0.5 or frac_y < 0.5:
+        return {
+            "ok": False,
+            "reason": f"no real grid lines confirmed (frac_x={frac_x:.2f}, frac_y={frac_y:.2f}, period={px:.1f})",
+            "applicable": True,
+        }
+    return {
+        "ok": True,
+        "grid_px": px,
+        "grid_py": py,
+        "frac_x": frac_x,
+        "frac_y": frac_y,
+        "applicable": True,
     }

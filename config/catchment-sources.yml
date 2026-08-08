@@ -3932,6 +3932,73 @@ sources:
   # explicitly flagged as needing a higher-DPI revisit) was tried again
   # at 300dpi but its marker is now merged into the same connected
   # component as the boundary line itself, still unresolved.
+  #
+  # 2026-08-08 systematic re-verification pass: a prior session this same
+  # day discovered a fake-grid false-positive template and added
+  # confirmed_grid_line_fraction() to catch it, but only spot-checked 2 of
+  # the ~114 already-deployed grid-template schools (King's Meadow, Queen
+  # Emma's) against it - see the "IMPORTANT 2026-08-08 correction" note
+  # below. This pass re-downloaded and re-checked essentially all of the
+  # rest (112 of 114) against the hardened check. Result: 96 PASS
+  # (confirmed genuine, real continuous grid lines at the claimed
+  # spacing), 0 confirmed fake, 18 could not be re-checked because the
+  # source PDF now live at the exact URL used for original digitisation
+  # (1 primary - Nettlebed Community School; 17 secondary - Maiden
+  # Erlegh Chiltern Edge, The Henry Box School, Wood Green School,
+  # Bartholomew School, Wheatley Park School, Langtree School, Matthew
+  # Arnold School, St Birinus School, Didcot Girls' School, Wallingford
+  # School, Chipping Norton School, Larkmead School, Lord Williams's
+  # School, The Cooper School, The Marlborough Church of England School,
+  # The Warriner School, Burford School) no longer presents as the
+  # raster grid-template at all (n_images 8-37, well under the
+  # GRID_TEMPLATE_MIN_IMAGES=80 threshold, one file even carrying an
+  # internal "2011"/"from 1 September 2012" date) - genuinely different,
+  # much smaller content than the 140+-tile grid raster the yml notes
+  # below describe these schools as having been digitised from. No
+  # alternate dated URL path exists (checked 2021-12 through 2025-09 for
+  # several of these codes, all 404 except the same 2022-12 path already
+  # in use) - this isn't a wrong-date guess, the file actually behind
+  # this URL genuinely no longer matches what digitisation used, for
+  # reasons not established (a genuine council-side content replacement,
+  # or a bookkeeping mismatch in which of Oxfordshire's 3+ known PDF
+  # template variants these particular schools actually came from at the
+  # time). These 18 are left deployed (no evidence of fakeness was
+  # found for them, only that this session's method can no longer check
+  # them) but are NOT hardened-verified - flagged here rather than
+  # silently counted as good, per this project's standing rule against
+  # treating unverified geometry as confirmed.
+  #
+  # A second, important finding from this pass: confirmed_grid_line_fraction's
+  # own narrow RGB cyan mask (calibrated on vivid urban 1:1250 basemaps)
+  # produces real false negatives - several genuinely real grid files
+  # (Kidmore End, Hornton, Cholsey, John Blandy, Leafield, Chalgrove, The
+  # Hendreds, Brightwell-cum-Sotwell, John Hampden Primary) initially
+  # scored 0.0/0.0 or otherwise failed the 0.7 threshold, identical to
+  # the true fake-grid signature, because their grid line renders in a
+  # much paler cyan on a more rural/topographic basemap sub-variant this
+  # same export tool also produces, plus (separately) a harmonic
+  # peak-detection bug on a few files where the x-axis and y-axis
+  # independently locked onto different multiples of the true spacing.
+  # A full-page visual-style judgement call (background colour/scheme)
+  # on these files was actively misleading and nearly caused 6+
+  # genuinely correct schools to be wrongly deleted before pixel-strip
+  # crops caught the mistake - only a literal per-line pixel check (not
+  # a glance at overall map style) is trustworthy here. Fixed with
+  # cyan_mask_broad() (HSV-based, catches pale and vivid cyan alike) and
+  # reconcile_grid_period() (searches for a period shared by both axes'
+  # autocorrelation peaks rather than trusting each axis's independently
+  # -ranked top peak, resolving the harmonic bug) in oxon_lib.py, exposed
+  # via process_one.reverify_grid() for re-verification use. Validated
+  # both directions before trusting it: every genuine file re-checked
+  # this session now scores correctly, and all 12 of the actually-fake
+  # rows removed in the immediately prior session (still fetchable at
+  # their original URLs) score exactly 0.0/0.0 even under the broadened
+  # mask - the discriminating signal is real "no periodic grid structure
+  # at all", not narrow colour range. The original narrow-mask
+  # confirmed_grid_line_fraction() and process()'s gate for NEW candidate
+  # digitisation are left unchanged (a stricter default there is a
+  # reasonable, conservative choice); reverify_grid() is the function to
+  # use for auditing already-deployed schools going forward.
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
@@ -4002,6 +4069,23 @@ sources:
       re-downloaded and run through is_grid_template() +
       confirmed_grid_line_fraction().
 
+      2026-08-08 systematic re-verification (separate later session,
+      see the block comment above this entry for full detail): checked
+      all remaining primary grid-template schools except Nettlebed
+      Community School (source PDF no longer presents as a grid
+      template at all, could not be re-checked - see block comment).
+      Every other primary grid-template school - all 92 not already
+      covered by the spot-check above - passed the hardened check
+      (confirmed real, continuous grid lines), using an improved
+      broadened-colour + harmonic-reconciled variant of the check after
+      the original narrow-mask version produced false negatives on
+      several genuinely real files (see block comment). 0 primary rows
+      removed this pass. Total grid-template primary schools now
+      hardened-verified: 94 of 94 checkable (King's Meadow and Queen
+      Emma's from the earlier spot-check, plus 92 more this pass);
+      Nettlebed remains unverified (flagged, not removed - no evidence
+      of fakeness, just unable to re-check with the current live PDF).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
@@ -4030,6 +4114,26 @@ sources:
       session, plus 2 (Oxford Spires Academy, Cheney School) from the newer
       non-gridded template using the landmark-pair method - see the
       block comment above this entry.
+
+      2026-08-08 systematic re-verification (separate later session,
+      see the block comment above the primary_catchment entry for full
+      detail): of the 20 secondary schools digitised via the grid
+      method, only 3 (Icknield Community College, King Alfred's, The
+      Bicester School) currently have a live source PDF that still
+      presents as a grid-raster template - all 3 passed the hardened
+      check (confirmed real grid). The other 17 (Maiden Erlegh Chiltern
+      Edge, The Henry Box School, Wood Green School, Bartholomew
+      School, Wheatley Park School, Langtree School, Matthew Arnold
+      School, St Birinus School, Didcot Girls' School, Wallingford
+      School, Chipping Norton School, Larkmead School, Lord Williams's
+      School, The Cooper School, The Marlborough Church of England
+      School, The Warriner School, Burford School) now have a much
+      smaller (8-37 image), non-grid-template PDF at the exact URL used
+      for original digitisation - could not be re-checked this pass
+      (see block comment for what was ruled out). 0 secondary rows
+      removed. These 17 are flagged, not removed - no evidence found
+      either way, only that this session's pixel method can no longer
+      check them against their original source.
 
   # Halton: no GIS/catchment map found on the council's own mapping
   # portal, only a single PDF ("Widnes Secondary-Catchment Zone.pdf")

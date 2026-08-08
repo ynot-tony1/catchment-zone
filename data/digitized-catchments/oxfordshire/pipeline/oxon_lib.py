@@ -129,6 +129,101 @@ def _best_phase(signal, p, band=2):
     return best_off
 
 
+def cyan_mask_broad(arr):
+    """A broadened, HSV-based grid-line colour detector, added after a
+    2026-08-08 re-verification session found the narrow RGB cyan_mask
+    used elsewhere in this module (b>200, g:140-230, r:10-160) produces
+    real false negatives: pixel-sampled directly, several genuine
+    Oxfordshire grid-template files render their OS 1km grid line in a
+    much PALER cyan (e.g. RGB (177,243,239), (201,235,237) - R and/or G
+    channel outside the narrow mask's range) on a more rural/
+    topographic-styled basemap sub-variant (orange contour lines, cream
+    shading) that this same PDF export tool also produces - a stylistic
+    difference, not evidence of a missing/fake grid. Schools initially
+    suspected fake purely from a whole-page visual style judgement
+    (Kidmore End, Hornton, Cholsey, John Blandy, Leafield, Chalgrove,
+    The Hendreds, Brightwell-cum-Sotwell, John Hampden) were all
+    confirmed genuine once checked with this broader mask AND a direct
+    pixel-strip crop showing a real, continuous, page-spanning grid
+    line - the narrow mask alone had scored several of them 0.0/0.0,
+    identical to the true fake-grid template's signature, making a
+    whole-page style judgement call actively dangerous here (nearly led
+    to wrongly deleting 6+ genuinely correct live catchments before the
+    strip-level pixel check caught the mistake).
+
+    Validated (2026-08-08) against both directions: every real grid-
+    template school checked this session (96 re-downloaded, currently-
+    deployed schools plus the ~12 hand-verified above) scores a real,
+    confirmable line fraction with this mask; all 12 of the previously
+    confirmed-fake rows from the immediately prior session's cleanup
+    (Edith Moorhouse, Hardwick, John Henry Newman, New Hinksey,
+    Queensway, RAF Benson, St Ebbe's, St Francis, St Mary's Banbury,
+    St Michael's Oxford City, St Nicholas', Windale) still score exactly
+    0.0/0.0 even with this broadened mask - the discriminating signal is
+    genuinely "no periodic grid-line structure at all", not "narrow
+    colour range". Use this (with reconcile_period below) in preference
+    to the plain cyan mask when re-verifying already-digitised files;
+    the narrow mask remains available for NEW-candidate digitisation
+    where a stricter, more conservative default is reasonable."""
+    hsv = cv2.cvtColor(arr, cv2.COLOR_RGB2HSV)
+    h, s, v = hsv[:, :, 0].astype(int), hsv[:, :, 1].astype(int), hsv[:, :, 2].astype(int)
+    return (h >= 75) & (h <= 105) & (s >= 15) & (v >= 150)
+
+
+def _autocorr_peaks(signal, min_p=100, max_p=1000, k=10):
+    s = signal - signal.mean()
+    n = len(s)
+    ac = np.correlate(s, s, mode="full")[n - 1 :]
+    peaks = []
+    for p in range(min_p, min(max_p, n - 1)):
+        if ac[p] > ac[p - 1] and ac[p] > ac[p + 1]:
+            peaks.append((p, ac[p]))
+    peaks.sort(key=lambda t: -t[1])
+    return peaks[:k]
+
+
+def reconcile_grid_period(colsum, rowsum, min_p=100, max_p=1000, tol=0.03):
+    """Find a single period p shared by the x-axis and y-axis
+    autocorrelation peaks (a real OS grid is square, so both axes
+    should agree), even when one axis's own top-ranked peak is a 2x/3x
+    harmonic of the true fundamental rather than the fundamental itself
+    - a real failure mode found this session on several genuine grid
+    files (e.g. The Hendreds: px axis top peak 564px, py axis top peak
+    282px - 564 is exactly 2x282, and 282 is also present as px's own
+    2nd-ranked peak). Rather than trusting each axis's independently-
+    ranked top peak (what grid_spacing_px does, and what causes the
+    'grid x/y mismatch' rejection on files like this), search every
+    combination of top-k peaks on both axes for a shared base period
+    (each peak within `tol` of an integer multiple of the candidate),
+    preferring the combination with the strongest combined peak height.
+    Returns (px, py) - always equal, since a shared fundamental is what
+    this function looks for - or (None, None) if no consistent period
+    exists across both axes at all (a real signal for a genuinely
+    fake/gridless file, not just a detection quirk)."""
+    px_peaks = _autocorr_peaks(colsum, min_p, max_p)
+    py_peaks = _autocorr_peaks(rowsum, min_p, max_p)
+    if not px_peaks or not py_peaks:
+        return None, None
+    best = None
+    for px, hx in px_peaks:
+        for py, hy in py_peaks:
+            for base in (px, py):
+                ok = True
+                for other in (px, py):
+                    ratio = other / base
+                    nearest_int = round(ratio)
+                    if nearest_int < 1 or abs(ratio - nearest_int) / nearest_int > tol:
+                        ok = False
+                        break
+                if ok:
+                    score = hx + hy
+                    if best is None or score > best[2]:
+                        best = (base, base, score)
+    if best is None:
+        return None, None
+    return best[0], best[1]
+
+
 def confirmed_grid_line_fraction(cyan_mask, px, py, band=2, min_coverage=0.3):
     """The single most important safety check in this pipeline - see the
     long comment in process_one.py's process() for why. A detected
