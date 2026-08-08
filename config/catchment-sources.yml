@@ -4365,6 +4365,48 @@ sources:
       just outside its own polygon. Oxfordshire primary total: 121 ->
       123 (Charlton + Stockham).
 
+      2026-08-09 session (continued further): landed Thomas Reade
+      Primary School (URN 123073, Abingdon, 1.13km2) - the map
+      previously flagged as a "promising Radley Road neighbour cluster"
+      for Rush Common turned out to be a red herring (St Edmund's/
+      Kingfisher/Thomas Reade/Fitzharrys/John Mason are not actually
+      visible on Rush Common's own map page), but Thomas Reade has its
+      OWN PDF with its own real vector boundary. Anchored on its own
+      marker + "Abingdon Lock" (a tight-bbox named POI on the Thames,
+      749m baseline, rotation 0.8 degrees), verified by reverse-
+      geocoding a predicted point near "Science Park" to "Audlett
+      Drive, Peachcroft, Abingdon" (correct - Science Park is directly
+      on Audlett Drive on the source map too). Also fixed a real bug in
+      vector_boundary.py found while visually overlay-checking this
+      file: item_endpoints() collapsed bezier curve ('c') items to a
+      straight chord between just their start/end point, discarding
+      the actual curve. Invisible on gentle curves, but Thomas Reade's
+      boundary has one unusually tight notch near Eney Road where this
+      produced a visibly wrong straight-line cut across real boundary
+      area - caught only by this project's standing practice of
+      overlaying every traced ring on the source page before trusting
+      it, never skip that step even when a school's own marker check
+      and georeferencing all pass. Fixed by sampling 12 intermediate
+      points along each bezier curve (_cubic_bezier_points(), see the
+      file). Re-checked all 5 previously-committed real-vector-path
+      schools (Rush Common, Sandhills, Hill View, Charlton, Stockham)
+      against the fix: none of their actual boundary ring objects
+      contained curve items (confirmed via identical point counts
+      before/after), so none needed correction - only Thomas Reade was
+      affected. Also landed Pegasus School (URN 139985, Blackbird
+      Leys/Cowley, Oxford, 1.63km2), anchored on its own marker +
+      Windale Primary School (URN 146381, a real DB-matched neighbour
+      school visible and named on the same map, 621m baseline, rotation
+      -0.10 degrees - about as close to perfectly north-up as this
+      project has seen), cross-checked against both "Horspath Road
+      Industrial Estate" (a diffuse label, bearing 6.6 degrees/distance
+      ratio 1.05 - borderline on bearing alone, attributed to
+      imprecise text-label pixel-picking rather than a real error given
+      how clean the primary anchor rotation was) and "Chancerygate
+      Business Centre" (a precise POI, bearing 3.3 degrees/distance
+      ratio 1.13) as two independent sanity checks. Oxfordshire primary
+      total: 123 -> 125 (Thomas Reade + Pegasus).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"

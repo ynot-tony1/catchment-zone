@@ -40,19 +40,46 @@ def item_endpoints(item):
     return None, None
 
 
+def _cubic_bezier_points(p0, p1, p2, p3, n=12):
+    """Sample n intermediate points (excluding the start, including the
+    end) along a cubic bezier curve. Discovered necessary 2026-08-09
+    digitising Thomas Reade Primary School: item_endpoints() collapsing
+    a 'c' item to just its start/end point turns any curved stretch of
+    the boundary into a straight chord - invisible on most files (curves
+    are usually gentle) but produced a visible, wrong straight-line cut
+    across a real notch in Thomas Reade's boundary near Eney Road,
+    caught only by this project's standing practice of visually
+    overlaying every traced ring on the source page before trusting it."""
+    pts = []
+    for i in range(1, n + 1):
+        t = i / n
+        mt = 1 - t
+        x = mt**3 * p0.x + 3 * mt**2 * t * p1.x + 3 * mt * t**2 * p2.x + t**3 * p3.x
+        y = mt**3 * p0.y + 3 * mt**2 * t * p1.y + 3 * mt * t**2 * p2.y + t**3 * p3.y
+        pts.append((x, y))
+    return pts
+
+
 def segment_polyline(d):
     """Flatten one get_drawings() path dict into an ordered list of
     (x, y) points, relying on each item's end point equalling the next
     item's start point within the same path (verified true in every
-    file checked so far)."""
+    file checked so far). Bezier curve ('c') items are sampled at 12
+    intermediate points rather than collapsed to a straight chord
+    between their start/end - see _cubic_bezier_points()."""
     pts = []
     for item in d["items"]:
-        s, e = item_endpoints(item)
-        if s is None:
-            continue
-        if not pts:
-            pts.append((s.x, s.y))
-        pts.append((e.x, e.y))
+        kind = item[0]
+        if kind == "l":
+            s, e = item[1], item[2]
+            if not pts:
+                pts.append((s.x, s.y))
+            pts.append((e.x, e.y))
+        elif kind == "c":
+            p0, p1, p2, p3 = item[1], item[2], item[3], item[4]
+            if not pts:
+                pts.append((p0.x, p0.y))
+            pts.extend(_cubic_bezier_points(p0, p1, p2, p3))
     return pts
 
 
