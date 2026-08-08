@@ -4751,6 +4751,80 @@ sources:
       above - see the block comment there for the full method. Every
       polygon verified to contain its own school's real DB coordinate.
 
+  # Shetland Islands: previously a dead end (fully rasterised PDF, no
+  # vector text/lines at all - see the "candidates" history preserved
+  # below this council's old entry search trail elsewhere in this file's
+  # git history). Solved across two sessions: (1) a 26-point least-squares
+  # affine fit (pixel -> lon/lat) built by matching each of the map's
+  # coloured marker dots to its adjacent printed "X feeds to Y" label,
+  # read directly off the 150dpi raster (RMS residual 126m, cross-checked
+  # against the PDF's own printed 1:150000 scale to within 0.5%); (2) zone
+  # polygon extraction via competitive nearest-fill-colour classification
+  # (each land pixel assigned to whichever of the ~27 zones' sampled
+  # reference tint is closest) rather than this project's usual line-
+  # network watershed, since these zones are semi-transparent colour
+  # tints alpha-blended over a full OS basemap with no clean boundary
+  # lines to trace. A naive single-pass version of this produced
+  # "confetti" - several zones on this map reuse near-identical fill
+  # hues for non-adjacent areas, so pure per-pixel colour competition let
+  # a zone win small pockets of unrelated territory elsewhere on the map.
+  # Fixed with a confirm-then-regrow pass: for each zone, keep only the
+  # connected component of its colour-classified pixels that actually
+  # contains its own seed dot(s) as "confirmed" territory, discard
+  # everything else, then re-fill all unclaimed land purely by nearest-
+  # neighbour distance to the confirmed regions (a spatial regrow immune
+  # to further colour collisions). Sea/coastline itself was separated
+  # first by its own highly consistent pale-blue colour (independent of
+  # the zone-vs-zone problem), with thin overlay artefacts (OS grid
+  # lines, place-name text, the north arrow, "SIC" watermark) stripped by
+  # morphological opening before coastline extraction, since those are
+  # non-sea-coloured but span open water and would otherwise inflate the
+  # land mask. Verified every one of the 25 zones with a real DB school
+  # match: after vectorising (rasterio polygonize + light smoothing +
+  # Douglas-Peucker simplify) every resulting polygon contains its own
+  # school's real DB coordinate (shapely .contains, not just a pixel
+  # check). "Sound & Bells Brae feeds to Anderson High School" is one
+  # genuine shared zone covering two schools (Sound Primary and Bell's
+  # Brae Primary, both real, separate, open DB schools ~560m apart on
+  # the map) - handled by this project's existing same-geometry-checksum
+  # merge logic in build_catchment_areas, exactly as Middlesbrough's
+  # shared zone was. Fetlar, Papa Stour and Out Skerries are drawn on the
+  # map with their own zones but excluded (as before) since none has a
+  # currently-open DB school. Fair Isle's inset has its own separate
+  # scale with no OS grid of its own to re-anchor, so it was not put
+  # through the same pixel pipeline at all - since it's a single-school
+  # island where the whole island is definitionally the catchment, its
+  # real OSM/Nominatim coastline polygon (osm relation 3067410) was used
+  # directly instead, verified to contain Fair Isle Primary School's own
+  # DB coordinate.
+  - local_authority_code: "S12000027"
+    local_authority_name: "Shetland Islands"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.shetland.gov.uk/downloads/file/301/school-catchment-map"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/shetland/shetland_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "As printed on the source map: 'Reproduced by permission of Ordnance Survey on behalf of HMSO. (c) Crown copyright and database right 2014. All rights reserved. Ordnance Survey Licence number 100024344.' This is a standard local-authority OS PSMA public-reference publication, not an open-data licence (no OGL statement found anywhere on shetland.gov.uk for this item) - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      25 primary/JHS catchment polygons (24 solo + 1 shared Sound/Bell's
+      Brae zone merged by the pipeline's existing geometry-checksum dedup)
+      plus Fair Isle's own real coastline polygon, covering 26 of
+      Shetland's 34 open schools. See the block comment above for the
+      full affine-fit + colour-classification + confirm-and-regrow method
+      and the per-school verification. Fetlar, Papa Stour and Out
+      Skerries are drawn on the source map but excluded (no open DB
+      school). Whether the 6 Junior High School zones should *also* be
+      imported as secondary_catchment (they provide S1-S2/S3 locally
+      before transfer to Anderson/Brae High School) was not attempted
+      this session - the map itself only labels these as primary "feeds
+      to" zones, and a real secondary catchment would need to be the
+      union of many primary zones per high school, a different exercise.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -5513,143 +5587,14 @@ candidates:
     reason_not_enabled: "Catchment areas published only as plain HTML text tables of school-name-to-area-name (cne-siar.gov.uk/education-and-learning/schools/catchment-areas) - not even a PDF map exists, let alone structured boundary data."
   - local_authority_name: "Shetland Islands"
     reason_not_enabled: >
-      PDF-only (shetland.gov.uk/downloads/file/301/school-catchment-map,
-      confirmed via Content-Type: application/pdf) - no ArcGIS Online
-      presence found for the council. Re-checked this session for a
-      Spatial Hub Scotland dataset like the one that worked for North
-      Ayrshire/South Ayrshire elsewhere in this file
-      (data.spatialhub.scot/dataset/school_catchments-is is the real
-      Scotland-wide parent listing, enumerating child datasets for 13
-      local authorities) - Shetland is not one of the 13, confirming no
-      such dataset exists for it; not a search-technique failure.
-
-      The PDF itself: single A1 page (1684x2384pt), "Shetland Schools &
-      Catchment Areas", ~20 real colour-coded zones each printed "X
-      feeds to Y Junior High/High School", a legend distinguishing
-      Shetland College/High Schools(2)/Junior High Schools(6)/Primary
-      Departments(24) by marker colour, visible OS National Grid lines,
-      a printed scale (1:150000), a north arrow, and a separate Fair
-      Isle inset box. Inspected properly this session (rendered to PNG
-      via pdftoppm and viewed directly, not just probed for text/vector
-      objects): confirmed via pdfimages -list (329 embedded image
-      objects, mostly small JBIG2/JPX/CCITT tiles) and pdftotext (zero
-      characters extracted) that this is a FULLY RASTERISED composite -
-      unlike Middlesbrough's or South Tyneside's PDFs, there is no real
-      vector line network and no real text to extract via pdftotext
-      -bbox; every zone boundary, label and grid line is baked into
-      pixels. The OS grid lines are also unlabelled in this render (no
-      printed easting/northing at any checked intersection), so the
-      OS-grid-anchor method that worked for Middlesbrough (matching a
-      detected grid intersection to a known BNG value) cannot be used
-      as-is here without first solving that.
-
-      Two viable methods identified, neither attempted yet: (1) multi-
-      point least-squares affine fit using this project's own real DB
-      coordinates for Shetland's ~30 schools (local_authority_code
-      "S12000027", 34 open schools) against each school's coloured
-      marker-dot pixel position - more robust than Inverclyde's failed
-      single/few-landmark approach since Shetland has many more schools
-      to fit against, but requires manually associating each dot to its
-      printed name (no OCR-extractable text) by visual inspection of
-      cropped regions, which is what actually did not fit in this
-      session's time budget; (2) ICP coastline registration (the
-      technique that worked for Portsmouth) between the rasterised
-      land/sea boundary (colour-thresholdable - sea is a distinct pale
-      blue) and a real Shetland coastline pulled from an independent
-      public boundary source, sidestepping the grid-label and dot-
-      labelling problems entirely. Two further structural complications
-      once georeferencing is solved: (a) the islands' geography is
-      highly fragmented (many small separate islands, not one
-      contiguous boundary), which the existing pipeline handles fine
-      per-polygon but is worth flagging; (b) the Fair Isle inset needs
-      its own separate georeferencing pass at its own scale, not the
-      main map's transform. Genuinely tractable, real map quality
-      confirmed twice now - but a multi-hour undertaking on the scale of
-      South Tyneside below, not a quick win; worth a dedicated future
-      session rather than more time inside a mixed-target pass.
-
-      Follow-up session: attempted method (1) (multi-point affine fit
-      against this project's own DB coordinates). The georeferencing
-      half is now solved and verified, a real, reusable result even
-      though full deployment wasn't reached this pass. Identified each
-      of the map's marker dots (legend: red=Shetland College,
-      blue=High Schools(2), yellow=Junior High School(6),
-      green=Primary Departments(24)) by exact swatch colour
-      (pure (255,0,0)/(0,0,255)/(255,255,0)/(0,128,0), connected-
-      component-detected, legend box excluded) then visually matched
-      each dot to its adjacent printed "X feeds to Y" label (labels
-      are real legible text baked into the raster even though
-      pdftotext extracts nothing - confirmed readable at 150dpi
-      crops). 26 of the ~29 zones matched a real currently-open school
-      in this project's own DB by name (local_authority_code
-      "S12000027"); Fetlar, Papa Stour and Out Skerries' own primary
-      departments are drawn on the map but do not exist in this
-      project's schools table under any name (apparently fully closed
-      with no successor, unlike e.g. Halton's Bankfield->Ormiston
-      Chadwick case) - excluded as control points, left for a future
-      pass to decide whether to keep as unlinked named zones. Fit a
-      6-parameter least-squares affine (pixel -> lon/lat) across all
-      26 matched points at 150dpi render resolution
-      (lon = 0.00045903208249*px - 0.0000056406064885*py -
-      2.210659221831656; lat = -0.000002031061620538*px -
-      0.00022782537118394564*py + 60.90441880220972). Residual after
-      fitting: RMS 126m, max 418m (Brae), most points under 130m -
-      within this project's established tolerance elsewhere in this
-      file (comparable to Harton Academy's 82m, Allerton High's
-      48-71m). Independently cross-checked the fit's implied ground
-      sample distance (642 m^2/px^2 from the fit's own Jacobian)
-      against the value implied by the PDF's printed "Scale 1:150000"
-      ratio at 150dpi (645 m^2/px^2) - within 0.5%, a strong sanity
-      check that the fit is geometrically sound and not just
-      numerically overfit. One real bug caught and fixed while
-      building the correspondence table: an initial control-point list
-      had Sandness and Happyhansel's pixel coordinates accidentally
-      swapped with their neighbours (a copy-paste indexing slip against
-      the raw detected-dot array), which produced a 7.2km outlier
-      residual for Happyhansel alone - correcting the two coordinates
-      dropped every residual to the sub-450m range reported above, a
-      reminder to sanity-check any single outlier residual against the
-      raw source data before accepting a "good enough" global fit.
-
-      NOT yet deployed: the second half (turning each zone into a
-      closed polygon) is a harder raster-segmentation problem than
-      Middlesbrough/Portsmouth's line-network watershed technique,
-      because this map's zones are semi-transparent colour tints
-      alpha-blended over a full detailed OS basemap (roads, contour
-      lines, place-name text, water) rather than a flat vector fill or
-      a clean outline network - so a single fixed RGB distance
-      threshold per zone does not generalise: at a loose threshold
-      (35) small/isolated-island zones extract almost exactly right
-      (Foula 12.8 sq km vs a real ~12.7 sq km, Papa Stour 8.8 vs ~9.1,
-      Unst/Baltasound 116.3 vs ~120.6 - all near-exact), but the total
-      across all 26 zones comes to ~2253 sq km against Shetland's real
-      ~1466 sq km land area (a ~54% overcount, concentrated in the
-      large contiguous mainland zones where morphological closing
-      bridges across thin shared boundaries between similarly-tinted
-      neighbours); at a tighter threshold (24) several urban/small
-      zones (Scalloway, Bell's Brae, Hamnavoe, Aith, Out Skerries)
-      collapse to near-zero area instead, traced to those specific
-      zones' own reference colour being sampled from a low-confidence,
-      contaminated ring (under 10 consistent samples out of ~150-200
-      at the seed) rather than a genuinely representative fill colour
-      - a per-zone reference-colour problem, not a threshold problem,
-      for those specific zones. Next session should either
-      hand-pick a clean interior sample pixel per low-confidence zone
-      (visually, from a zoomed crop, rather than automatic ring-
-      sampling) before re-running the same closing+connected-
-      component-containing-seed pipeline, or revisit method (2) (ICP
-      coastline registration) purely for the polygon-extraction half,
-      now that method (1) has already solved georeferencing
-      independently - the two methods do not have to be used together.
-      The Fair Isle inset has no OS grid or scale marker of its own and
-      only one control point available (its own primary school), so it
-      cannot be independently georeferenced the same way; since Fair
-      Isle is a single-school island where the entire island is by
-      definition the catchment (confirmed: the inset's own yellow fill
-      covers the full island outline with no internal subdivision),
-      the practical fix is to use Fair Isle's real OSM/Ordnance Survey
-      coastline directly as the catchment polygon rather than
-      georeferencing the inset raster at all - not yet done.
+      RESOLVED - now digitised, see the Shetland Islands entry in
+      sources: above (25 zones via a 26-point affine fit + competitive
+      colour classification with a confirm-and-regrow cleanup pass,
+      plus Fair Isle via its real OSM coastline). This candidates entry
+      is kept deleted-in-spirit; the full investigation history (PDF
+      rasterisation check, the two viable-method writeup, and the
+      26-point affine derivation with its RMS/scale cross-check) lives
+      in this file's git history on this line if it's ever needed again.
   - local_authority_name: "City of London (England)"
     reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."
   - local_authority_name: "Redbridge (England)"
