@@ -4086,6 +4086,55 @@ sources:
       Nettlebed remains unverified (flagged, not removed - no evidence
       of fakeness, just unable to re-check with the current live PDF).
 
+      2026-08-08 investigation of the 18 flagged schools (separate later
+      session): directly inspected get_drawings() on all 18 PDFs rather
+      than trusting is_grid_template()'s n_images/saturated-path
+      heuristic (built only to distinguish the OTHER two known
+      templates). Finding: these files did NOT lose their grid or
+      degrade to a smaller/different map. They are a genuine THIRD
+      real sub-template never previously documented: the same raster
+      OS-grid basemap as the original 90/22 (real, continuous cyan grid,
+      confirmed both visually and via confirmed_grid_line_fraction),
+      but with the boundary/marker drawn as GENUINE vector paths in
+      get_drawings() (several hundred line/curve segments split across
+      multiple path objects that chain end-to-end into one closed loop,
+      plus a small filled marker square) rather than baked into the
+      raster like the original template - is_grid_template() rejected
+      them purely because of the low image count and the vector paths
+      it (correctly, for the other two templates) treats as evidence of
+      the non-gridded vector template. This is actually HIGHER precision
+      than the pixel-contour method (exact vector coordinates, not a
+      rasterised approximation), not lower. New pipeline code
+      (data/digitized-catchments/oxfordshire/pipeline/, not yet
+      committed as of this note - see next session for the committed
+      module name) extracts and chains these vector paths directly,
+      anchors them the same grid-scale + real-school-coordinate way as
+      the raster method, and reuses confirmed_grid_line_fraction() (plus
+      a peak-based fallback for tall/wide A3 pages where a fixed integer
+      pixel stride drifts out of phase - validated against all known
+      real/fake Oxfordshire files before being trusted) for the grid
+      check. Also found and handled two genuine geometric subtleties
+      real Oxfordshire designated areas can have: The Cooper School's
+      area is genuinely two disjoint rings (a main Bicester-area zone
+      plus a separate Ot Moor-area zone, both confirmed by tracing the
+      extracted rings back over the source page image), landed as a
+      MultiPolygon; Burford School's area has a real interior hole
+      (Carterton, its own separately-schooled town, carved out of the
+      middle of Burford's designated area) - resolved via ring
+      containment, not treated as a second added area. Nettlebed itself
+      passed via this method (real vector-path boundary, area 43.03km2,
+      real school coordinate falls inside). All 18 previously-flagged
+      schools (this one plus the 17 secondary ones documented in the
+      secondary_catchment entry below) are now hardened-verified;
+      Larkmead School's file turned out to be the ORIGINAL raster
+      template after all (get_drawings() completely empty, confirming
+      no vector boundary), just exported with far fewer/larger raster
+      tiles (18) than the 80-tile heuristic assumes - verified
+      genuine via direct grid/boundary/marker inspection and landed via
+      the original pixel method with a one-off bypass of the image-count
+      check for this specific confirmed-genuine file, not a threshold
+      change to the shared gate.
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
@@ -4134,6 +4183,41 @@ sources:
       removed. These 17 are flagged, not removed - no evidence found
       either way, only that this session's pixel method can no longer
       check them against their original source.
+
+      2026-08-08 resolution (separate later session, see the block
+      comment above the primary_catchment entry and this session's added
+      paragraph in that entry's notes for full detail): all 17 turned
+      out to be a genuine third Oxfordshire sub-template - same real
+      raster OS grid as before, but boundary/marker drawn as real vector
+      paths in get_drawings() rather than baked into the raster, which
+      is_grid_template()'s image-count/vector-path heuristic (built only
+      for the other two templates) misclassified as "not a grid
+      template". Re-digitised all 17 from their current live PDFs using
+      a new vector-path-chaining extraction (higher precision than the
+      pixel-contour method - exact vector coordinates, not a rasterised
+      approximation) anchored the same grid-scale + real-school-
+      coordinate way as the pixel method, gated by the same
+      confirmed_grid_line_fraction() check (plus a validated peak-based
+      fallback for tall A3 pages where a fixed-integer-pixel-stride
+      phase search drifts, found on Wheatley Park School's file).
+      The Cooper School's designated area is genuinely two disjoint
+      rings (Bicester area + a separate Ot Moor-area zone) and is now a
+      MultiPolygon; Burford School's area has a real interior hole
+      (Carterton, its own separately-schooled town, excluded from the
+      middle of Burford's area) rather than a second added area -
+      both confirmed by tracing the extracted rings back over the
+      source page image, not assumed. Larkmead School's file turned out
+      to still be the original raster-boundary template (get_drawings()
+      completely empty), just exported with only 18 large image tiles
+      rather than 140+ small ones - genuine per direct grid/boundary/
+      marker inspection, landed via the original pixel method with a
+      one-off bypass of the 80-image-count heuristic for this specific
+      confirmed file (the shared gate itself is unchanged). All 17
+      previously-existing feature rows (same SCHOOL_URN) were replaced
+      in place with the new hardened-verified geometry, not appended as
+      duplicates. 0 schools remain unverified from this flagged set of
+      18 (1 primary + 17 secondary) - all now pass hardened
+      verification.
 
   # Halton: no GIS/catchment map found on the council's own mapping
   # portal, only a single PDF ("Widnes Secondary-Catchment Zone.pdf")
