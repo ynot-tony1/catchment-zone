@@ -3979,13 +3979,17 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      25 secondary catchment polygons: 23 digitised the same way as the
-      primary_catchment entry above (across three passes, the latest 3
-      this session - Didcot Girls' School, King Alfred's, Lord
-      Williams's School - via the refined OpenCV connected-component
-      variant), plus 2 (Oxford Spires Academy, Cheney School) from the
-      newer non-gridded template using the landmark-pair method - see
-      the block comment above this entry.
+      24 secondary catchment polygons: 22 digitised the same way as the
+      primary_catchment entry above (across three passes, the latest 2
+      this session - Didcot Girls' School, King Alfred's - via the
+      refined OpenCV connected-component variant; Lord Williams's
+      School was already present from an earlier pass and a 2026-08-08
+      re-run of finalize.py accidentally re-digitised and re-added it
+      as a near-duplicate second polygon for the same school - caught
+      and removed, along with the stale DB row, in a later session),
+      plus 2 (Oxford Spires Academy, Cheney School) from the newer
+      non-gridded template using the landmark-pair method - see the
+      block comment above this entry.
 
   # Halton: no GIS/catchment map found on the council's own mapping
   # portal, only a single PDF ("Widnes Secondary-Catchment Zone.pdf")
