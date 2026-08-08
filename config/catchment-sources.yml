@@ -4174,6 +4174,80 @@ sources:
       a 2.7x disagreement) with no way to resolve which, if either, was
       right. Oxfordshire primary total: 101 -> 107.
 
+      2026-08-08 session (later): re-derived the full remaining-schools
+      list from scratch (no scratchpad state survived from the prior
+      session) by re-scraping all 307 school codes from
+      oxfordshire.gov.uk/schools/list?page=0..15, re-querying the DB for
+      all 370 local_authority_code=931 rows, and matching codes to URNs
+      by normalised name (306/307 matched; only "The ACE Centre Nursery
+      School" failed, a nursery not relevant to designated-area
+      digitisation anyway). Cross-referencing against both geojson
+      files' existing SCHOOL_URN values gave 165 still-undigitised
+      schools (142 Primary/Secondary/All-through with real PDF
+      candidates); 66 of those had a real, freshly-downloadable PDF this
+      session (the rest 404 or are genuinely no-designated-area
+      schools). Classifying all 66 by is_grid_template(): 44 grid, 22
+      non-grid vector (4 of the 22 already known-uninterpretable:
+      Aureus Primary, Ewelme, Sacred Heart Henley, St Joseph's Thame -
+      see standing notes above and in the reason_not_enabled block).
+
+      Of the 44 grid-classified candidates, the standard
+      process_one.process() pipeline at 300dpi found 0 (all either
+      "grid x/y mismatch" or "no real grid lines confirmed", i.e. mostly
+      more instances of the documented fake-grid-tile-count template). A
+      new process_broad.py (data/digitized-catchments/oxfordshire/pipeline/,
+      committed this session) retries with oxon_lib's already-proven
+      broader HSV cyan mask + reconcile_grid_period() combo (previously
+      validated for RE-verifying already-deployed schools; this session
+      is the first time it's used to find NEW ones) - this caught
+      **Burford Primary School** (URN 142341, area 60.75km2, grid
+      spacing 217px at 300dpi) that the narrow-mask pipeline missed
+      entirely. A full automated sweep (sweep.py, also committed:
+      8 DPIs x {narrow, broad} mask x reconcile_grid_period, same
+      confirmed_grid_line_fraction/marker-inside-boundary/GB-bounds/
+      plausible-area safety gates as the proven pipeline) against the
+      other 43 grid-classified candidates found nothing further - every
+      one scores 0.00 (or near it) on confirmed_grid_line_fraction at
+      every DPI/mask combination tried, meaning they are genuinely the
+      fake-grid-tile-count template (many raster tiles, no real grid
+      drawn), not a detection failure. Burford was visually verified:
+      traced ring overlaid pixel-accurate against the source page image,
+      real grid lines visibly present, school's own DB coordinate falls
+      inside the polygon.
+
+      The 22 non-grid candidates (18 excluding the 4 known-
+      uninterpretable ones) were investigated for the cross-school-
+      anchor landmark-pair method but NOT landed this session: New
+      Marston Primary School's page (dense Oxford suburb, generic
+      unlabeled "Sch"/"School" icons rather than named villages) was
+      tried with St Michael's CofE Primary (Oxford City) as a
+      cross-school anchor (identified via matching the icon's position
+      to St Michael's own "Marston Road" street address in the DB) and
+      John Radcliffe Hospital as an independent third-point check; the
+      bearing residual passed (2.1 degrees) but the distance ratio was
+      off by ~58% (762m real vs 1209m predicted), an internal
+      inconsistency serious enough to decline landing it per this
+      project's standing accuracy discipline - not resolved, needs a
+      better-identified second anchor or a different landmark pair.
+      Stoke Row CofE Primary School's PDF turned out to be a genuinely
+      different document (an admissions-policy appendix reproducing an
+      OS Explorer-style sheet showing the "Stoke Row Parish Boundary",
+      not the standard "Location and Designated Area" template) with a
+      real but only partially-legible OS grid (obscured by dense
+      village content and woodland tint in several places); reconciled
+      grid period (697px at 400dpi) scored only 0.00/0.14 on
+      confirmed_grid_line_fraction, i.e. failed this project's own
+      safety gate, so it was declined rather than trusted on a plausible-
+      looking but unconfirmed grid. Rush Common School (Abingdon) has a
+      promising cluster of identifiable neighbour schools on Radley
+      Road (St Edmund's, Kingfisher, Thomas Reade, Fitzharrys, John
+      Mason all in the DB with real street-matched addresses) but was
+      not completed this session due to time. These three plus the
+      remaining ~14 non-grid candidates are the best next target for a
+      future session - see the reason_not_enabled block below for the
+      full list of what's left. Oxfordshire primary total: 117 -> 118
+      (Burford only landed this session).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
@@ -5851,6 +5925,38 @@ candidates:
       need individual debugging. This remains the single largest body
       of bounded, already-solved-in-principle work in the whole
       project.
+
+      2026-08-08 update (later session): stands at 142 of 307 (118
+      primary + 24 secondary) after landing Burford Primary School via
+      a broader cyan-mask retry of the grid pipeline (see the
+      primary_catchment entry's own notes above for full detail,
+      including the automated sweep across 8 DPIs x 2 masks that found
+      nothing further in the 43 other downloaded grid-classified
+      candidates - they score genuinely 0.00 on confirmed_grid_line_
+      fraction, i.e. are the known fake-grid-tile-count template, not a
+      detection failure worth re-trying with the same method again).
+      165 schools remain undigitised in total; of those, 142 have a
+      matched URN and a plausible PDF path, and 66 PDFs were actually
+      downloaded and classified this session (44 grid, of which only
+      Burford was real; 18 non-grid excluding 4 already-known-
+      uninterpretable). Three non-grid candidates were investigated in
+      depth but not landed (New Marston Primary - cross-school anchor
+      passed bearing but failed distance-ratio check by ~58%; Stoke Row
+      - a different admissions-policy-appendix document with a real but
+      only 0.00/0.14-confirmed OS grid; Rush Common - promising Radley
+      Road neighbour-school cluster, ran out of time). The other ~99
+      undigitised schools (of the 165) were never downloaded this
+      session at all. Most promising next step: download the remaining
+      ~99 un-downloaded PDFs and classify them the same way (see
+      match_schools.py + the URL pattern below), since the grid bucket
+      needs only the already-proven pipeline run and the non-grid
+      bucket needs the cross-school-anchor method applied per-file
+      (best when a second neighbouring school with a DB-matched street
+      address is visible on the same page, per the Chinnor/Lewknor
+      precedent above - avoid single-external-landmark anchors without
+      an independent bearing AND distance cross-check, per this
+      session's New Marston finding that bearing alone can pass while
+      distance is still 58% wrong).
   - local_authority_name: "Reading"
     reason_not_enabled: "Runs Astun iShare (my.reading.gov.uk) with nursery/primary/secondary school layers confirmed live, but verified via GetFeature that these are esriGeometryPoint (school locations only) - no layer with 'catchment' in the name exists on this server."
   - local_authority_name: "Slough"
