@@ -4291,6 +4291,54 @@ sources:
       Common's own DB coordinate falls inside it. Oxfordshire primary
       total: 118 -> 119.
 
+      2026-08-09 session (continued): the real-vector-path discovery
+      generalises - checked all 14 previously-untouched non-grid
+      landmark-pair candidates directly via get_drawings() rather than
+      assuming they all need pixel-contour tracing, and found most of
+      them (Sandhills, Hill View, Charlton, Stockham, Thomas Reade,
+      Pegasus, Church Cowley St James, Cumnor, Wantage CE all have a
+      single real closed vector ring plus an automatically-extractable
+      marker point; Mill Lane, St John's, Dr South's, Oxford Academy,
+      Cherwell School do not, likely raster-baked or a different
+      colour). Landed Sandhills Community Primary School (URN 146270,
+      Oxford/Barton-Risinghurst area, 2.91km2) this batch - the
+      "inconsistent landmark scales" that caused a prior session to
+      decline it turned out to be an artefact of the OLD landmark-pair
+      pixel-picking method; the new direct vector extraction sidesteps
+      that entirely. Anchored on Sandhills' own marker + the "Green
+      Road Roundabout" (Headington, named POI, 1.3km baseline, fitted
+      rotation 0.5 degrees), verified against two independent points
+      (Shotover Hill's predicted coordinate falls inside its real
+      OSM bounding box; "Barton" predicted coordinate reverse-geocodes
+      via Nominatim to "Barton, Oxford" exactly).
+
+      Also landed Hill View Primary School (Banbury/Ruscote, URN
+      145094, 0.58km2) - but only after finding and fixing a real bug
+      in this session's new vector-extraction approach: Hill View's
+      source PDF has page.rotation=90 (a landscape-oriented map, unlike
+      every other Oxfordshire file seen so far which is portrait/
+      rotation=0), and page.get_drawings() returns coordinates in the
+      UN-rotated mediabox space while page.get_pixmap() applies the
+      rotation - using the raw get_drawings() coordinates directly
+      produced a boundary ring that, when overlaid on the rendered
+      page, was completely wrong (some unrelated diagonal shape, not
+      the blue catchment line at all). Caught by this project's
+      standing practice of visually overlaying every traced ring back
+      onto the source page before trusting it - never skip that step.
+      Fixed by transforming every ring/marker point through
+      `page.rotation_matrix` before use; re-verified the corrected
+      overlay matches the source blue line exactly. Now check
+      page.rotation for every Oxfordshire PDF going forward, not just
+      when something looks wrong. Georeferenced on Hill View's own
+      (rotation-corrected) marker + "Redlands Centre" (named POI,
+      528m baseline), cross-checked against two more independent
+      points (Sandford Green park centroid, Ferndale Road) both within
+      1.6 degrees bearing / ~8-9% distance ratio once the rotation fix
+      was applied (before the fix, the same points showed a spurious
+      ~7.5 degree inconsistency - itself a useful confirmation that the
+      rotation bug, not the landmark choices, was the problem).
+      Oxfordshire primary total: 119 -> 121 (Sandhills + Hill View).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
