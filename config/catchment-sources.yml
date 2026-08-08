@@ -4149,9 +4149,9 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      22 secondary catchment polygons (unchanged this session - no new
-      secondary schools cleared the hardened verification described in
-      the primary_catchment entry's notes above): 20 digitised the same
+      23 secondary catchment polygons (22 as of the start of this
+      session, +1 - Faringdon Community College, see the last note
+      below - added this session): 20 digitised the same
       way as the primary_catchment entry above (across three passes
       using the OpenCV connected-component variant); Didcot Girls'
       School, King Alfred's and Lord Williams's School were already
@@ -4218,6 +4218,26 @@ sources:
       duplicates. 0 schools remain unverified from this flagged set of
       18 (1 primary + 17 secondary) - all now pass hardened
       verification.
+
+      2026-08-08, same session: while checking whether the newly-found
+      hybrid template could unlock more of the ~184 still-undigitised
+      Oxfordshire schools (not just the 18 flagged ones), ran both the
+      grid method and the hybrid method against every remaining school
+      with an already-downloaded PDF (116 candidates: the 83 not yet
+      attempted at all, plus the 33 previously logged as "not a
+      grid-template file"). Only one cleared verification this way:
+      Faringdon Community College (URN 137993, hybrid method, area
+      214.92km2, confirmed real grid + school's own coordinate inside
+      the traced boundary, ring traced back over the source page image
+      and matches exactly) - added as a new feature (secondary total
+      now 23). The other 82 genuinely need the non-gridded
+      landmark-pair method (most: grid check scores 0.00/0.00 on both
+      the narrow and broadened/peak-based checks, i.e. truly no OS grid
+      on the page, not a detection failure) or per-file scale-detection
+      debugging (the "grid x/y mismatch" cases) - neither is a quick
+      automated win, matching this project's standing notes that the
+      remaining pool needs the same manual per-file work the original
+      90/22 batch required.
 
   # Halton: no GIS/catchment map found on the council's own mapping
   # portal, only a single PDF ("Widnes Secondary-Catchment Zone.pdf")
