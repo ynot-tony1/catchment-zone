@@ -4248,6 +4248,49 @@ sources:
       full list of what's left. Oxfordshire primary total: 117 -> 118
       (Burford only landed this session).
 
+      2026-08-09 session: landed Rush Common School (Abingdon, URN
+      137920) via a NEW sub-approach for this project - direct
+      extraction from page.get_drawings() rather than pixel-contour
+      tracing. Inspecting the PDF found the boundary is a single real
+      vector path (387 line items, one unbroken closed ring via
+      vector_boundary.py's find_all_rings(), no other same-colour
+      drawings on the page to confuse the chain with - unlike Bloxham's
+      file this page has no competing parish-boundary linework, so the
+      vector-chaining method the project generally avoids for non-
+      gridded pages was safe here) - exact vector coordinates, no
+      raster-approximation error. The Radley Road neighbour-school
+      cluster flagged by the prior session (St Edmund's, Kingfisher,
+      Thomas Reade, Fitzharrys, John Mason) turned out to be a dead
+      end: none of them are actually visible on this particular map
+      page (their real coordinates are further south/west than the
+      page's extent), and two unlabelled generic "School"/"Sch" icons
+      in the map's SW corner that looked at first glance like they
+      might be Fitzharrys/Dunmore were checked against real DB
+      coordinates and produced an internally-inconsistent ~280-306
+      degree implied rotation (a north-up OS basemap should read close
+      to 0 degrees) - caught and discarded before landing anything,
+      exactly the failure mode this project's bearing+distance
+      discipline exists to catch. Landed instead using two confidently-
+      identified points: Rush Common's own marker (exact colour-
+      segmented centroid) and the "Peach Croft Farm" building cluster
+      (~1.17km baseline, colour-segmented centroid matched to
+      Nominatim's compact bounding-box centroid for the named farm) as
+      the two similarity-transform anchors (fitted rotation -1.6
+      degrees, i.e. genuinely north-up as expected, strong internal
+      corroboration of the transform itself). Verified against TWO
+      independent third points: St Andrews Close, Peachcroft (bearing
+      residual 0.04 degrees / distance ratio 1.06 against the Rush
+      anchor, 3.94 degrees / 0.79 against the Peach Croft Farm anchor -
+      the shorter baseline to this closer check point makes its distance
+      ratio noisier but bearing stays under the 5-degree threshold from
+      both anchors), and separately the Oxford Road roundabout at the
+      map's north edge, whose predicted lat/lon reverse-geocoded via
+      Nominatim to "Oxford Road, Long Furlong, Abingdon" - an
+      independent confirmation the georeferencing is correct, not just
+      internally self-consistent. Final polygon: 1.06km2, valid, Rush
+      Common's own DB coordinate falls inside it. Oxfordshire primary
+      total: 118 -> 119.
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
