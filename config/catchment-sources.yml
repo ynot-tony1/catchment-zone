@@ -5003,6 +5003,85 @@ sources:
   # real OSM/Nominatim coastline polygon (osm relation 3067410) was used
   # directly instead, verified to contain Fair Isle Primary School's own
   # DB coordinate.
+
+  # Central Bedfordshire: real polygon geometry confirmed live on the
+  # council's Astun iShare WFS (my.centralbedfordshire.gov.uk/GetOWS.ashx,
+  # MAPSOURCE=mapsources/MyHouse, typeNames catchment_areas_lower/_middle/
+  # _upper - matching the county's real lower/middle/upper school-tier
+  # system) but with zero attribute fields on every layer, the same
+  # DescribeFeatureType gap already documented for Cardiff/Monmouthshire's
+  # identical Astun iShare platform - see the (resolved) Central
+  # Bedfordshire candidate note elsewhere in this file for the original
+  # finding. This particular deployment also rejects
+  # outputFormat=application/json ("not a permitted output format for
+  # layer") the same way North Lincolnshire's does, so the existing GML3
+  # parser (query_all_wfs_gml_features) was reused rather than the plain
+  # WFS GeoJSON adapter. Attributed to real schools by point-in-polygon
+  # containment against this project's own GIAS-sourced school
+  # coordinates, restricted per layer to schools of the matching phase
+  # (Primary/"Middle deemed secondary"/Secondary). Central Bedfordshire is
+  # genuinely mid-transition from its historic 3-tier system to a 2-tier
+  # primary/secondary one - many of the source layer's polygons (22 of 99
+  # lower, 18 of 28 middle, 9 of 15 upper) have no candidate school of the
+  # matching phase inside them at all (the school that zone was drawn for
+  # has since closed, merged or converted phase) and were correctly left
+  # out rather than force-matched. A further 9 lower-tier polygons were
+  # excluded for a genuinely different reason: 5 schools (St Andrew's CofE
+  # VC Primary, Lawnside Academy, St Christophers Academy, Hadrian
+  # Academy, The Vale Academy) each fall inside two different lower
+  # polygons at once - real overlapping/superseded zone geometry from the
+  # same tier transition, not a name-matching bug - so every polygon
+  # touching any of those 5 schools was dropped rather than guessed at.
+  # The middle and upper layers had no such overlap (every candidate
+  # school fell inside 0 or 1 polygon). One repaired self-intersecting
+  # polygon (The Rushmere Park Academy) was fixed with this project's
+  # existing validate_and_repair (shapely make_valid) before being
+  # re-verified to still contain its school's real coordinate.
+  - local_authority_code: "823"
+    local_authority_name: "Central Bedfordshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://my.centralbedfordshire.gov.uk/?layers=catchment_areas_lower&ms=mapsources%2FMyHouse"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/central-bedfordshire/central_bedfordshire_primary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the iShare WFS response carries no licence metadata of its own and the catchment layer itself isn't individually listed on data.gov.uk, but all 5 of Central Bedfordshire Council's other data.gov.uk-listed datasets (Listed Buildings, Conservation Areas, Article 4 Directions, Tree Preservation Orders, Rights of Way Network) are explicitly OGL - strong sibling evidence, not individually confirmed."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "77 lower-school (ages 4-9) catchment polygons matched 1:1 against real open Central Bedfordshire primary-phase schools. 22 of the source layer's 99 polygons had no matching school inside them (superseded by the lower/middle/upper-to-primary/secondary tier transition) and a further 5 schools/9 polygons were excluded for genuine geometry overlap - see the block comment above."
+
+  - local_authority_code: "823"
+    local_authority_name: "Central Bedfordshire"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://my.centralbedfordshire.gov.uk/?layers=catchment_areas_middle&ms=mapsources%2FMyHouse"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/central-bedfordshire/central_bedfordshire_middle_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - same sibling-dataset evidence as the primary_catchment entry above."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "10 middle-school (ages 9-13) catchment polygons matched 1:1 against real open Central Bedfordshire 'Middle deemed secondary' schools, out of 28 source polygons and only 12 currently-open middle schools (most of the county's historic middle-school tier has already closed or converted as part of the ongoing 2-tier transition)."
+
+  - local_authority_code: "823"
+    local_authority_name: "Central Bedfordshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://my.centralbedfordshire.gov.uk/?layers=catchment_areas_upper&ms=mapsources%2FMyHouse"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/central-bedfordshire/central_bedfordshire_secondary_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - same sibling-dataset evidence as the primary_catchment entry above."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "6 upper-school (ages 13-18, the county's final exam-bearing tier) catchment polygons matched 1:1 against real open Central Bedfordshire secondary-phase schools, out of 15 source polygons and 14 currently-open upper/secondary schools."
+
   - local_authority_code: "S12000027"
     local_authority_name: "Shetland Islands"
     academic_year: "2025-2026"
@@ -5150,22 +5229,24 @@ candidates:
     reason_not_enabled: 'The council defines "Priority Admission Areas" conceptually and publishes them annually, but only as PDF brochure maps - no GIS/WFS/ArcGIS layer found.'
   - local_authority_name: "Central Bedfordshire"
     reason_not_enabled: >
-      Real, fully downloadable polygon data confirmed via the council's
-      Astun iShare WFS (my.centralbedfordshire.gov.uk/GetOWS.ashx) - 3
-      tiers matching the county's lower/middle/upper school system
-      (catchment_areas_lower 99 features, catchment_areas_middle 28,
-      catchment_areas_upper 15; 142 total), correctly in EPSG:27700. But
-      DescribeFeatureType confirms the schema exposes only a single
-      msGeometry element, no other attributes at all - the same "real
-      geometry, zero identifying data" gap already documented for
-      Cardiff/Monmouthshire's Astun iShare deployments in Wales. A
-      GetFeatureInfo attempt to surface a name via the popup mechanism
-      returned "LayerNotQueryable". Not enabled: fuzzy-matching polygons
-      to schools by shape/location alone risks attributing the wrong
-      catchment to the wrong school, a real data-quality risk this
-      project does not take even with licensing not being a gate (see
-      the same judgement call already made for Herefordshire elsewhere
-      in this file).
+      RESOLVED - now digitised, see the Central Bedfordshire entries in
+      sources: above. The original finding stands as real (Astun iShare
+      WFS, my.centralbedfordshire.gov.uk/GetOWS.ashx, 3 tiers matching the
+      county's lower/middle/upper school system, DescribeFeatureType
+      confirms zero attribute fields on every layer), but as with Cardiff/
+      Monmouthshire this was not a hard stop: since this project already
+      holds every Central Bedfordshire school's own real DB coordinate,
+      each polygon can be attributed to its school by point-in-polygon
+      containment instead of a name field that doesn't exist server-side,
+      restricted per layer to schools of the matching phase. 93 of the
+      142 source polygons were matched cleanly this way (77 lower/primary,
+      10 middle, 6 upper/secondary); the rest had no matching
+      currently-open school of the right phase inside them (the county is
+      genuinely mid-transition from its historic 3-tier system to a
+      2-tier one) or, for 9 lower-tier polygons specifically, touched one
+      of 5 schools whose real coordinate fell inside two different
+      polygons at once - real overlapping/superseded zone geometry, left
+      out rather than guessed at.
   - local_authority_name: "West Sussex"
     reason_not_enabled: >
       CONFIRMED DEAD END (2026-08-06 follow-up). Real vector layers exist
