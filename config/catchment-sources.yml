@@ -5110,6 +5110,121 @@ sources:
       to" zones, and a real secondary catchment would need to be the
       union of many primary zones per high school, a different exercise.
 
+  # Inverclyde: previously a documented dead end (see the candidates:
+  # history preserved below for the original session's finding) - a 3/4-
+  # point affine fit using geocoded place-name label positions (Greenock,
+  # Port Glasgow, Dumbarton Castle, Dunoon) had too large a residual to
+  # trust, landing several schools in the wrong neighbouring zone
+  # entirely. Solved this session with the fix idea that note left for a
+  # future attempt: the source PDF (Inverclyde-School-Catchments.pdf, a
+  # genuine Cadcorp SIS Map Modeller vector export - confirmed via
+  # PyMuPDF page.get_drawings(), each catchment a real filled/stroked
+  # vector path, not a raster/schematic image) has real OS 1km grid
+  # lines printed in its basemap at a single consistent RGB(204,204,204)
+  # against an RGB(233,233,233) background, distinguishable with a tight
+  # colour-band mask. Column-sum and row-sum profiles of that mask spike
+  # sharply at the true grid-line pixel columns/rows (a cleaner signal
+  # than Oxfordshire's autocorrelation-only approach needed, since here
+  # the exact line colour is known and consistent across the whole
+  # document); measured spacing was 101.5px/km at 200dpi, identical to
+  # the pixel across two independent long baselines (609px over a 6km
+  # easting run, 406px over a 4km northing run) and identical between
+  # the x and y axes - confirming uniform scale with no distortion. The
+  # grid's own printed two-digit labels (the last two digits of each
+  # line's true OSGB36 easting/northing, standard OS convention) were
+  # read directly off the rendered page and cross-checked against this
+  # project's own DB coordinates for Greenock/Port Glasgow/Gourock
+  # reprojected to EPSG:27700 with pyproj - e.g. grid column "32"
+  # (easting 232000) sits almost exactly on Port Glasgow's real
+  # projected easting (232058), and the PORT GLASGOW label is printed
+  # exactly where that grid intersection predicts on the page. The
+  # compass rose confirms north-up, and the grid lines themselves are
+  # perfectly axis-aligned in the render, so no rotation term was
+  # needed - just scale plus a single absolute offset per axis, no
+  # diffuse multi-landmark averaging like the rejected first attempt.
+  # All 4 pages of the PDF (primary denominational, primary non-
+  # denominational, secondary denominational, secondary non-
+  # denominational) share the exact same map extent and grid (confirmed
+  # by matching detected grid-line pixel positions across all 4 pages),
+  # so one derived transform served the whole document. Each page's
+  # filled catchment polygons were matched to their school by exact
+  # fill-colour lookup against that page's own printed legend swatches
+  # (9-11 distinct colours per page, e.g. St Andrew's = RGB(255,255,
+  # 178), St Michael's = RGB(179,221,105)). Every single one of the 26
+  # zones across all 4 pages was verified to contain its own real DB
+  # school coordinate (reprojected to EPSG:27700 for a true-distance
+  # check, not degrees) - margins to the nearest zone boundary ranged
+  # from 56m (Moorfoot Primary, the tightest) to 1365m (Port Glasgow
+  # High School/St Stephen's High School, a genuinely shared-campus
+  # coordinate used on two different pages), with most in the 150-600m
+  # range - no zone was even close to a coin-flip case. Licence: as
+  # printed in the PDF footer, "This material has been reproduced from
+  # Ordnance Survey digital map data with the permission of the
+  # Controller of Her Majesty's Stationery Office. (c) Crown copyright.
+  # Licence Number: 100023421" - a standard local-authority OS PSMA
+  # public-reference publication, not an explicit open-data licence (no
+  # OGL statement found), same disclosure treatment as Shetland's
+  # identically-licensed source above.
+  - local_authority_code: "S12000018"
+    local_authority_name: "Inverclyde"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://www.inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/inverclyde/inverclyde_digitized_primary_denom_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "As printed on the source PDF: 'This material has been reproduced from Ordnance Survey digital map data with the permission of the Controller of Her Majesty's Stationery Office. (c) Crown copyright. Licence Number: 100023421.' A standard local-authority OS PSMA public-reference publication, not an open-data licence (no OGL statement found) - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "9 primary (Roman Catholic) catchment polygons, digitised from page 1 of the source PDF (a genuine Cadcorp vector export) via OS-grid-line pixel detection + printed grid-label cross-check for georeferencing. All 9 verified to contain their own real DB school coordinate - see the block comment above for the full method and per-zone margins."
+
+  - local_authority_code: "S12000018"
+    local_authority_name: "Inverclyde"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://www.inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/inverclyde/inverclyde_digitized_primary_nd_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "As printed on the source PDF: 'This material has been reproduced from Ordnance Survey digital map data with the permission of the Controller of Her Majesty's Stationery Office. (c) Crown copyright. Licence Number: 100023421.' A standard local-authority OS PSMA public-reference publication, not an open-data licence (no OGL statement found) - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "11 primary (non-denominational) catchment polygons, digitised from page 2 of the source PDF using the same method as the primary_catchment_denom entry above. All 11 verified to contain their own real DB school coordinate."
+
+  - local_authority_code: "S12000018"
+    local_authority_name: "Inverclyde"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://www.inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/inverclyde/inverclyde_digitized_secondary_denom_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "As printed on the source PDF: 'This material has been reproduced from Ordnance Survey digital map data with the permission of the Controller of Her Majesty's Stationery Office. (c) Crown copyright. Licence Number: 100023421.' A standard local-authority OS PSMA public-reference publication, not an open-data licence (no OGL statement found) - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "3 secondary (Roman Catholic) catchment polygons (Notre Dame, St Columba's, St Stephen's High Schools), digitised from page 3 of the source PDF using the same method as the primary_catchment_denom entry above. All 3 verified to contain their own real DB school coordinate - St Stephen's shares a real campus coordinate with Port Glasgow High School (secondary_catchment_nd below), both correctly landing in their own separate zone."
+
+  - local_authority_code: "S12000018"
+    local_authority_name: "Inverclyde"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://www.inverclyde.gov.uk/assets/attach/10179/Inverclyde-School-Catchments.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/inverclyde/inverclyde_digitized_secondary_nd_catchments.geojson"
+    name_field: "CATCHMENT_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "As printed on the source PDF: 'This material has been reproduced from Ordnance Survey digital map data with the permission of the Controller of Her Majesty's Stationery Office. (c) Crown copyright. Licence Number: 100023421.' A standard local-authority OS PSMA public-reference publication, not an open-data licence (no OGL statement found) - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-08"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "3 secondary (non-denominational) catchment polygons (Clydeview Academy, Inverclyde Academy, Port Glasgow High School), digitised from page 4 of the source PDF using the same method as the primary_catchment_denom entry above. All 3 verified to contain their own real DB school coordinate."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -5870,6 +5985,22 @@ candidates:
     reason_not_enabled: "Re-checked past the original 13-feature partial ArcGIS subset already noted elsewhere in this file - council's interactive mapping runs on two proprietary non-ArcGIS platforms (webgis.east-ayrshire.gov.uk) with no discoverable WMS/WFS/REST endpoint, and no fuller ArcGIS Online source exists. The 13-feature subset remains the best known source."
   - local_authority_name: "Inverclyde"
     reason_not_enabled: >
+      RESOLVED - now digitised, see the 4 Inverclyde entries in sources:
+      above (26 of 26 zones: 9 primary denominational, 11 primary non-
+      denominational, 3 secondary denominational, 3 secondary non-
+      denominational). The fix over this entry's original rejected
+      attempt was exactly the one this note used to suggest: OS grid-
+      line pixel detection (a precise RGB(204,204,204) line colour
+      against an RGB(233,233,233) background, not autocorrelation-only)
+      for scale, plus the grid's own printed two-digit labels cross-
+      checked against this project's real DB coordinates for Greenock/
+      Port Glasgow/Gourock for absolute position - not the rejected
+      diffuse multi-label-landmark affine fit. This candidates entry is
+      kept deleted-in-spirit; the full original investigation history
+      (the rejected 3/4-point affine fit and its residual findings)
+      lives in this file's git history on this line if it's ever needed
+      again. Original note preserved below for that history:
+
       Proprietary 'My Inverclyde' viewer (ASP.NET NoticeBoard8 platform
       using the Google Maps JS API, not ArcGIS/GeoServer) - no structured/
       bulk-queryable data found there. BUT the static PDF
