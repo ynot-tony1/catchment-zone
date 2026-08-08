@@ -4339,6 +4339,32 @@ sources:
       rotation bug, not the landmark choices, was the problem).
       Oxfordshire primary total: 119 -> 121 (Sandhills + Hill View).
 
+      2026-08-09 session (continued further): landed Charlton Primary
+      School (URN 140237, 0.96km2) and Stockham Primary School (URN
+      123072, 0.74km2), both in Wantage - their source PDFs share the
+      exact same underlying map extent/scale as each other (confirmed
+      visually: Charlton's own "School" icon appears at the same pixel
+      position, +/-30px, on Stockham's page too), both rotation=90.
+      Anchored Charlton on its own marker + "South Charlton Farm" (a
+      tightly-bounded named POI, ~465m baseline, fitted rotation 1.26
+      degrees), cross-checked by reverse-geocoding a predicted point
+      near the map's NW roundabout, which resolved to "Donnington
+      Place, Stockham, Belmont, Wantage" - the correct neighbourhood.
+      For Stockham, anchoring on Charlton's transform directly (reusing
+      the shared map extent) put Stockham's own DB coordinate 59m
+      outside its polygon - small, but this project's own rule is to
+      verify the point falls inside, so re-anchored on Stockham's OWN
+      marker + South Charlton Farm instead (~1.97km baseline, rotation
+      2.35 degrees), cross-checked against Charlton's marker as the
+      third point (0.53 degrees bearing residual off the previous fit,
+      2.57 degrees / 96.5% distance ratio here) - now lands cleanly
+      inside. Lesson: even when two schools' PDFs share a map, anchor
+      each polygon on ITS OWN school's marker rather than reusing
+      another school's fitted transform wholesale - the small residual
+      from an indirect anchor is enough to occasionally put a school
+      just outside its own polygon. Oxfordshire primary total: 121 ->
+      123 (Charlton + Stockham).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
