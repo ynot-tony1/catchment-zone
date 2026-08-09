@@ -84,11 +84,23 @@ def segment_polyline(d):
 
 
 def is_boundary_color(color, target):
+    """Discovered 2026-08-09 (St John's Primary School, The Oxford
+    Academy): a third marker/boundary colour exists in this template
+    family - plain BLACK stroke/fill, rather than the blue/red used
+    elsewhere. Distinguishing it from the base-map's own black text/
+    road-outline strokes isn't an issue here because those are baked
+    into the raster basemap image (get_text() confirms no real text
+    layer beyond the page title), so any real get_drawings() vector
+    path in this colour range - other than the single page-border
+    rect, already excluded by extract_vector_boundary_and_marker's own
+    item-count/fill filtering - is the boundary/marker overlay."""
     if color is None:
         return False
     r, g, b = color
     if target == "blue":
         return b > 0.5 and r < 0.3
+    if target == "black":
+        return r < 0.3 and g < 0.3 and b < 0.3
     return r > 0.5 and b < 0.3
 
 

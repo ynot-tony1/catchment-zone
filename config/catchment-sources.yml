@@ -4009,7 +4009,7 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - each source PDF states only '© Crown Copyright. All rights reserved 100023343 [year]', no explicit Open Government Licence statement."
-    last_verified_at: "2026-08-08"
+    last_verified_at: "2026-08-09"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
@@ -4407,6 +4407,82 @@ sources:
       ratio 1.13) as two independent sanity checks. Oxfordshire primary
       total: 123 -> 125 (Thomas Reade + Pegasus).
 
+      2026-08-09 session (continued further): landed Church Cowley St
+      James CE Primary School, Cumnor CE Primary School, and Wantage CE
+      Primary School, all via cross-school landmark-pair anchoring
+      against a second real DB-matched neighbour school visible on the
+      same map page, verified against both bearing residual and
+      distance ratio (Church Cowley St James was previously declined
+      for inconsistent landmark scales when anchored against an
+      external landmark; the cross-school anchor resolved it cleanly
+      this time). Oxfordshire primary total: 125 -> 128.
+
+      2026-08-09 session (continued further, checking the remaining 5
+      of the original 14 non-grid landmark-pair candidates - Mill
+      Lane, St John's, Dr South's, The Oxford Academy, The Cherwell
+      School - previously found to lack an automatically-extractable
+      marker point via get_drawings() checked only against blue/red):
+      Mill Lane Community Primary School (URN 123036, Chinnor,
+      0.83km2) turned out to have a real vector boundary+marker after
+      all, just in RED (the earlier check had only tried blue) -
+      anchored on its own marker + Chinnor Post Office (OSM-geocoded,
+      1.3km baseline, rotation -0.12 degrees), cross-checked against
+      Chinnor Library (0.91 degrees bearing residual, 99.8% distance
+      ratio). The Oxford Academy (URN 148354, Blackbird Leys/
+      Littlemore, Oxford, 9.11km2) and St John's Primary School (URN
+      139762, Wallingford, 2.02km2) both turned out to use a THIRD
+      marker/boundary colour never seen before - plain BLACK, not
+      blue/red - added support for this to vector_boundary.py's
+      is_boundary_color(). Both are also page.rotation=90 files,
+      requiring the same rotation_matrix correction as Hill View.
+      Important lesson from St John's: the first two verification
+      landmarks tried (Wallingford Community Hospital and Wallingford
+      Fire Station, both real OSM-geocoded amenities) gave badly
+      inconsistent, implausible fits (bearing residuals 20-30+
+      degrees, rotation nowhere near north-up) despite a very clean
+      fit against Hithercroft Roundabout - the likely explanation is
+      that this source PDF is dated 2011 and amenities (hospitals,
+      fire stations) can genuinely relocate over 15 years, while roads/
+      roundabouts/level-crossings do not; re-verified instead against
+      a real railway level crossing (Cholsey and Wallingford Railway,
+      found via Overpass) and got a clean 3.69 degree bearing residual/
+      103% distance ratio. Applied the same preference for stable
+      infrastructure (named roundabouts: Kennington Roundabout,
+      Heyford Hill Roundabout) over amenities when digitising The
+      Oxford Academy, which fit cleanly first try (1.77 degrees/97.2%).
+      The Cherwell School (URN 137970, Summertown, Oxford, 22.41km2)
+      had TWO real vector marker stars on its own map, close together
+      (~100m apart) - unable to determine with certainty which
+      represents the school itself (possibly a main-site/annex split,
+      not seen on any other Oxfordshire file so far) - anchored on the
+      one nearer the school's real road frontage against Peartree
+      Roundabout (another stable-infrastructure landmark, 5.5km
+      baseline), cross-checked against Redbridge Park and Ride
+      roundabout at the opposite (southern) end of this large
+      catchment's ~7km span: 0.02 degrees bearing residual, 105.3%
+      distance ratio - both anchor stars would have landed within
+      ~200m of each other regardless, negligible next to this
+      catchment's city-wide scale. Dr South's Church of England
+      Primary School (URN 143888, Islip) was investigated and
+      DECLINED: its source PDF is a genuinely different kind of
+      document - a wide-area monochrome scanned OS map (a single
+      embedded raster image, confirmed via get_images()/get_drawings())
+      with the designated-area boundary hand-drawn as a plain dark
+      line with NO distinguishing colour from the rest of the map's
+      own linework (confirmed pixel-sampling: the whole page is
+      greyscale, R=G=B everywhere), so this project's colour-based
+      boundary extraction cannot isolate it - would need bespoke
+      per-file line-tracing work outside this pipeline's scope, same
+      category of "different document type" as the South Tyneside
+      zone-map and Stoke Row admissions-policy-appendix cases noted
+      elsewhere in this file. Oxfordshire primary total: 128 -> 130
+      (Mill Lane + St John's); secondary total: 24 -> 26 (Oxford
+      Academy + Cherwell School). This exhausts the original list of
+      14 non-grid landmark-pair candidates identified two sessions
+      ago - all 14 are now resolved (9 landed via cross-school
+      anchoring in earlier passes this session, 4 more landed here,
+      Dr South's correctly declined as an unsupported document type).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
@@ -4417,7 +4493,7 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - each source PDF states only '© Crown Copyright. All rights reserved 100023343 [year]', no explicit Open Government Licence statement."
-    last_verified_at: "2026-08-08"
+    last_verified_at: "2026-08-09"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
@@ -6116,6 +6192,21 @@ candidates:
       an independent bearing AND distance cross-check, per this
       session's New Marston finding that bearing alone can pass while
       distance is still 58% wrong).
+
+      2026-08-09 update (later session): stands at 156 of 307 (130
+      primary + 26 secondary) after exhausting the original 14 non-grid
+      landmark-pair candidates (see the primary_catchment entry's own
+      notes above for the last 4: Mill Lane, St John's, The Oxford
+      Academy, The Cherwell School; Dr South's correctly declined as an
+      unsupported monochrome-scanned document type with no colour
+      channel to isolate its boundary). 151 schools remain undigitised.
+      Most promising next step unchanged from the note above: download
+      and classify the ~99 still-never-downloaded PDFs (URL pattern
+      oxfordshire.gov.uk/sites/default/files/2022-12/{school-code}_all.pdf,
+      codes regenerable by paginating oxfordshire.gov.uk/schools/list?page=0..15,
+      matched to URNs via match_schools.py) - this is now the largest
+      untapped pool, since the bounded non-grid landmark-pair candidate
+      list identified so far is fully worked through.
   - local_authority_name: "Reading"
     reason_not_enabled: "Runs Astun iShare (my.reading.gov.uk) with nursery/primary/secondary school layers confirmed live, but verified via GetFeature that these are esriGeometryPoint (school locations only) - no layer with 'catchment' in the name exists on this server."
   - local_authority_name: "Slough"
