@@ -4483,6 +4483,55 @@ sources:
       anchoring in earlier passes this session, 4 more landed here,
       Dr South's correctly declined as an unsupported document type).
 
+      2026-08-09 session (fresh-territory pass on the remaining 125
+      schools): found that every prior session's {code}_all.pdf
+      URL-guessing pattern missed 5 schools whose own council code
+      does NOT host their own catchment PDF - their
+      oxfordshire.gov.uk/schools/list/{code} profile page instead
+      links to a "Catchment areas all" PDF hosted under a different,
+      older/legacy numeric code no longer in the current 307-code
+      school list (e.g. West Kidlington's own code is 2021, but its
+      catchment PDF is served at .../2110_all.pdf). All 5 landed:
+      Manor School Didcot and Charlbury Primary via the standard grid
+      method; West Kidlington via the broadened reconcile_grid_period()
+      combo at 280dpi. Also confirmed the other 69 of the 74
+      never-downloaded schools genuinely have NO catchment PDF at all
+      (own admission authority - academies, including several
+      converted Catholic/CofE VA primaries) - a structural dead end
+      for this source, not a harder digitisation problem, see
+      PROJECT_STATUS.md and the new
+      pipeline/remaining_schools_triage.tsv for the full breakdown.
+
+      Also discovered the ~43-school "confirmed fake grid" pool (many
+      raster tiles, is_grid_template()=True, but genuinely no OS grid
+      anywhere on the page) is not a dead end: find_marker_and_boundary()
+      still finds a completely real raster-baked boundary+marker on
+      these files by colour, so the missing grid can be replaced with
+      landmark-pair scaling (previously only used for the separate
+      vector-drawn non-gridded template). Proved this on Larkrise
+      Primary School (URN 146815, via legacy code 2027 -> 2543_all.pdf,
+      1.07km2 - anchored on its own marker plus Oxford School's real
+      DB coordinate visible on the same page, 884m baseline, cross-
+      checked against Iffley Lock at 1.19km, 1.83 degree bearing
+      residual, distance ratio 0.947) and Botley School (URN 147759,
+      via legacy code 2032 -> 2569_all.pdf, 11.51km2 - anchored on
+      Matthew Arnold School's real DB coordinate, 1.23km baseline,
+      cross-checked against Wytham Village Hall at 2.64km, 0.70 degree
+      bearing residual, distance ratio 1.045). This reopens the
+      remaining 41 fake-grid schools as realistic landmark-pair
+      candidates - the most promising next lead in this file.
+
+      Tetsworth Primary School (URN 123031, code 2456, real vector
+      boundary+marker already extracted cleanly) was attempted but not
+      landed: the two available OSM landmarks (Rycote Lane's named-way
+      point, Attington Toll House) gave a 36 degree mutual bearing
+      residual, most likely because "Rycote Lane" as a road name
+      covers a stretch of road rather than the single point shown on
+      this specific map. Left undigitised rather than forced; needs a
+      tighter point-like landmark or a cross-school anchor next
+      session. Oxfordshire primary total: 130 -> 135 (Manor School
+      Didcot, West Kidlington, Charlbury, Larkrise, Botley).
+
   - local_authority_code: "931"
     local_authority_name: "Oxfordshire"
     academic_year: "2025-2026"
