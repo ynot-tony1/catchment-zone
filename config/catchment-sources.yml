@@ -6852,8 +6852,6 @@ candidates:
     reason_not_enabled: "Council states explicitly that its catchment map is 'a digital map, not a paper map, and so is not available for inspection by the public,' and separately that no Southampton secondary school has a catchment area at all. southampton-opendata.hub.arcgis.com returns zero datasets via DCAT feed. www.southampton.gov.uk is behind an Incapsula bot-mitigation challenge from this environment, blocking direct page inspection."
   - local_authority_name: "Leicester"
     reason_not_enabled: "schoolinfo.leicester.gov.uk is a form-based address-to-school finder with no map/GIS markers. Leicester's real open-data portal (data.leicester.gov.uk, Opendatasoft, 393 datasets) was checked exhaustively - no catchment or school-boundary dataset exists. leicester-opendata.hub.arcgis.com DCAT feed also empty."
-  - local_authority_name: "Stoke-on-Trent"
-    reason_not_enabled: "Same Cadcorp GeognoSIS platform as Derby (webmaplayers.stoke.gov.uk/webmaplayers8/, vs Derby's maps.derby.gov.uk/webmap/ - now enabled above), same session-scoped proxy.axd architecture with no public WFS/REST endpoint found via static inspection. Not yet retried with the technique that unlocked Derby (real Playwright session, trigger a map click to mint a session id, then walk Overlays/{n}/Features.json -> Features/I{n}.geojson for the polygon layer) - worth a follow-up pass, since the council's own help text confirms a 'Primary School Catchment Areas and Schools' layer exists server-side. High-school catchments don't exist at all per the council (non-catchment admissions), so only primary would be recoverable."
   - local_authority_name: "Isles of Scilly"
     reason_not_enabled: "Structural, not a search failure: the islands have exactly one all-through school (Five Islands Academy) serving all five inhabited islands - with no second school to be zoned against, 'catchment area' as this project defines it does not meaningfully apply. No GIS/open-data presence found for the council at all."
   - local_authority_name: "Westmorland and Furness"
@@ -6869,7 +6867,53 @@ candidates:
   - local_authority_name: "Hartlepool"
     reason_not_enabled: "No AGOL presence, no CKAN hit, hartlepool.gov.uk/schools-education has no map/GIS markers."
   - local_authority_name: "West Northamptonshire"
-    reason_not_enabled: "Unlike sibling North Northamptonshire above, no ArcGIS Online org found. maps.westnorthants.gov.uk resolves but serves a bare, unconfigured default IIS Windows Server landing page. Both candidate open-data hub hostnames return zero datasets. No map markers on the council's own school-finder page."
+    reason_not_enabled: >
+      The earlier note ("maps.westnorthants.gov.uk serves a bare
+      unconfigured IIS landing page") only checked the bare host - the
+      council's real public webmap lives at a different path
+      (maps.westnorthants.gov.uk/webmappingpublic/en-gb/PublicMap/WNC_Map,
+      "WNC_Map Cadcorp SIS WebMap 9.1", found via a plain web search this
+      session), a live, real, cookie/human-check-gated (Vuetify "I am
+      Human" checkbox dialog) Cadcorp GeognoSIS application. A real
+      Playwright session (confirm the human-check, expand the layer tree)
+      reaches a genuine "Education and Learning" group, but it contains
+      only one leaf layer - "Schools" (point locations, classified
+      All Through/Infant/Junior/Primary/Secondary in its own legend) - no
+      catchment polygon layer exists anywhere in the tree. A confirmed
+      data-absence finding on the real platform, not an access failure -
+      corrects, not just supplements, the earlier note.
+  - local_authority_name: "Dacorum"
+    reason_not_enabled: >
+      Runs a real, live, reachable Cadcorp SIS WebMap 9 instance
+      (maps.dacorum.gov.uk/webmap/) - never previously checked. A real
+      Playwright session (accept the cookie dialog, open the hamburger
+      menu's "Map Features" panel) lists every layer category the council
+      publishes: Drawing Layer, Planning Apps by Year, Administrative
+      Area, All Planning Applications, Community Infrastructure Levy
+      Zones, Doctors, DBC Car Parks, Recycling, Environmental
+      Permits, Planning Constraints, PROW Lines, Gazetteer Points, Litter
+      Bins - a complete, short, non-paginated list with no Education,
+      Schools or Catchment entry of any kind. A genuine data-absence
+      finding, not an access or discovery failure.
+  - local_authority_name: "Wealden"
+    reason_not_enabled: >
+      Runs a real ArcGIS Experience Builder app ("Wealden Interactive
+      Map", maps.wealden.gov.uk/webmap/ - a search hit describing it as
+      "Cadcorp WebMap 9 Mobile" was stale/superseded, confirmed by this
+      session's own live fetch: "Powered by Esri", not Cadcorp). After
+      accepting its terms-and-conditions dialog, its "Map Layers" panel
+      lists 10 real top-level categories (Elections, Community, Health
+      care services, Leisure and tourism, Planning & Building Control,
+      Planning policy, Landscape and environment, Heritage and
+      conservation, Waste management, Administrative boundaries) - no
+      Education/Schools category exists. Network capture during the
+      session's live layer loads did surface a real
+      "ESCC_School_Locations" FeatureServer (East Sussex County Council -
+      Wealden is a district within East Sussex, not its own education
+      authority), but that is a point-location layer, not catchments;
+      East Sussex's own real catchment data ("Community Areas") is
+      already covered separately under local authority code 845, so
+      Wealden district itself has no separate catchment source to add.
   - local_authority_name: "Ealing"
     reason_not_enabled: >
       Real data confirmed to exist: data.gov.uk lists "School Catchment
