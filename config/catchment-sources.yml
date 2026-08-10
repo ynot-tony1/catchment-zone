@@ -6042,6 +6042,93 @@ sources:
       reference screenshot unchanged; only the overlay colour threshold and
       school seed list differ.
 
+  # Staffordshire: a genuinely different, far higher-precision source class
+  # than any raster/watershed technique used elsewhere in this project - no
+  # georeferencing, affine fit, or pixel tracing at all. The council's
+  # legacy ASP.NET "School Search" app (apps2.staffordshire.gov.uk/scc/
+  # schooldetails/) renders each school's real DfE URN and EPSG:27700
+  # easting/northing directly in its search-results <option> markup
+  # (value="{easting}:{northing}-SC{urn}"), enumerated by POSTing each
+  # letter A-Z to default.aspx (404 schools found, no session/JS required -
+  # a fresh __VIEWSTATE per plain POST is enough). Each school's own
+  # "View Catchment Area" button navigates to a plain GET URL
+  # (details.aspx?Easting=..&Northing=..&SchoolMap=1&SchoolID={urn}) whose
+  # HTML embeds the catchment polygon as a literal JS array already in
+  # WGS84 - `var catchmentA = [{lat: .., lng: ..}, ...]; map.data.add({
+  # geometry: new google.maps.Data.Polygon([catchmentA]) });` - fetched
+  # with plain HTTP requests (curl/requests, confirmed no Playwright/
+  # session needed even though discovery used a live browser session
+  # first). SchoolID in the URL is the school's real DfE URN directly, so
+  # matching to this project's DB needed no name-matching at all: 403 of
+  # 404 enumerated URNs matched a real Staffordshire (local authority code
+  # 860) school outright.
+  #
+  # Data-quality checks: of 404 schools, 84 have no catchment layer on the
+  # council's own site (hdnHasCatchment=0, mostly sixth-form/16+ and
+  # non-catchment academies, consistent with the council's own admissions
+  # page naming 16 schools that don't prioritise catchment children) and 0
+  # fetch errors. Of the remaining 320, split by this project's own GIAS
+  # phase_name for each matched school (Primary/Secondary/Middle deemed
+  # secondary) into 3 source types; 7 failed this project's standard
+  # point-in-polygon check (own DB coordinate 20m-3.4km outside its named
+  # polygon - not investigated further, the same class of genuine source-
+  # data discrepancy already seen and excluded for Derby/Stoke-on-Trent)
+  # and were excluded rather than force-matched, leaving 313 kept: 255
+  # primary, 45 secondary, 13 middle-deemed-secondary.
+  - local_authority_code: "860"
+    local_authority_name: "Staffordshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://apps2.staffordshire.gov.uk/scc/schooldetails/default.aspx"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/staffordshire/staffordshire_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found on apps2.staffordshire.gov.uk."
+    last_verified_at: "2026-08-10"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      255 primary catchment polygons - see the block comment above for the
+      School Search app discovery method. Real WGS84 vector geometry
+      embedded server-side, no georeferencing needed. Matched to this
+      project's DB directly by DfE URN (the app's own SchoolID parameter).
+
+  - local_authority_code: "860"
+    local_authority_name: "Staffordshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://apps2.staffordshire.gov.uk/scc/schooldetails/default.aspx"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/staffordshire/staffordshire_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found on apps2.staffordshire.gov.uk."
+    last_verified_at: "2026-08-10"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      45 secondary catchment polygons - see the block comment above for
+      method. Same source and matching approach as the primary entry.
+
+  - local_authority_code: "860"
+    local_authority_name: "Staffordshire"
+    academic_year: "2025-2026"
+    source_type: "middle_school_catchment"
+    source_url: "https://apps2.staffordshire.gov.uk/scc/schooldetails/default.aspx"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/staffordshire/staffordshire_middle_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found on apps2.staffordshire.gov.uk."
+    last_verified_at: "2026-08-10"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      13 middle-deemed-secondary catchment polygons (GIAS phase_name
+      "Middle deemed secondary") - see the block comment above for
+      method. Same source and matching approach as the primary entry.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
