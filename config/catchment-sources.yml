@@ -5996,10 +5996,51 @@ sources:
     notes: >
       79 primary catchment polygons (of 95 in-view open primary schools) -
       see the block comment above for the address-search georeferencing
-      and marker-controlled watershed segmentation/validation method. No
-      secondary layer attempted this pass (a "Secondary Catchment" overlay
-      also exists in the same Education group, sparser - left for a future
-      session).
+      and marker-controlled watershed segmentation/validation method. The
+      "Secondary Catchment" overlay in the same Education group was
+      attempted in a later session - see the entry immediately below.
+
+  # Rotherham secondary catchment: same Cadcorp GeognoSIS webmap, same
+  # Education layer group, same "Secondary Catchment" overlay flagged as a
+  # future follow-up by the primary_catchment entry above. Reused the
+  # primary entry's pixel-to-EPSG:27700 affine transform directly (same
+  # default map view, same 1600x1000 viewport, confirmed by identical place-
+  # label pixel positions across screenshots) rather than re-deriving new
+  # ground-control points - the transform is a property of the map view, not
+  # the layer. The "Secondary Catchment" overlay renders as a bright magenta/
+  # pink line network (RGB ~(255,0,128), distinct from the primary layer's
+  # green) over the same OS basemap; thresholded those line pixels plus the
+  # same independently-sampled navy LA-boundary pixels as watershed barriers,
+  # seeded one marker per open Rotherham secondary school's real DB
+  # coordinate (16 total, all in view), and ran the same OpenCV marker-
+  # controlled watershed plus boundary-support validation (reject any
+  # polygon where >15% of its contour isn't within 4px of a real drawn line)
+  # used for the primary layer. Of 16 in-view open secondary schools: 14
+  # passed (support fraction 0.85-1.0) and every one independently
+  # re-verified to contain its own real DB coordinate; 2 rejected outright
+  # rather than guessed at - St Bernard's Catholic High School (seed landed
+  # on/beside a boundary pixel, zero-area region) and Wickersley School and
+  # Sports College (seed's watershed cell leaked into the unbounded
+  # background beyond the district boundary, implausible ~755km2 area).
+  - local_authority_code: "372"
+    local_authority_name: "Rotherham"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://maps.rotherham.gov.uk/webmapping/en-gb/PublicMap/Rotherham"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/rotherham/rotherham_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found for the catchment layer itself. The webmap's own terms disclose only Ordnance Survey basemap attribution ('reproduced from Ordnance Survey mapping with the permission of the Controller of Her Majesty's Stationery Office (c) Crown copyright... Rotherham MBC Licence Number 100019587'), not a data licence for the catchment boundaries - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-10"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      14 secondary catchment polygons (of 16 in-view open secondary
+      schools) - see the block comment above for method. Reused the
+      primary_catchment entry's affine transform and navy LA-boundary
+      reference screenshot unchanged; only the overlay colour threshold and
+      school seed list differ.
 
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
