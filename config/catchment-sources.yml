@@ -5922,6 +5922,85 @@ sources:
     enabled: true
     notes: "3 secondary (non-denominational) catchment polygons (Clydeview Academy, Inverclyde Academy, Port Glasgow High School), digitised from page 4 of the source PDF using the same method as the primary_catchment_denom entry above. All 3 verified to contain their own real DB school coordinate."
 
+  # Rotherham: real Cadcorp GeognoSIS platform (maps.rotherham.gov.uk/webmapping,
+  # "Rotherham Cadcorp SIS WebMap 9.1") already documented as a raster-only
+  # dead end in candidates: below (Overlay/{n}/Image?bbox=... tiles, no
+  # Features.json vector endpoint like Derby/Stoke - confirmed again this
+  # session, still genuinely 404). What that earlier pass didn't try: the
+  # rendered "Primary Catchment" overlay (session Overlay 26 of 77, under
+  # the "Education" group) is a clean, closed boundary-line network (bright
+  # green, RGB(0,255,0)) drawn directly over the OS basemap - exactly the
+  # shape this project's marker-controlled-watershed technique (previously
+  # used for Portsmouth/Middlesbrough) needs, just rendered as pixels
+  # instead of vector.
+  #
+  # Georeferencing: this webmap's address search
+  # (maps.rotherham.gov.uk/webmapping/search/quicksearch/{orgId}?filter=...)
+  # returns exact EPSG:27700 coordinates for any UK postcode/address
+  # server-side, and the map's own "Home"/"Zoom to initial location"
+  # control resets to a fixed, pixel-reproducible default view (confirmed
+  # identical framing across independent fresh page loads). Searched 6 real
+  # postcodes spread across the borough (Rotherham town centre, Maltby,
+  # Dinnington, Swinton, Aston, Thurcroft), read back each one's exact
+  # EPSG:27700 coordinate from the search API response, then placed each
+  # one's map pin and reset to the default view via Home to get its pixel
+  # position - 6 real, independently-sourced ground-control points (not
+  # 2 - "landmark-pair" plus 4 extra for redundancy), fitted to a pixel-to-
+  # EPSG:27700 affine transform by least squares (residuals ~7-22m against
+  # a ~22.9 m/px scale, i.e. sub-pixel, with negligible rotation - a real
+  # north-up web map as expected).
+  #
+  # Segmentation: screenshotted the "Primary Catchment" layer alone at the
+  # default view, thresholded the pure-green line pixels plus this
+  # project's independently-sampled navy LA-boundary-line pixels (from a
+  # separate screenshot with the catchment layer off, so the boundary mask
+  # isn't contaminated by the green mesh) as watershed barriers, seeded one
+  # marker per this project's own DB coordinate for every open Rotherham
+  # primary school (reprojected lat/lon -> EPSG:27700 -> pixel space via
+  # the inverse of the fitted transform), and ran OpenCV marker-controlled
+  # watershed (cv2.watershed) to carve out each school's enclosed cell.
+  #
+  # Validation (this is the step that makes watershed-on-raster honest
+  # rather than inventing geometry): every resulting polygon's original
+  # (pre-simplification) contour was sampled and checked against a distance
+  # transform of the real barrier mask - polygons where more than 15% of
+  # the boundary was NOT within 4px of an actual drawn line or the real LA
+  # boundary (i.e. a watershed "seam" through undrawn territory, which
+  # happens when two seeds share an open area with no digitised line
+  # between them) were rejected outright, not kept with a guessed edge.
+  # Of 95 in-view open primary schools: 79 passed with a mean 99% real-line
+  # support (min 88%) and every one independently re-verified to contain
+  # its own real DB coordinate; 16 were rejected (6 zero/near-zero-area
+  # regions where a seed landed on or beside a boundary pixel itself, 1
+  # region matched by the OS_open_names anti-aliasing to 820km2 the
+  # unbounded background instead of a real cell, others similar
+  # seed-placement edge cases) - dropped, not guessed at. Two open schools
+  # both happen to be named "St Joseph's Catholic Primary School" (URNs
+  # 106944 and 140590, ~10km apart) - both kept, since this project's
+  # catchment-to-school matching is a real point-in-polygon spatial join
+  # (see catchment_scores.py), not a name lookup, so the shared label is
+  # cosmetic only and each polygon still resolves to the correct school.
+  - local_authority_code: "372"
+    local_authority_name: "Rotherham"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://maps.rotherham.gov.uk/webmapping/en-gb/PublicMap/Rotherham"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/rotherham/rotherham_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit Open Government Licence statement found for the catchment layer itself. The webmap's own terms disclose only Ordnance Survey basemap attribution ('reproduced from Ordnance Survey mapping with the permission of the Controller of Her Majesty's Stationery Office (c) Crown copyright... Rotherham MBC Licence Number 100019587'), not a data licence for the catchment boundaries - included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-10"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      79 primary catchment polygons (of 95 in-view open primary schools) -
+      see the block comment above for the address-search georeferencing
+      and marker-controlled watershed segmentation/validation method. No
+      secondary layer attempted this pass (a "Secondary Catchment" overlay
+      also exists in the same Education group, sparser - left for a future
+      session).
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -6287,21 +6366,26 @@ candidates:
       point layers (school locations), no catchment polygons.
   - local_authority_name: "Rotherham"
     reason_not_enabled: >
-      Confirmed via a real Playwright browser session (maps.rotherham.gov.uk/webmapping/en-gb/PublicMap/Rotherham)
-      to run genuine Cadcorp GeognoSIS: a real session is opened
-      (POST .../GeognoSis/Rotherham/{orgId}/Sessions) and 77 overlay
-      layers are loaded, each served only as
-      .../Overlay/{n}/Image?bbox=... - rendered raster PNG tiles, not
-      vector data. Requesting an overlay endpoint directly outside the
-      browser's own session context returns 401 (session-scoped, no
-      public API). This is the same session-scoped-rendering-only
-      architecture already confirmed for Bridgend/Derby/Stoke-on-Trent's
-      Cadcorp GeognoSIS deployments - a genuine structural dead end for
-      this platform, not a search gap. A previously-noted FOI request
-      titled "School Catchment Area Coordinates" exists on
-      WhatDoTheyKnow but that site is Cloudflare-blocked from this
-      environment, the same block already documented for Brighton/
-      Islington's FOI attachments elsewhere in this file.
+      PARTIALLY RESOLVED - primary catchments now digitised, see the
+      Rotherham entry in sources: above. The original finding stands as
+      real (a real session is opened via POST .../GeognoSis/Rotherham/
+      {orgId}/Sessions and all 77 overlay layers, including "Primary
+      Catchment", are served only as .../Overlay/{n}/Image?bbox=...
+      rendered raster PNG tiles - no Features.json vector endpoint exists
+      here unlike Derby/Stoke-on-Trent's identical-looking platform,
+      re-confirmed 404 this session too), but raster-only turned out not
+      to be a hard stop: the rendered boundary-line network is clean
+      enough for this project's marker-controlled-watershed technique
+      (previously proven on Portsmouth/Middlesbrough), georeferenced via
+      6 real postcode ground-control points read from the webmap's own
+      address-search API. 79 of 95 in-view open primary schools recovered
+      and validated - full method in the sources: block comment. The
+      "Secondary Catchment" overlay in the same Education group was not
+      attempted this pass. A previously-noted FOI request titled "School
+      Catchment Area Coordinates" exists on WhatDoTheyKnow but that site
+      is Cloudflare-blocked from this environment, the same block already
+      documented for Brighton/Islington's FOI attachments elsewhere in
+      this file - moot now anyway given the above.
   - local_authority_name: "Bury"
     reason_not_enabled: "Runs a Cadcorp SIS webmap platform (map.bury.gov.uk/externalwebmap/) with no discoverable data-layer/API. Actual catchment information is published only as per-school PDF maps; community primaries reportedly have no catchments at all."
   - local_authority_name: "Salford"
