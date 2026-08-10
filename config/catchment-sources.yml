@@ -6793,8 +6793,6 @@ candidates:
     reason_not_enabled: "Surrey's 'Find a School' tool is powered by a real ArcGIS Server layer (AP2116_School_gates_dissolve_join, sccmaps.surreycc.gov.uk) but it is MultiPoint geometry (school gate locations), a distance-radius input, not catchment polygons. No catchment polygon layer found anywhere in Surrey's REST service folder list."
   - local_authority_name: "Suffolk"
     reason_not_enabled: "Only a 'Nearest School Checker' distance tool (nearestschool.suffolk.gov.uk) found; no GIS polygon layer. Suffolk's catchment information is published per-school as PDF/list, not as a map."
-  - local_authority_name: "Staffordshire"
-    reason_not_enabled: "The council's own school-details tool has a 'View Catchment Area' button but no exposed feature service was found behind it. Staffordshire's public GIS portal (map.staffordshire.gov.uk/publicmap) exposes Boundaries/Planning/RightsOfWay and similar themes but no Schools/Catchments layer."
   - local_authority_name: "Gloucestershire"
     reason_not_enabled: "A real interactive catchment map exists (gcc.dynamicmaps.co.uk/MapThatPublic/) but is gated behind a genuine login page (Angular login form requiring credentials) - a hard stop per this project's standing rule against bypassing authentication, not a licensing question."
   - local_authority_name: "County Durham"
