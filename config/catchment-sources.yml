@@ -2797,6 +2797,16 @@ sources:
   # this does not get read as full borough coverage. A fourth layer,
   # Latimer_Postcode_Areas (405 features), was found but excluded: it has
   # no school-name field at all (feeds a different prospectus map).
+  # Re-checked 2026-08-11 against the full public services listing at
+  # services-eu1.arcgis.com/SuC1rPA4UP1jdgwy/arcgis/rest/services (411
+  # services total): two more Latimer-prefixed layers exist
+  # (Latimer_Linked_Areas - a parish-boundary export, fields NAME/
+  # AREA_CODE/etc, and Latimer_LinkedPostcodes - a postcode-area overlay,
+  # fields POSTCODE/PC_AREA/etc) but both were confirmed to carry no
+  # school-name field either, same exclusion reason as
+  # Latimer_Postcode_Areas above. No further Linked Area layers with a
+  # real school field exist beyond the 4 already enabled below - this
+  # authority's coverage is confirmed complete, not an under-search.
   - local_authority_code: "940"
     local_authority_name: "North Northamptonshire"
     academic_year: "2025-2026"
@@ -7210,13 +7220,78 @@ candidates:
   - local_authority_name: "Westmorland and Furness"
     reason_not_enabled: "Shares Cumberland's LocalGov Drupal 'find a school near you' platform (Cumberland's own catchment boundaries were later found and deployed via this tool's server-rendered Leaflet geofields - see the enabled Cumberland entries above), but genuinely lacks the catchment-boundary content type here: only point locations are published, no polygon geofield. Re-verified after Cumberland was deployed, not a stale carry-over."
   - local_authority_name: "Blackburn with Darwen"
-    reason_not_enabled: "No official ArcGIS org found (the one AGOL hit belongs to an unrelated personal/hobbyist account, not the council). No maps.blackburn.gov.uk host resolves. No CKAN catchment dataset. Council only publishes an unrelated planning-applications map."
+    reason_not_enabled: >
+      Re-investigated in depth 2026-08-11 (was previously only checked via
+      AGOL/CKAN search): the council's real school-admissions system is a
+      Capita "Synergy" portal (www.blackburn.gov.uk/SynergyWeb/) - its
+      citizen-facing admissions page does load a
+      "legacy/map.bundle.min.css" component, but the whole admissions
+      workflow sits behind a personal parent-account "Sign In" wall (a
+      genuine login gate for the application process itself, not a
+      catchment-viewing feature) and no unauthenticated catchment/zone map
+      page was found anywhere on the site. The council's own admissions
+      guidance page has zero mentions of "catchment" or "oversubscri" at
+      all - Blackburn with Darwen's admissions criteria do not appear to
+      reference geographic zones in the first place. No official ArcGIS
+      org found (the one AGOL hit belongs to an unrelated
+      personal/hobbyist account, not the council). No
+      maps.blackburn.gov.uk host resolves. No CKAN catchment dataset.
+      Council only publishes an unrelated planning-applications map. A
+      genuine structural dead end, not an under-search.
   - local_authority_name: "Blackpool"
-    reason_not_enabled: "Has a genuine ArcGIS Online org (blackpool.maps.arcgis.com), searched org-scoped: zero catchment items, only an 'Education Establishments' point layer (school locations, not boundaries)."
+    reason_not_enabled: >
+      Re-investigated in depth 2026-08-11: the council's own published
+      admissions policy states explicitly "The council's admission policy
+      does not operate catchment areas or feeder schools" (found via a
+      direct web search snippet of the council's own admissions-policy
+      page text) - a genuine, explicit structural dead end, not a search
+      failure. Consistent with the earlier finding that Blackpool's real
+      ArcGIS Online org (blackpool.maps.arcgis.com), searched org-scoped,
+      has zero catchment items, only an 'Education Establishments' point
+      layer (school locations, not boundaries).
   - local_authority_name: "Stockton-on-Tees"
-    reason_not_enabled: "The earlier Cloudflare block on www.stockton.gov.uk cleared this pass (reachable via a real Playwright session, 200 OK) - and with the page actually readable, it's now a confirmed data-absence finding, not an access barrier: the council's own 'Admissions zones' page (stockton.gov.uk/school-admissions-zones) describes its historic zone policy entirely in prose (which schools/postcodes are in-zone), with no map, PDF, or GIS link anywhere on the page or in its own site search results. No AGOL org or CKAN dataset found either."
+    reason_not_enabled: >
+      Re-checked 2026-08-11 with a real Playwright Chromium session: the
+      council's own "Admissions zones" page
+      (stockton.gov.uk/school-admissions-zones) and every admissions page
+      linked from it (apply-primary, apply-secondary,
+      school-admission-allocating-places, school-admissions-address,
+      primary-secondary-schools) were fetched and searched for
+      map/PDF/ArcGIS/KML/WFS/GeoServer links - none exist anywhere in the
+      actual page content, confirming the zone policy really is prose-only
+      by design. One new detail this session: stockton.maps.arcgis.com is
+      a real, live ArcGIS Online org, but it reports "access":"private" on
+      an anonymous portal self-query (same pattern as Enfield's 401 in the
+      Category A roadmap above) - not confirmed to contain a catchment
+      layer at all, and the prose-only public admissions description gives
+      no reason to expect one does. No CKAN/open-data catalogue found
+      either (stockton-opendata.hub.arcgis.com 404s). A confirmed
+      data-absence finding, not an access barrier.
   - local_authority_name: "Hartlepool"
-    reason_not_enabled: "No AGOL presence, no CKAN hit, hartlepool.gov.uk/schools-education has no map/GIS markers."
+    reason_not_enabled: >
+      Re-investigated in depth 2026-08-11: Hartlepool genuinely does
+      operate named "Admission Zones" for every community school (unlike
+      Blackpool/Blackburn with Darwen above) - confirmed directly from the
+      council's own 2026-27 community-schools admission-arrangements PDF
+      ("All community schools in Hartlepool have a defined geographic area
+      called an Admission Zone... some streets are split"). However the
+      council deliberately does not publish the zone boundaries as a
+      map/PDF/GIS layer: the same document tells parents to phone the
+      School Admissions Team to find out which zone they live in, and the
+      only online tool
+      (online.hartlepool.gov.uk/service/School_Admission_Zone_Finder) is a
+      Granicus AchieveForms iframe whose real form definition is served
+      from a session-scoped sandbox-publish:// URI, not a guessable public
+      REST endpoint - a real backend zone-lookup clearly exists behind it
+      (it must resolve an address to a zone/school somehow), but no
+      boundary geometry is exposed by it directly. No AGOL org, no CKAN
+      hit. Most promising unexplored angle for a future session: dense
+      per-address sampling of the AchieveForms tool (via a real Playwright
+      session driving the iframe, not a guessable API) to recover the zone
+      assignment for many real addresses, then a marker-controlled
+      watershed reconstruction exactly like Rotherham's proven technique -
+      not attempted this session given the extra engineering it would take
+      to drive a session-scoped third-party form tool reliably.
   - local_authority_name: "West Northamptonshire"
     reason_not_enabled: >
       The earlier note ("maps.westnorthants.gov.uk serves a bare
@@ -7537,5 +7612,3 @@ candidates:
       the practical ceiling for this authority regardless.
   - local_authority_name: "Warrington (England)"
     reason_not_enabled: 'Admissions page references a PDF booklet only - the one real map reference found inside it ("Figure 1" in a single school''s own admissions-policy extract, geographic postcode-district bandings, not a drawn catchment boundary) is thin and per-school, not a borough-wide GIS layer. A PDF-only dead end, not a licensing gap. (Halton, Middlesbrough and Redcar and Cleveland, previously grouped here, are now all digitised - see their entries in sources: above; Redcar and Cleveland''s ArcGIS Hub open-data catalogue genuinely has no catchment dataset, but its separate self-hosted rcbcmaps.redcar-cleveland.gov.uk ArcGIS Server, found via its "School Catchment Area Finder" tool''s own page source, does.)'
-  - local_authority_name: "Blackburn with Darwen, Blackpool, Stockton-on-Tees, Darlington, Hartlepool, North Northamptonshire, West Northamptonshire (England)"
-    reason_not_enabled: 'Checked via CKAN and ArcGIS Online full-text search only (0 results for all seven); general web search surfaced only third-party sites (Locrating, School Guide, AdmissionsDay, catchment.school), not an official GIS source. Not exhaustively checked council-by-council in depth - treat as "no lead found" rather than a confirmed dead end, worth a deeper look in a future pass.'
