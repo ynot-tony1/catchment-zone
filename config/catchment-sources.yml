@@ -6569,6 +6569,109 @@ sources:
     enabled: true
     notes: "12 primary admission-zone polygons (of 18 zoned schools found; see the block comment above for the full per-address-sampling/Voronoi/trust-radius-clipping method and the 6 exclusions). Reconstructed from dense point-sample classification of a real backend zone-lookup database, not a digitised published map - deliberately conservative (100m own-school-coordinate margin bar, trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason."
 
+  # Stockport: the existing candidate note (removed by this session, was in
+  # candidates: below) said the council's catchment tool was "a server-side
+  # address-lookup form, not a map - no GIS markers in its HTML" - true of
+  # the static HTML, but incomplete: the page also embeds a real interactive
+  # Leaflet/Mapbox-GL map (only visible after rendering, not in the raw
+  # HTML/curl output) whose "Primary Catchments"/"Secondary Catchments"/
+  # Catholic-associated-area layers are tiled from a genuine public
+  # GeoServer instance (spatial.stockport.gov.uk/geoserver), found via a
+  # live Playwright session inspecting the rendered DOM for the WMS tile
+  # image src, which exposed the real internal layer name
+  # (education:mv_primary_catchments). Unlike every other source added this
+  # session, no reconstruction was needed at all - GeoServer's standard WFS
+  # GetFeature endpoint
+  # (spatial.stockport.gov.uk/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=education:{layer}&outputFormat=application/json)
+  # is open with no auth/CAPTCHA/session requirement and returns the real
+  # digitised polygons directly as WGS84 GeoJSON, already carrying the
+  # school's own URN as an attribute. Four layers pulled this way:
+  # education:mv_primary_catchments (69 features), mv_secondary_catchments
+  # (9), mv_catholic_primary_catchments (16, "Primary Catholic Associated
+  # Area" in the on-page legend), mv_catholic_secondary_catchments (3) - a
+  # combined education:all_school_catchments layer (97) also exists and
+  # matches the sum exactly, confirming these are the same underlying data
+  # sliced four ways, not four independent claims.
+  #
+  # Verification: matched every polygon's own urn attribute against this
+  # project's schools table, dropped anything whose URN no longer resolves
+  # to an OPEN school (9 closed/merged schools across the four layers - the
+  # dataset is not perfectly current), then applied the same 100m
+  # own-school-coordinate-margin bar used elsewhere in this file. 17 of 97
+  # were dropped this way: 9 for closed URNs, 6 for a margin under 100m
+  # (23m-81m - genuinely close but not confidently inside), and 2 for the
+  # school's own DB coordinate falling hundreds of metres outside its
+  # matched polygon entirely (URN 141831 "St Paul's Catholic Primary
+  # School" resolves in this project's own schools table to a school in
+  # Cheshire, not Stockport - likely a stale/reused URN in the source
+  # dataset rather than an error on this project's side; URN 152599 "St
+  # Mary's RC Primary School, Manchester" landed 371m outside its own
+  # matched polygon for a reason not further investigated). 80 of 97
+  # verified and kept (60 primary, 7 secondary, 11 primary RC, 2 secondary
+  # RC). Filed as normal primary_catchment/secondary_catchment/
+  # primary_catchment_rc/secondary_catchment_rc (not the _partial variants
+  # used elsewhere this session) since this is genuine published GIS vector
+  # data, not a point-sample reconstruction.
+  - local_authority_code: "356"
+    local_authority_name: "Stockport"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.stockport.gov.uk/find-your-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/stockport/stockport_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no explicit open-data licence statement found for the catchment polygon data itself; the underlying interactive map carries a standard '(c) Crown copyright and database rights Ordnance Survey' basemap-tile attribution (typical of a council's OS PSMA/PSGA basemap licence), which does not necessarily extend to the catchment layer's own data rights. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "60 real digitised primary catchment polygons (of 69 published, after excluding closed-school URNs and this file's usual 100m own-coordinate-margin verification bar - see the block comment above for the full GeoServer-discovery method and all exclusions). Genuine published GIS vector data, not a reconstruction."
+
+  - local_authority_code: "356"
+    local_authority_name: "Stockport"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://www.stockport.gov.uk/find-your-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/stockport/stockport_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "7 real digitised secondary catchment polygons (of 9 published, 2 excluded for closed-school URNs - see the block comment above)."
+
+  - local_authority_code: "356"
+    local_authority_name: "Stockport"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_rc"
+    source_url: "https://www.stockport.gov.uk/find-your-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/stockport/stockport_primary_catchments_rc.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "11 real digitised Roman Catholic primary 'associated area' polygons (of 16 published, 5 excluded - 2 closed-school URNs, 2 margin-fail, 1 URN resolving to a school in a different county entirely - see the block comment above)."
+
+  - local_authority_code: "356"
+    local_authority_name: "Stockport"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_rc"
+    source_url: "https://www.stockport.gov.uk/find-your-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/stockport/stockport_secondary_catchments_rc.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "2 real digitised Roman Catholic secondary 'associated area' polygons (of 3 published, 1 excluded for a closed-school URN)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7284,8 +7387,6 @@ candidates:
       browser-fingerprint change made from this environment. Only a
       genuinely different network origin (the user's own residential
       connection) is left to try.
-  - local_authority_name: "Stockport"
-    reason_not_enabled: "Both ArcGIS Hub portal hostnames (stockport-council-opendata.hub.arcgis.com, stockport.opendata.arcgis.com) are live but return zero datasets via DCAT feed. The council's own catchment tool (stockport.gov.uk/find-your-catchment-area) is a server-side address-lookup form, not a map - no GIS markers in its HTML, no AGOL org search hits."
   - local_authority_name: "Kingston upon Hull"
     reason_not_enabled: >
       Confirmed running Astun iShare (maps.hull.gov.uk;
