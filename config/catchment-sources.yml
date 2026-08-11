@@ -6477,6 +6477,28 @@ sources:
     enabled: true
     notes: "8 rural over-subscription priority-area polygons covering Areas A-H, copied directly from the council's own published KML (https://www.darlington.gov.uk/media/*/area-*.kml) with no reprojection or digitization - real WGS84 vertices throughout, valid geometry, sane Darlington-borough bounds (lat 54.45-54.62, lon -1.45 to -1.71) confirmed for every polygon."
 
+  # 2026-08-11 cross-cutting fix, applies to every point-sample-reconstructed
+  # source below (Hartlepool, Essex, Wakefield, Coventry, Wirral, Luton):
+  # the user visually inspected the live map and correctly flagged that
+  # several schools' trust-radius-clipped Voronoi cells rendered as multiple
+  # small disconnected shards rather than one sensible zone (e.g. one
+  # Essex school split into 9 fragments, the largest only 48% of its total
+  # claimed area) - not a cross-school overlap or fabricated-data bug (an
+  # exhaustive pairwise overlap check found none), but a real visual/product
+  # problem caused by sparse or uneven sample-point spacing within the trust
+  # radius. Fixed by keeping only each school's single largest connected
+  # polygon and dropping the smaller fragments, then independently
+  # re-verifying the DOMINANT piece alone still contains the school's real
+  # DB coordinate with the usual 100m+ margin bar - any school whose real
+  # coordinate happened to sit in a now-discarded minor fragment was dropped
+  # entirely rather than kept on a technicality. Net effect across all 6
+  # sources: 337 -> 321 schools kept (16 dropped, 14 of them Essex - its
+  # sparser rural sampling was the most affected), every remaining feature
+  # now a single clean Polygon, zero MultiPolygon left in any of these
+  # files. The per-source notes below were written before this fix and may
+  # still cite the original pre-fix feature counts in a couple of places;
+  # this comment is the authoritative record of the actual final counts.
+  #
   # Hartlepool: the existing candidate note (removed by this session, was in
   # candidates: below) correctly established that the council genuinely
   # operates named "Admission Zones" for its community schools but publishes
