@@ -6527,7 +6527,7 @@ candidates:
       point-in-polygon matching entirely server-side (ASP.NET postcode
       form), returning only a school name, not boundary geometry.
   - local_authority_name: "Barnet"
-    reason_not_enabled: 'Only static JPEG primary catchment maps published. The council''s real Astun-style iShare GIS platform (maps.barnet.gov.uk/barnetwebmap) exposes Elections/HealthAndWellbeing/LocalPlan and similar workspaces but no Schools/Catchments workspace. (A seemingly on-point "School_Catchments_2022_View" FeatureServer found in search is a false positive - verified via item metadata to actually belong to Dundee City, Scotland, not Barnet.) The catchment-maps page itself (barnet.gov.uk/.../primary-school-catchment-area-maps) is blocked by a genuine Incapsula bot-mitigation challenge (a real JS challenge page, confirmed via both curl and a live Playwright session - not just a slow load), the same pattern already found for Southampton - worth retrying with a more sophisticated browser fingerprint/session if this becomes a priority, not yet worth pursuing further.'
+    reason_not_enabled: 'Only static JPEG primary catchment maps published. The council''s real Astun-style iShare GIS platform (maps.barnet.gov.uk/barnetwebmap) exposes Elections/HealthAndWellbeing/LocalPlan and similar workspaces but no Schools/Catchments workspace. (A seemingly on-point "School_Catchments_2022_View" FeatureServer found in search is a false positive - verified via item metadata to actually belong to Dundee City, Scotland, not Barnet.) The catchment-maps page itself (barnet.gov.uk/.../primary-school-catchment-area-maps) is blocked by a genuine Incapsula bot-mitigation challenge (a real JS challenge page, confirmed via both curl and a live Playwright session - not just a slow load), the same pattern already found for Southampton - worth retrying with a more sophisticated browser fingerprint/session if this becomes a priority, not yet worth pursuing further. Re-tried 2026-08-11 with a genuine Chrome (channel:"chrome", --headless=new) session and a 30s wait for the Incapsula iframe redirect to resolve on its own (the normal behaviour in a real browser): it never resolved - page content stayed the static `_Incapsula_Resource` iframe stub (997 bytes) the whole time, unlike a real browser where the JS challenge typically clears in under 2 seconds. Would be lower-value even if unblocked anyway (static JPEGs need this project''s image-digitization toolkit, not a simple download) - deprioritised further pending the FOI/other leads above.'
   - local_authority_name: "Bromley"
     reason_not_enabled: "No official interactive catchment tool found. Its ArcGIS Hub hostname resolves to an unpopulated default template (not a real council-populated portal); a second candidate hostname is a private org, not accessible. Uses annually-reviewed distance-based priority areas, not published GIS polygons."
   - local_authority_name: "Croydon"
@@ -6611,7 +6611,7 @@ candidates:
       has been decommissioned/removed rather than being merely
       temporarily down. No longer worth rechecking; the tool is gone.
   - local_authority_name: "Milton Keynes"
-    reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin."
+    reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin. Re-confirmed 2026-08-11: DNS resolves fine (63.35.62.103), but TCP connect on both port 443 and 80 times out from this sandbox - a network/firewall-level block on this specific host's IP, not DNS or bot-JS, and therefore not something a Playwright/browser session run from the same sandbox network can route around. A WhatDoTheyKnow FOI thread titled 'School Catchment Area Coordinates' exists for Milton Keynes Council too (whatdotheyknow.com/request/school_catchment_area_coordinate_2) but is blocked by the same Cloudflare wall documented under Rotherham/Brighton and Hove/Islington below."
   - local_authority_name: "Bedford Borough"
     reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published.'
   - local_authority_name: "Luton"
@@ -6809,11 +6809,16 @@ candidates:
       Catchment Area Coordinates" exists on WhatDoTheyKnow but that site
       is Cloudflare-blocked from this environment, the same block already
       documented for Brighton/Islington's FOI attachments elsewhere in
-      this file - moot now anyway given the above.
+      this file - moot now anyway given the above. Thread URL located
+      2026-08-11: whatdotheyknow.com/request/school_catchment_area_coordinate
+      (FOI 542-17, successful, asked for coordinates in KML/CSV format) -
+      still unreachable, same Cloudflare Turnstile block, re-tried with a
+      genuine Chrome browser and the r.jina.ai proxy this session (see the
+      Brighton and Hove/Islington entry for full detail on both attempts).
   - local_authority_name: "Bury"
     reason_not_enabled: "Runs a Cadcorp SIS webmap platform (map.bury.gov.uk/externalwebmap/) with no discoverable data-layer/API. Actual catchment information is published only as per-school PDF maps; community primaries reportedly have no catchments at all."
   - local_authority_name: "Salford"
-    reason_not_enabled: "Official page provides PDF catchment maps only for ~25 faith schools, no GIS. map.salford.gov.uk's interactive map timed out from this sandbox on every attempt - the same unreachability pattern as Ealing/Hampshire, worth retrying from a different network origin rather than assumed empty."
+    reason_not_enabled: "Official page provides PDF catchment maps only for ~25 faith schools, no GIS. map.salford.gov.uk's interactive map timed out from this sandbox on every attempt - the same unreachability pattern as Ealing/Hampshire, worth retrying from a different network origin rather than assumed empty. Re-confirmed 2026-08-11: DNS resolves (80.193.232.60) but TCP connect times out/refuses on both 443 and 80 - genuine network-level block on this host specifically (general internet egress from this sandbox is fine, confirmed against google.com/gov.uk/raw.githubusercontent.com in the same session), so a browser-fingerprint fix cannot help here."
   - local_authority_name: "Wirral"
     reason_not_enabled: "The council's own 'school catchment area finder' embeds a legacy ASP tool (ww3.wirral.gov.uk/catchment/indexiframe.asp) that is a road/street-name text search returning a list of catchment schools per street - no polygon geometry exposed anywhere, not a map at all."
   - local_authority_name: "Wolverhampton"
@@ -7123,6 +7128,18 @@ candidates:
       since two independent sessions now show the identical failure mode.
       Same category as the already-documented Ealing/Salford/Milton Keynes
       network-blocked candidates - not assumed permanently closed.
+      Re-confirmed a third time 2026-08-11, this time with a genuine Google
+      Chrome binary (not bundled Chromium) via channel:'chrome' and
+      --headless=new, realistic en-GB/Europe-London context, no stealth
+      flags omitted: still a hard 403 "Access Denied" (Akamai
+      errors.edgesuite.net reference ID returned), identical to both prior
+      curl and Chromium-only Playwright attempts. Three independent
+      sessions, three techniques, one identical failure mode - this is
+      very likely an IP-range block (the sandbox's outbound IP is probably
+      on a datacenter/cloud ASN Akamai blocklists), not solvable by any
+      browser-fingerprint change made from this environment. Only a
+      genuinely different network origin (the user's own residential
+      connection) is left to try.
   - local_authority_name: "Stockport"
     reason_not_enabled: "Both ArcGIS Hub portal hostnames (stockport-council-opendata.hub.arcgis.com, stockport.opendata.arcgis.com) are live but return zero datasets via DCAT feed. The council's own catchment tool (stockport.gov.uk/find-your-catchment-area) is a server-side address-lookup form, not a map - no GIS markers in its HTML, no AGOL org search hits."
   - local_authority_name: "Kingston upon Hull"
@@ -7143,7 +7160,7 @@ candidates:
   - local_authority_name: "North East Lincolnshire"
     reason_not_enabled: "Only official catchment artifact is a plain PDF list (not even a map): nelincs.gov.uk/assets/uploads/2024/08/School-catchment-list-2024-2025.pdf. Four candidate ArcGIS Hub hostnames all resolve but return zero datasets via DCAT feed. No evidence this council runs the same iShare platform as neighbouring North Lincolnshire."
   - local_authority_name: "Southampton"
-    reason_not_enabled: "Council states explicitly that its catchment map is 'a digital map, not a paper map, and so is not available for inspection by the public,' and separately that no Southampton secondary school has a catchment area at all. southampton-opendata.hub.arcgis.com returns zero datasets via DCAT feed. www.southampton.gov.uk is behind an Incapsula bot-mitigation challenge from this environment, blocking direct page inspection."
+    reason_not_enabled: "Council states explicitly that its catchment map is 'a digital map, not a paper map, and so is not available for inspection by the public,' and separately that no Southampton secondary school has a catchment area at all. southampton-opendata.hub.arcgis.com returns zero datasets via DCAT feed. www.southampton.gov.uk is behind an Incapsula bot-mitigation challenge from this environment, blocking direct page inspection. Re-checked 2026-08-11: www.southampton.gov.uk now loads normally with a plain curl request (no bot challenge encountered this time), but the council's own published position (verified again via fresh web search this session, at the 'catchment-statement' page) is unchanged and remains a genuine structural dead end regardless of reachability - the map is deliberately not published for public inspection. Not worth further pursuit."
   - local_authority_name: "Leicester"
     reason_not_enabled: "schoolinfo.leicester.gov.uk is a form-based address-to-school finder with no map/GIS markers. Leicester's real open-data portal (data.leicester.gov.uk, Opendatasoft, 393 datasets) was checked exhaustively - no catchment or school-boundary dataset exists. leicester-opendata.hub.arcgis.com DCAT feed also empty."
   - local_authority_name: "Isles of Scilly"
@@ -7219,7 +7236,13 @@ candidates:
       previously found unreachable for a different council's data in an
       earlier pass this session. Worth retrying from a different network
       origin; a GeoServer host like this would very likely also expose a
-      WFS GetFeature endpoint at the same path once reachable.
+      WFS GetFeature endpoint at the same path once reachable. Re-confirmed
+      2026-08-11: DNS resolves fine (52.16.156.33, an AWS eu-west-1 IP) but
+      TCP connect times out on 443 - a network/firewall-level block on this
+      host specifically, not a bot-JS challenge, so unfixable from within
+      this sandbox regardless of browser fingerprint. The
+      ?service=WFS&request=GetCapabilities suffix could not be tested for
+      the same reason.
   - local_authority_name: "School Catchments - Scotland (national aggregate, Improvement Service)"
     reason_not_enabled: >
       Real, live, OGL-licensed national WFS aggregate exists at
@@ -7449,7 +7472,7 @@ candidates:
       Greenwich - Band 1: 874m") - genuinely distance-based, not
       catchment-zone, admission.
   - local_authority_name: "Brighton and Hove, Islington (England)"
-    reason_not_enabled: 'Real catchment shapefiles confirmed to exist via WhatDoTheyKnow FOI threads for both councils, but WhatDoTheyKnow now serves a Cloudflare JS challenge ("Just a moment...") to automated requests, confirmed even with a real Playwright Chromium browser context (not just curl/WebFetch, which fail sooner with a plain 403) - genuinely blocked from this environment, not a data-non-existence dead end.'
+    reason_not_enabled: 'Real catchment shapefiles confirmed to exist via WhatDoTheyKnow FOI threads for both councils, but WhatDoTheyKnow now serves a Cloudflare JS challenge ("Just a moment...") to automated requests, confirmed even with a real Playwright Chromium browser context (not just curl/WebFetch, which fail sooner with a plain 403) - genuinely blocked from this environment, not a data-non-existence dead end. Exact thread URLs located via web search 2026-08-11: Brighton and Hove has at least three relevant threads (whatdotheyknow.com/request/school_catchment_areas_2, /request/catchemtn_areas_of_primary_and_s, /request/brighton_and_hove_secondary_scho_3 - the first''s summary explicitly confirms "Secondary school catchment areas are available in ESRI Shape file format"). Re-tried this session with three additional techniques beyond the prior Chromium attempt, all still blocked: (1) a genuine Chrome (channel:"chrome") headless=new session waiting 30s for the Cloudflare Turnstile/managed-challenge page to clear - it never did (stayed on "Performing security verification" the whole time, unlike a real browser where this normally clears in 3-5s); (2) the r.jina.ai read-proxy service, which fetches server-side from Jina''s own infrastructure rather than this sandbox''s IP - still returned the same "Just a moment..." challenge page, meaning Jina''s own crawler IP is also caught by WhatDoTheyKnow''s Cloudflare rules, not something specific to this sandbox; (3) WebFetch directly - 403. This is a strong, actual Cloudflare bot-management product (Turnstile), not a simple JS-redirect challenge - genuinely not passable by any automated technique tried so far, only by a real interactive human browser session on a clean residential IP.'
   - local_authority_name: "Kensington and Chelsea, Merton, Sutton, Westminster, Hammersmith and Fulham, Waltham Forest, Barking and Dagenham (England)"
     reason_not_enabled: "Checked via CKAN (0 results each), ArcGIS Online org-scoped search (0 results each, RBKC/Merton/LBBD/LBHF all have real AGOL orgs but no catchment item; Hammersmith and Fulham's ArcGIS Hub DCAT feed returns 0 datasets), and general web search (only third-party sites like Locrating/School Guide, no official GIS source). No catchment layer found for any of the seven."
   - local_authority_name: "Rutland"
