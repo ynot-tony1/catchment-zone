@@ -8,15 +8,18 @@
   "features": [
     {
       "type": "Feature",
-      "properties": { "NAME": "Test Primary Catchment A (fixture)", "SOURCE_TYPE": "primary_catchment" },
+      "properties": {
+        "NAME": "Test Primary Catchment A (fixture)",
+        "SOURCE_TYPE": "primary_catchment"
+      },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
             [-1.48, 53.38],
             [-1.46, 53.38],
-            [-1.46, 53.40],
-            [-1.48, 53.40],
+            [-1.46, 53.4],
+            [-1.48, 53.4],
             [-1.48, 53.38]
           ]
         ]
@@ -24,14 +27,17 @@
     },
     {
       "type": "Feature",
-      "properties": { "NAME": "Test Primary Catchment B, with hole (fixture)", "SOURCE_TYPE": "primary_catchment" },
+      "properties": {
+        "NAME": "Test Primary Catchment B, with hole (fixture)",
+        "SOURCE_TYPE": "primary_catchment"
+      },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
           [
             [-1.44, 53.41],
-            [-1.40, 53.41],
-            [-1.40, 53.44],
+            [-1.4, 53.41],
+            [-1.4, 53.44],
             [-1.44, 53.44],
             [-1.44, 53.41]
           ],
@@ -47,12 +53,15 @@
     },
     {
       "type": "Feature",
-      "properties": { "NAME": "Test Secondary Catchment C, malformed non-polygon row (fixture, invalid)", "SOURCE_TYPE": "secondary_catchment" },
+      "properties": {
+        "NAME": "Test Secondary Catchment C, malformed non-polygon row (fixture, invalid)",
+        "SOURCE_TYPE": "secondary_catchment"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [-1.52, 53.36],
-          [-1.50, 53.38]
+          [-1.5, 53.38]
         ]
       }
     }

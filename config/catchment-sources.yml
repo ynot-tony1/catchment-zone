@@ -5734,6 +5734,19 @@ sources:
   # admission criteria entirely) rather than an unsolved naming
   # problem - not chased further given the time already spent and the
   # strong structural explanation found.
+  #
+  # Confirmed, not just believed: a coverage-gap audit (2026-08-11)
+  # re-checked all 36 open Herefordshire schools whose real DB
+  # coordinate falls outside every deployed polygon and found a clean
+  # 100% structural pattern with zero exceptions - every single one is
+  # Voluntary Aided, an Academy (converter or sponsor-led), an
+  # independent school, a PRU, or a special school ("Not applicable"
+  # phase); not one is a plain community/foundation school. Herefordshire
+  # Council's own live admissions guidance confirms voluntary aided and
+  # academy schools are their own admission authority and several named
+  # CE schools explicitly use "nearest school not catchment school"
+  # rather than a catchment - consistent with, not contradicting, the
+  # faith-school finding above. Closed out; not a live lead.
   - local_authority_code: "884"
     local_authority_name: "Herefordshire"
     academic_year: "2025-2026"
