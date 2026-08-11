@@ -6250,6 +6250,168 @@ sources:
       "Middle deemed secondary") - see the block comment above for
       method. Same source and matching approach as the primary entry.
 
+  # Scotland's national school-catchments aggregate (Improvement Service,
+  # data.spatialhub.scot/dataset/school_catchments-is), covering all 32
+  # council areas in 4 layers (Primary/Secondary x denominational/
+  # non-denominational). The user manually downloaded all 4 layers (the
+  # download UI requires a free account/sign-in, a genuine registration
+  # gate this project's own automated tooling can't pass, per the standing
+  # rule against bypassing login walls - the user did this themselves).
+  # Only used to fill genuine coverage gaps against this project's existing
+  # per-council sources, not to replace any of them: 28 of the 32 councils
+  # already have a dedicated primary AND secondary source elsewhere in this
+  # file, so importing this aggregate for them would create duplicate,
+  # potentially-conflicting polygons for the same schools. Two councils
+  # (East Ayrshire, Na h-Eileanan an Iar) had no source of either phase at
+  # all - Na h-Eileanan an Iar was a previously-confirmed dead end (no
+  # published map existed), now unlocked by this aggregate. Two more
+  # (Dumfries and Galloway, Shetland Islands) had primary coverage from an
+  # existing source but no secondary source at all - only the missing
+  # secondary phase was taken from this aggregate for those two, to avoid
+  # touching their already-working primary sources.
+  #
+  # Matching: each feature carries a real seed_code (Scotland's standard
+  # school identifier) which maps directly to this project's own School.urn
+  # scheme (seed_code + P/S suffix, confirmed against a live DB lookup).
+  # A handful of council-contributed rows have a null seed_code in the
+  # source data itself (not every uploading council populated it) - those
+  # were matched by exact school name within the same council + phase
+  # instead. Every single matched feature (both seed_code and name matches)
+  # was then independently verified: the matched school's own real DB
+  # coordinate must fall inside the feature's polygon, or it's excluded.
+  # Reprojected EPSG:27700 -> EPSG:4326 via pyproj; repaired with this
+  # project's own validate_and_repair (several polygons collapsed to
+  # invalid GeometryCollections under naive make_valid() and needed the
+  # existing polygonal-parts-only repair path). Genuinely unmatched schools
+  # (closed since the source's 2021 upload, or - for one Carrick Academy
+  # feature filed under East Ayrshire's council code - actually a different
+  # council's school entirely) were correctly excluded, not guessed at.
+  - local_authority_code: "S12000008"
+    local_authority_name: "East Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000008_PD.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "6 primary (denominational) catchment polygons, matched via seed_code to real open East Ayrshire schools and verified point-in-polygon against their DB coordinates. First source of any kind for East Ayrshire."
+
+  - local_authority_code: "S12000008"
+    local_authority_name: "East Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000008_PN.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "34 primary (non-denominational) catchment polygons, matched via seed_code to real open East Ayrshire schools and verified point-in-polygon against their DB coordinates."
+
+  - local_authority_code: "S12000008"
+    local_authority_name: "East Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000008_SD.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "1 secondary (denominational) catchment polygon, matched via seed_code and verified point-in-polygon."
+
+  - local_authority_code: "S12000008"
+    local_authority_name: "East Ayrshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000008_SN.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "5 secondary (non-denominational) catchment polygons, matched via seed_code and verified point-in-polygon. Robert Burns Academy and Carrick Academy (South Ayrshire) both excluded - the former's DB coordinate fell outside its polygon on independent verification, the latter is a different council's school filed under this council's code in the source data."
+
+  - local_authority_code: "S12000013"
+    local_authority_name: "Na h-Eileanan an Iar"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000013_PN.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "17 primary catchment polygons (all non-denominational; the aggregate carries no separate denominational layer for this council), matched via seed_code to real open schools and verified point-in-polygon. 5 source features (Bernera, Tolsta, Balivanich, Leverburgh, New North Uist School) had no matching open school - closed/merged since the source's 2021 upload, correctly excluded. Reopens this local authority, previously confirmed a genuine dead end (no published catchment map existed) in an earlier session."
+
+  - local_authority_code: "S12000013"
+    local_authority_name: "Na h-Eileanan an Iar"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000013_SN.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "4 secondary catchment polygons, matched via seed_code and verified point-in-polygon."
+
+  - local_authority_code: "S12000006"
+    local_authority_name: "Dumfries and Galloway"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_denom"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000006_SD.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "1 secondary (denominational) catchment polygon, matched via seed_code and verified point-in-polygon. Fills a genuine secondary-phase gap - this council's existing primary_catchment source (see above) had no secondary counterpart before this."
+
+  - local_authority_code: "S12000006"
+    local_authority_name: "Dumfries and Galloway"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000006_SN.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "15 secondary (non-denominational) catchment polygons, matched via seed_code and verified point-in-polygon."
+
+  - local_authority_code: "S12000027"
+    local_authority_name: "Shetland Islands"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_nd"
+    source_url: "https://data.spatialhub.scot/dataset/school_catchments-is"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/scotland-national/scotland_S12000027_SN.geojson"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "Open (per data.spatialhub.scot's own catalogue page: 'Licence: Open', Data Provided By: Improvement Service) - not confirmed to be OGL v3.0 specifically by name, but the dataset page states no conditions beyond open access."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "5 secondary catchment polygons, matched via seed_code and verified point-in-polygon (all Shetland schools are non-denominational). Mid Yell Junior High, Whalsay Junior High and Brae Junior High had no matching open school (closed/merged since 2021); Brae High School's own coordinate fell outside its polygon on verification, correctly excluded. Fills a genuine secondary-phase gap - Shetland's existing primary_catchment source (see above, this session's earlier work) had no secondary counterpart before this."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
