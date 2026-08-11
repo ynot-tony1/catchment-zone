@@ -7058,6 +7058,105 @@ sources:
     enabled: true
     notes: "22 primary catchment polygons reconstructed from Wirral's road-name catchment search tool (ww3.wirral.gov.uk/catchment/searchiFrame.asp), harvested exhaustively via a single unfiltered POST, geocoded road-by-road and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
 
+  # Luton: secure.luton.gov.uk/catchment/ is a jQuery Mobile road-name search
+  # page whose backing lbc.js fetches the ENTIRE underlying dataset in one
+  # request as catchment.tsv (a flat 3-column tab-separated file: road name,
+  # primary catchment-area name, secondary school name) - client-side
+  # filtering on keyup, same "return the whole table in one call" shape as
+  # Wirral's search tool, just already flat-file rather than POST-triggered.
+  # Previously logged as a dead end ("no geometry of any kind, fails the
+  # polygon requirement entirely") because the file itself carries no
+  # coordinates - re-investigated this session per the standing instruction
+  # that a road/school text mapping is real membership data the Voronoi
+  # pipeline can turn into geometry, exactly like Coventry/Wirral.
+  #
+  # Harvest: single GET of catchment.tsv, 1,900 rows, cp1252-encoded (not
+  # UTF-8 - contains a Windows-1252 apostrophe). No auth, no rate limiting.
+  #
+  # Parsing: 143 of 1,900 rows carry an explicit house-number range/parity
+  # split in the road-name column itself (e.g. "Addington Way  1 - 29" vs
+  # "Addington Way  31 - end", "Biscot Road 1-89 odds only") - EXCLUDED per
+  # this project's standing rule against guessing a number-range's position
+  # along a road without real proportional-interpolation geometry. A further
+  # 153 rows carry a "/"-joined dual catchment-area or dual-school claim in
+  # the primary or secondary column (e.g. "Whipperley/Farley", "Denbigh/
+  # Icknield") after stripping "[Ward for The Linden Academy: ...]"
+  # annotations (a secondary-academy-specific admissions-ward note bolted
+  # onto the primary column, not itself a second claim) - EXCLUDED for the
+  # same reason Wirral excluded its dual-"Catchment school N" roads: a single
+  # point sample can't represent two schools' claims on the same road. No
+  # road name repeats with a conflicting claim anywhere in the raw 1,900
+  # rows (checked exhaustively). 1,604 unique whole-road, single-claim rows
+  # remained.
+  #
+  # Name matching: Luton's primary column is a named catchment AREA (e.g.
+  # "Crawley Green", "Hillborough"), not always a literal single school name -
+  # resolved to real OPEN Luton schools (local_authority_code 821) by exact/
+  # near-exact name match against the DB, not string-similarity guessing; all
+  # 34 primary and all 10 secondary catchment-area names matched cleanly.
+  # Five primary areas ("Ferrars", "Hillborough", "Someries", "Warden Hill",
+  # "William Austin") and one secondary area ("Challney") are genuinely
+  # shared by two same-named-family sister schools each (infant+junior pairs
+  # 30m-122m apart, all co-located per their own DB coordinates, confirmed
+  # individually rather than assumed; and Challney High School for Boys/Girls,
+  # a real gender-split pair sharing one catchment 388m apart) - both URNs
+  # were fed the identical road set per this project's standing convention for
+  # genuine same-catchment sister-school splits (already used for Redcar/
+  # Cleveland and Wirral's infant/junior pairs).
+  #
+  # Geocoding: 1,604 unique whole-road strings queried against Nominatim's
+  # public search endpoint, ~1 req/sec, structured as "<road>, Luton, UK"
+  # with a Luton-sized viewbox and bounded=1; 1,287 resolved (80%).
+  #
+  # Reconstruction: identical Voronoi-tessellation-plus-trust-radius-clip
+  # method as Hartlepool/Essex/Wakefield/Coventry/Wirral - tessellated
+  # separately by phase (primary areas and secondary schools don't compete
+  # for the same Voronoi space), dissolved by school, clipped to the real
+  # Luton LAD boundary (ONS Open Geography Portal, LAD_MAY_2025_UK_BFC_V2,
+  # E06000032) and a 300m trust-radius buffer around every real geocoded
+  # sample point (same radius as Coventry/Wirral, matching Luton's similarly
+  # compact built-up-area density).
+  #
+  # Verification: this file's standard 100m own-school-coordinate-margin bar,
+  # independently re-checked after generation. Of 37 primary schools with at
+  # least 4 geocoded points, 16 cleared the bar (margins 105m-336m); of 11
+  # secondary schools, 4 cleared (margins 109m-164m). The rest failed
+  # (several by a wide margin, e.g. both Challney schools, Denbigh High
+  # School, several Infant/Junior sister pairs) and were excluded rather than
+  # force-deployed - consistent with this being a denser urban unitary where
+  # many schools sit close together, leaving less real margin for a
+  # point-sample reconstruction to clear even when the underlying data is
+  # accurate (same pattern already seen at Wirral).
+  - local_authority_code: "821"
+    local_authority_name: "Luton"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.luton.gov.uk/schools-education/schools-colleges/apply-transfer-or-change-schools/find-your-school-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/luton/luton_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the council's catchment.tsv road-lookup file carries no data licence statement. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "16 primary catchment polygons reconstructed from Luton's road-name catchment lookup file (secure.luton.gov.uk/catchment/catchment.tsv), harvested in a single request and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
+
+  - local_authority_code: "821"
+    local_authority_name: "Luton"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.luton.gov.uk/schools-education/schools-colleges/apply-transfer-or-change-schools/find-your-school-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/luton/luton_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment_partial entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "4 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7247,8 +7346,6 @@ candidates:
     reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin. Re-confirmed 2026-08-11: DNS resolves fine (63.35.62.103), but TCP connect on both port 443 and 80 times out from this sandbox - a network/firewall-level block on this specific host's IP, not DNS or bot-JS, and therefore not something a Playwright/browser session run from the same sandbox network can route around. A WhatDoTheyKnow FOI thread titled 'School Catchment Area Coordinates' exists for Milton Keynes Council too (whatdotheyknow.com/request/school_catchment_area_coordinate_2) but is blocked by the same Cloudflare wall documented under Rotherham/Brighton and Hove/Islington below."
   - local_authority_name: "Bedford Borough"
     reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published.'
-  - local_authority_name: "Luton"
-    reason_not_enabled: "The council's catchment tool fetches a flat tab-separated text file (road name to primary/secondary school) - no geometry of any kind, fails the polygon requirement entirely."
   - local_authority_name: "Oxfordshire (remaining ~184 of 307 schools)"
     reason_not_enabled: >
       123 of Oxfordshire's 307 schools are now digitised and enabled
