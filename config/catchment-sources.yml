@@ -6756,6 +6756,106 @@ sources:
     enabled: true
     notes: "199 primary Priority Admission Area polygons reconstructed from dense stratified postcode sampling of a real backend SSRS report server (see the block comment above for the full method, sampling density, and all exclusions). Point-sample-interpolated, not digitised from a published map - deliberately conservative (100m own-school-coordinate margin bar, 900m trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason. Most Essex schools use distance-based admissions with no Priority Admission Area at all; this covers only the real minority that have one."
 
+  # Wakefield: the existing candidate note (removed by this session, was in
+  # candidates: below) correctly identified this as the Hartlepool/Essex
+  # point-sampling shape of problem, and correctly flagged it as easier
+  # than either: the council's "pick address for school catchment" tool
+  # returns real British National Grid coordinates (e=/n= query params)
+  # embedded directly in each address link, so no separate geocoding or
+  # postcode-centroid approximation step was needed at all (unlike
+  # Hartlepool/Essex, which both classified UPRNs with no coordinates of
+  # their own). Two plain GET endpoints, no auth/session/CAPTCHA on either
+  # (confirmed live): (1)
+  # wakefield.gov.uk/pick-address-for-school-catchment?where-i-live={postcode}
+  # returns an address list, each a link carrying uprn, usrn, e, n, p; (2)
+  # wakefield.gov.uk/schools-and-education/schools/school-catchment-area-search?uprn=...&e=...&n=...&p=...
+  # returns a "Your catchment area schools" section naming the real primary
+  # and secondary school for that address, or "No addresses found"/no
+  # section at all where none is defined. A second "Your nearest Roman
+  # Catholic schools" section is an explicit nearest-distance calculation
+  # ("Distance: 0.44 km"), not real RC catchment membership, and was
+  # deliberately NOT treated as a catchment zone here - only the "Your
+  # catchment area schools" section was harvested.
+  #
+  # Sampling: doogal.co.uk's AdministrativeAreasCSV export
+  # (?district=E08000036) gave every postcode in Wakefield MDC - 12,277
+  # total, 9,676 in use. Queried both endpoints for every in-use postcode
+  # (an exhaustive canvas, like Hartlepool, not a stratified sample like
+  # Essex's larger county) - about 50 minutes at concurrency 16. Result:
+  # 8,968 postcodes resolved to a real address (708 had no address match or
+  # a transient error, including a run of genuine 403s on a handful of
+  # non-residential/commercial-unit addresses - excluded, not guessed at),
+  # classified into 85 distinct primary-school names and 16 distinct
+  # secondary-school names by the tool's own text.
+  #
+  # Name matching: the tool's harvested school names don't share an ID with
+  # this project's own schools table (the "DFEE" number in its result links
+  # is a Wakefield-internal code, not a DfE URN), so matching was done by
+  # normalised name against this project's own OPEN Wakefield schools
+  # (local_authority_code 384) - stripping generic admin words (CE/VA/VC/
+  # Academy/Junior/Infant/Nursery/etc, "Church of England"/"C of E"
+  # consolidated first so "England Lane Academy" doesn't lose its own place
+  # name) and comparing what's left, filtered by phase (primary names only
+  # matched against open primary schools, secondary against secondary) to
+  # avoid same-place-name cross-phase collisions (e.g. "De Lacy Primary
+  # School" vs "De Lacy Academy" secondary). 99 of 101 harvested names
+  # matched a real open Wakefield school this way; the 2 that didn't
+  # ("Kinsley Academy", "Wakefield Greenhill Primary School") resolve in
+  # this project's own schools table to CLOSED URNs - the council's tool
+  # still references two schools that no longer exist under those names
+  # (Kinsley Academy closed; Wakefield Greenhill Primary School's URN is
+  # closed, its open successor is "Outwood Primary Academy Greenhill",
+  # which the tool never actually returned) - correctly excluded rather
+  # than guessed at.
+  #
+  # Reconstruction: identical method to Hartlepool/Essex - Voronoi
+  # tessellation over the classified points (already in EPSG:27700, the
+  # tool's own BNG coordinates, reprojected for nothing), dissolved by
+  # school, clipped to the real Wakefield LAD boundary (ONS Open Geography
+  # Portal, December 2024 boundaries) and to a 250m trust-radius buffer
+  # around every real sample point (tighter than Essex's 900m given this
+  # was a dense near-exhaustive postcode canvas across a compact
+  # metropolitan borough, not a sparse stratified sample across a much
+  # larger county).
+  #
+  # Verification: this file's standard 100m own-school-coordinate-margin
+  # bar. Of 82 matched primary schools, 14 failed (12 a margin under 100m,
+  # 2 with the school's own point just outside its reconstructed zone) -
+  # 68 kept. Of 16 matched secondary schools, 2 failed (Horbury Academy,
+  # De Lacy Academy) - 14 kept. Filed as primary_catchment_partial/
+  # secondary_catchment_partial per this project's standing convention for
+  # point-sample-reconstructed (not digitised-from-a-real-drawn-line)
+  # boundaries.
+  - local_authority_code: "384"
+    local_authority_name: "Wakefield"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.wakefield.gov.uk/pick-address-for-school-catchment"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/wakefield/wakefield_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the address-lookup tool's pages carry no data licence statement; the underlying UPRN-keyed address data resembles an OS AddressBase-derived gazetteer typical of UK council address systems, but no explicit licence was found for the catchment zone-membership data itself. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "68 primary catchment polygons reconstructed from a near-exhaustive postcode-level point sample of a real backend address/catchment-lookup tool (see the block comment above for the full method, sampling density, and all exclusions). Point-sample-interpolated, not digitised from a published map - deliberately conservative (100m own-school-coordinate margin bar, 250m trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason."
+
+  - local_authority_code: "384"
+    local_authority_name: "Wakefield"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.wakefield.gov.uk/pick-address-for-school-catchment"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/wakefield/wakefield_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment_partial entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "14 secondary catchment polygons reconstructed from the same point sample and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7178,38 +7278,6 @@ candidates:
     reason_not_enabled: "Manchester and Wigan both have live, fully-checked ArcGIS Hub open-data portals (26 and 95 datasets respectively, checked via DCAT feed) with no catchment dataset among them. Tameside's school-map page has no discoverable catchment polygon layer or API. No PDF-only fallback found for any of the three either."
   - local_authority_name: "Bradford"
     reason_not_enabled: "ArcGIS Hub portal (spatialdata-cbmdc.hub.arcgis.com, 62 datasets) checked via DCAT feed - no catchment dataset; the only schools-adjacent dataset is an air-quality interpolation layer, unrelated."
-  - local_authority_name: "Wakefield"
-    reason_not_enabled: >
-      UPGRADED FINDING (2026-08-11) - confirmed real and freely
-      programmatically callable, the strongest untouched next lead this
-      session found but ran out of time to build. The original note's
-      "GET-form single-address lookup" is accurate but undersells it: this
-      is exactly the Hartlepool/Essex point-sampling shape of problem, and
-      is actually EASIER than either of those, because Wakefield's address-
-      picker step returns real British National Grid coordinates (e=/n=
-      params) directly in each address link's own URL - no separate
-      geocoding or postcode-centroid approximation needed at all. Two
-      plain GET endpoints, no auth/session/CAPTCHA on either (confirmed via
-      bare curl): (1)
-      wakefield.gov.uk/pick-address-for-school-catchment?where-i-live={postcode}
-      returns an address list, each as a link carrying uprn, usrn, e, n,
-      and p (postcode) as query params; (2) following one of those links -
-      wakefield.gov.uk/schools-and-education/schools/school-catchment-area-search?uprn=...&e=...&n=...&p=...
-      - returns either "No schools found in this catchment area" or a real
-      "Your catchment area schools" section naming the actual primary and
-      secondary school for that address (confirmed live: 5 Wentworth
-      Terrace, WF1 3QW -> "Wakefield St Johns CE (VA) J&I School"
-      primary, "Outwood Grange Academy" secondary). Note the same response
-      also has a "Your nearest Roman Catholic schools" section explicitly
-      labelled by distance ("Distance: 0.44 km") rather than catchment
-      membership - that section is a nearest-school calculation, not a
-      real RC catchment zone, and should NOT be treated the same way as
-      the "Your catchment area schools" section if this is built out.
-      Next step: doogal.co.uk CountyCouncilCSV-style postcode export for
-      Wakefield MDC (or equivalent), sample postcodes, follow both GET
-      steps per sample, classify by school, Voronoi + trust-radius +
-      100m-own-coordinate-margin verify exactly as done for Essex this
-      session (see the Essex block comment above for the full method).
   - local_authority_name: "Coventry"
     reason_not_enabled: >
       UPGRADED FINDING (2026-08-11): the street-name search tool
