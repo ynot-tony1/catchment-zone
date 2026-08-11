@@ -3244,6 +3244,24 @@ sources:
   # one combined source_type rather than force-splitting into
   # primary_catchment/secondary_catchment, which would require guessing
   # phase from school name.
+  #
+  # Confirmed structural, not an under-searched source: a coverage-gap
+  # audit (2026-08-11) flagged Lancashire's ~144-school gap (41 GPA
+  # polygons vs ~700 open schools) as looking unexplained, but Lancashire
+  # County Council's own live admissions pages confirm a GPA is a real
+  # but genuinely partial concept, not borough-wide - its determined
+  # admission arrangements describe "community and voluntary controlled
+  # schools which are subject to a GPA" (i.e. only some are), and its own
+  # public "Geographical priority area (GPA) mapping" index page
+  # (lancashire.gov.uk/children-education-families/schools/apply-for-a-
+  # school-place/geographical-priority-area-mapping/) lists GPA maps only
+  # for the same handful of oversubscribed schools already captured by
+  # this ArcGIS layer. Every other Lancashire school (the large majority)
+  # is either an own-admission-authority academy/VA/foundation school
+  # using its own policy, or a community/VC school with no GPA at all,
+  # falling back to straight-line distance as the deciding criterion -
+  # the same structural pattern already confirmed for Halton and Bristol.
+  # Not pursued further.
   - local_authority_code: "888"
     local_authority_name: "Lancashire"
     academic_year: "2025-2026"
@@ -5315,6 +5333,19 @@ sources:
   # Academy" pairing, and "Waterside Primary School" whose own DB
   # coordinate falls outside its named polygon), leaving 48 kept, all with
   # unique URNs (no dedup collisions).
+  #
+  # No secondary_catchment source exists for Stoke-on-Trent and none was
+  # missed: the original landing session (commit ce79137) walked this same
+  # live GeognoSIS overlay list and found only "Primary School Catchment
+  # Areas", consistent with the council's own published statement that
+  # high-school admissions in Stoke-on-Trent aren't catchment-based at
+  # all (plain distance/oversubscription criteria instead) - re-confirmed
+  # by a later coverage-gap audit (2026-08-11) that flagged Stoke's
+  # remaining ~27-school gap as looking unexplained purely because this
+  # finding had only ever been recorded in the git commit message, not
+  # here. Not a live discoverable secondary layer waiting to be found -
+  # the remaining gap is real schools with no LA catchment concept, not
+  # an unsearched source.
   - local_authority_code: "861"
     local_authority_name: "Stoke-on-Trent"
     academic_year: "2025-2026"
