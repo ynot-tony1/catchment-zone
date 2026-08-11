@@ -6959,6 +6959,105 @@ sources:
     enabled: true
     notes: "6 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
 
+  # Wirral: ww3.wirral.gov.uk/catchment/searchiFrame.asp (POST
+  # frmRoad={text}&IncludeCatholic=Catch) is a real, freely callable
+  # road-name search tool with no auth/CAPTCHA - the same shape of problem
+  # Coventry's per-school "roads in catchment" text was, just inverted
+  # (road-in, school-out rather than school-in, roads-out). No per-school
+  # "roads in catchment" listing page exists on wirral.gov.uk itself (its
+  # SchoolDetailsiFrame.asp?SchoolName={key} pages carry only address/phone/
+  # Ofsted-link - confirmed live 2026-08-11, no road list), so item 1 of
+  # this session's brief (Coventry-style per-school page) was ruled out and
+  # item 2 (exhaustive enumeration of the street-search tool) was used
+  # instead.
+  #
+  # Discovery: rather than enumerating real Wirral street names one at a
+  # time (the originally-scoped approach), an empty frmRoad= POST turns out
+  # to return the tool's ENTIRE underlying table unfiltered - 5,241
+  # road-segment results in one request, one HTTP call for the whole
+  # borough's catchment membership data (confirmed by cross-checking
+  # against several single-letter substring queries, e.g. frmRoad=a
+  # returned a strict subset of 4,236). No pagination, no rate limiting
+  # encountered on this single bulk request.
+  #
+  # Parsing: unlike Coventry's free-text road names, every result here is
+  # a (school key, road label) anchor pair. Road labels carry three
+  # distinct annotation shapes, handled differently: (1) plain road name -
+  # used as-is; (2) an explicit house-number parity/range split (e.g.
+  # "GRANGE ROAD WEST evens and odds 71 and above" vs "odds 1 to 69" -> two
+  # different schools) - EXCLUDED per this project's standing rule against
+  # guessing a number-range's position along a road without real
+  # proportional-interpolation geometry (285 of 5,241 rows); (3) a
+  # "(Catchment school N)" or "(Catchment school N, Infant/Junior)"
+  # annotation - checked per base road name for how many DISTINCT schools
+  # claim it: 125 of 131 such base roads are genuinely claimed by two
+  # different schools (a real dual-catchment/oversubscription-shared area,
+  # not a geometric split) and were EXCLUDED since a single point sample
+  # can't represent two schools' claims on the same road; the remaining 6
+  # resolved to only one distinct school despite the tag and were kept.
+  # Bare "(Infant)"/"(Junior)" annotations (84 base roads, no "Catchment
+  # school" wording) were NOT excluded - these are genuine infant/junior
+  # sister-school splits over the same catchment area (verified: every
+  # affected road maps consistently to Town Lane Infant School for its
+  # Infant tag and Higher Bebington Junior School for its Junior tag, a
+  # real two-school-same-catchment pattern already used elsewhere in this
+  # file, e.g. Redcar and Cleveland). 4,712 of 5,241 rows survived to the
+  # (school key, road) pair stage.
+  #
+  # Name matching: the tool's 67 raw school keys were resolved to real OPEN
+  # Wirral schools (local_authority_code 344) by fetching each key's
+  # SchoolDetailsiFrame.asp page and matching its printed postcode/address
+  # against the DB (not by string-similarity guessing) - caught two real
+  # traps this way: "PENSBY"/"PRENTON"/"ROCK FERRY"/"WEST KIRBY" (bare,
+  # low-volume keys) resolved to the SECONDARY grammar/selective schools of
+  # similar name, not the intended primaries, and were dropped in favour of
+  # their correctly-phased "...PRIMARY" sibling keys; "SANDBROOK" resolved
+  # to Chapelhill Primary School under its former name (identical Stavordale
+  # Road/CH46 9PS address, confirmed against the DB's own school-website
+  # field). Two stale one-character postcode typos on the council's own
+  # pages (Mount Primary, Townfield Primary) were resolved by unique name
+  # match instead once the postcode lookup 404'd. 63 of 67 keys resolved to
+  # a real OPEN URN (2 keys are Infant+Junior co-located sister-school pairs
+  # sharing one key, both kept); 4 low-volume wrong-phase keys dropped.
+  #
+  # Geocoding: up to 26 unique whole-road strings per school (fewer for
+  # schools with a smaller pool) queried against Nominatim's public search
+  # endpoint at 1 req/sec, structured as "{road name}, Wirral, UK" with a
+  # Wirral-sized viewbox and bounded=1 - 2,171 unique strings queried across
+  # two sampling passes (16 then a further 10-26 per school), ~89% resolved.
+  #
+  # Reconstruction: identical Voronoi-tessellation-plus-trust-radius-clip
+  # method as Hartlepool/Essex/Wakefield/Coventry, clipped to the real
+  # Wirral LAD boundary (ONS Open Geography Portal, LAD_MAY_2025_UK_BFC_V2)
+  # and a 300m trust-radius buffer around every real geocoded sample point.
+  #
+  # Verification: this file's standard 100m own-school-coordinate-margin
+  # bar, independently re-checked after generation. Of 63 schools with at
+  # least 16 geocoded points, only 22 cleared the bar (margins 101m-233m);
+  # 41 failed and were excluded rather than force-deployed - a much lower
+  # yield than Coventry's 79%, consistent with Wirral being a denser
+  # suburban borough with many primary schools packed within a few hundred
+  # metres of each other, leaving less real margin for a point-sample
+  # reconstruction to clear even when the underlying data is accurate.
+  # Wirral publishes no secondary catchment tool of any kind (it runs a
+  # selective secondary system - grammar schools plus distance/preference
+  # admission, not catchment zones - confirmed via web search), so no
+  # secondary_catchment_partial entry exists for this local authority.
+  - local_authority_code: "344"
+    local_authority_name: "Wirral"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.wirral.gov.uk/schools-and-learning/school-admissions/school-catchment-area-finder"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/wirral/wirral_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the road/street catchment search tool carries no data licence statement. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "22 primary catchment polygons reconstructed from Wirral's road-name catchment search tool (ww3.wirral.gov.uk/catchment/searchiFrame.asp), harvested exhaustively via a single unfiltered POST, geocoded road-by-road and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7353,28 +7452,6 @@ candidates:
     reason_not_enabled: "Runs a Cadcorp SIS webmap platform (map.bury.gov.uk/externalwebmap/) with no discoverable data-layer/API. Actual catchment information is published only as per-school PDF maps; community primaries reportedly have no catchments at all."
   - local_authority_name: "Salford"
     reason_not_enabled: "Official page provides PDF catchment maps only for ~25 faith schools, no GIS. map.salford.gov.uk's interactive map timed out from this sandbox on every attempt - the same unreachability pattern as Ealing/Hampshire, worth retrying from a different network origin rather than assumed empty. Re-confirmed 2026-08-11: DNS resolves (80.193.232.60) but TCP connect times out/refuses on both 443 and 80 - genuine network-level block on this host specifically (general internet egress from this sandbox is fine, confirmed against google.com/gov.uk/raw.githubusercontent.com in the same session), so a browser-fingerprint fix cannot help here."
-  - local_authority_name: "Wirral"
-    reason_not_enabled: >
-      Confirmed live (2026-08-11): ww3.wirral.gov.uk/catchment/
-      searchiFrame.asp (POST frmRoad={road name}&IncludeCatholic=Catch) is
-      real, freely callable by plain POST with no auth/CAPTCHA, and
-      returns actual results - e.g. "Grange Road" in Birkenhead returned 6
-      distinct road-segment results across 3 different schools. But unlike
-      Essex/Hartlepool/Wakefield's UPRN-keyed point lookups, this tool's
-      unit of data is a ROAD, sometimes split by house-number parity/range
-      ("GRANGE ROAD WEST evens and odds 71 and above" vs "odds 1 to 69" ->
-      two different schools) - harder to turn into point samples, since
-      the response gives no coordinates at all (just road name text) and
-      a resolved point would need number-range-aware geocoding (not just
-      a road-name centroid) to correctly separate split roads. Two viable
-      next steps if pursued: (a) restrict to roads with only ONE result
-      (no split) and geocode just those via structured Nominatim lookup
-      ("{road}, Wirral, UK"), accepting a smaller but higher-confidence
-      subset; (b) get a comprehensive Wirral road-name list first (OS Open
-      Roads is free and would work) rather than guessing road names to
-      query. Not attempted further this session given the extra
-      geocoding-precision problem this introduces versus Essex/Wakefield's
-      already-coordinate-bearing responses.
   - local_authority_name: "Wolverhampton"
     reason_not_enabled: "The council's own 'Schools' ArcGIS Experience app resolves to a real MapServer (maps.wolverhampton.gov.uk/arcgis/rest/services/CWC/MapServer), but its Schools layer is confirmed esriGeometryPoint (locations only) - no catchment polygon layer exists in that MapServer."
   - local_authority_name: "Manchester, Tameside, Wigan"
