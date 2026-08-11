@@ -6477,6 +6477,98 @@ sources:
     enabled: true
     notes: "8 rural over-subscription priority-area polygons covering Areas A-H, copied directly from the council's own published KML (https://www.darlington.gov.uk/media/*/area-*.kml) with no reprojection or digitization - real WGS84 vertices throughout, valid geometry, sane Darlington-borough bounds (lat 54.45-54.62, lon -1.45 to -1.71) confirmed for every polygon."
 
+  # Hartlepool: the existing candidate note (removed by this session, was in
+  # candidates: below) correctly established that the council genuinely
+  # operates named "Admission Zones" for its community schools but publishes
+  # them only via a session-scoped Granicus AchieveForms "School Admission
+  # Zone Finder" iframe, not a map/PDF/GIS layer - and flagged dense
+  # per-address sampling of that tool, reconstructed via a technique similar
+  # to Rotherham's watershed segmentation, as the most promising unexplored
+  # lead. This session did exactly that, but with a real per-address
+  # database lookup instead of Rotherham's rendered raster-line network,
+  # since network capture on a live Playwright session showed the tool's
+  # actual mechanism: entering a postcode calls a real backend
+  # (apibroker/runLookup?id=587f3deed5d4b) that resolves it to one or more
+  # AddressBase-style addresses (each with a UPRN and its own lat/lng), then
+  # selecting one calls a second backend (id=6a44d491cb5cf) that takes that
+  # UPRN and returns either a specific named school (with phone/email/
+  # website/"School type") or a fallback "Please contact the School
+  # Admissions Team" message for addresses with no defined zone - a genuine
+  # exhaustive per-address database membership lookup, not a "nearest
+  # school" style tool that always answers. Both endpoints turned out to be
+  # freely callable by direct POST (session cookies only, no CAPTCHA, no
+  # per-request signature - the "hash" field on the relevant form tokens is
+  # empty/unvalidated), so this was driven as a scripted HTTP client inside
+  # one real Playwright session rather than simulating UI clicks per query.
+  #
+  # Sampling: doogal.co.uk's free postcode-CSV export (derived from the
+  # ONS Postcode Directory/Ordnance Survey open data, no login) gave every
+  # in-use unit postcode in Hartlepool's district (ONS code E06000001) across
+  # its 7 overlapping outward codes (TS21/24/25/26/27/28/29) - 2,625 real
+  # postcodes. Queried the council's own address-search endpoint for each
+  # (2,625 calls), then the zone-lookup endpoint for the first returned
+  # UPRN's address (2,625 more calls) - full run took about 6 minutes at
+  # concurrency 8. Result: 2,141 addresses matched to one of 18 distinct
+  # zoned schools, 421 correctly returned "no defined zone" (the borough's
+  # other 14 open primaries are faith/voluntary schools using their own
+  # admissions criteria, not the community-school zone scheme - consistent
+  # with the council's own PDF wording "All COMMUNITY schools..."), and 63
+  # postcodes had no address match at all (excluded, not guessed at).
+  #
+  # Reconstruction: reprojected every classified address's own real lat/lng
+  # (not the postcode centroid) to EPSG:27700, computed a Voronoi
+  # tessellation over all 2,552 unique classified points (including the
+  # "no zone" points, so real zoned cells get correctly bounded against
+  # non-zoned territory instead of expanding into it), dissolved same-school
+  # cells, and clipped to the real Hartlepool LAD boundary (ONS Open
+  # Geography Portal, December 2024 boundaries). Critically - the one step
+  # that makes this honest rather than guessing across sparse gaps - every
+  # dissolved polygon was then clipped a second time to the union of a 300m
+  # buffer around every real sample point (roughly 2x the 134m median
+  # distance between adjacent opposite-school samples, well clear of the
+  # 40m median nearest-neighbour spacing): this means the published
+  # polygons only claim territory genuinely close to a real classified
+  # address, not the full, unbounded Voronoi cell reaching all the way to
+  # wherever the true edge probably is. Where sample density was low (the
+  # rural St Peter's Elwick catchment, and the borough's rural fringe more
+  # generally, opposite-school sample gaps up to 6.4km), this correctly
+  # leaves that polygon as several disconnected close-to-sampled-address
+  # patches rather than one confident contiguous shape covering the void.
+  #
+  # Verification: computed, for every one of the 18 zoned schools, the
+  # distance from that school's own real DB coordinate to the nearest edge
+  # of its own reconstructed (clipped) polygon. 16 of 18 had the school's
+  # own point inside its own zone at all; applied a conservative 100m
+  # minimum-margin bar on top of that (roughly the median cross-school
+  # sample gap) given this project's explicit caution that inferring a
+  # boundary between sparse point samples needs unusually strong
+  # verification - 6 schools were excluded for falling short (Brougham
+  # Primary School's own coordinate landed 12m *outside* its reconstructed
+  # zone, Rift House 36m outside; Stranton/Lynnfield/Rossmere/Golden Flatts
+  # were inside but within 41-76m of their own boundary, too close to trust
+  # given the technique's resolution). The 12 that passed cleared the bar
+  # comfortably (102m-358m margin). Not deployed as a normal
+  # primary_catchment source given the inherent coarseness of
+  # point-sample-interpolated boundaries versus a digitised real drawn line
+  # - filed under primary_catchment_partial instead, matching this
+  # project's existing convention (Darlington/North Northamptonshire above)
+  # for sources that are real and verified but knowingly incomplete/lower-
+  # confidence, so they are never mistaken for full borough coverage.
+  - local_authority_code: "805"
+    local_authority_name: "Hartlepool"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://online.hartlepool.gov.uk/service/School_Admission_Zone_Finder"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/hartlepool/hartlepool_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the AchieveForms tool's pages carry no data licence statement (only a Granicus cookie-policy notice); the underlying address-matching data resembles an OS AddressBase-derived layer typical of UK council address gazetteers, but no explicit licence was found for the zone-membership data itself. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "12 primary admission-zone polygons (of 18 zoned schools found; see the block comment above for the full per-address-sampling/Voronoi/trust-radius-clipping method and the 6 exclusions). Reconstructed from dense point-sample classification of a real backend zone-lookup database, not a digitised published map - deliberately conservative (100m own-school-coordinate margin bar, trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7267,31 +7359,6 @@ candidates:
       no reason to expect one does. No CKAN/open-data catalogue found
       either (stockton-opendata.hub.arcgis.com 404s). A confirmed
       data-absence finding, not an access barrier.
-  - local_authority_name: "Hartlepool"
-    reason_not_enabled: >
-      Re-investigated in depth 2026-08-11: Hartlepool genuinely does
-      operate named "Admission Zones" for every community school (unlike
-      Blackpool/Blackburn with Darwen above) - confirmed directly from the
-      council's own 2026-27 community-schools admission-arrangements PDF
-      ("All community schools in Hartlepool have a defined geographic area
-      called an Admission Zone... some streets are split"). However the
-      council deliberately does not publish the zone boundaries as a
-      map/PDF/GIS layer: the same document tells parents to phone the
-      School Admissions Team to find out which zone they live in, and the
-      only online tool
-      (online.hartlepool.gov.uk/service/School_Admission_Zone_Finder) is a
-      Granicus AchieveForms iframe whose real form definition is served
-      from a session-scoped sandbox-publish:// URI, not a guessable public
-      REST endpoint - a real backend zone-lookup clearly exists behind it
-      (it must resolve an address to a zone/school somehow), but no
-      boundary geometry is exposed by it directly. No AGOL org, no CKAN
-      hit. Most promising unexplored angle for a future session: dense
-      per-address sampling of the AchieveForms tool (via a real Playwright
-      session driving the iframe, not a guessable API) to recover the zone
-      assignment for many real addresses, then a marker-controlled
-      watershed reconstruction exactly like Rotherham's proven technique -
-      not attempted this session given the extra engineering it would take
-      to drive a session-scoped third-party form tool reliably.
   - local_authority_name: "West Northamptonshire"
     reason_not_enabled: >
       The earlier note ("maps.westnorthants.gov.uk serves a bare
