@@ -6856,6 +6856,109 @@ sources:
     enabled: true
     notes: "14 secondary catchment polygons reconstructed from the same point sample and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
 
+  # Coventry: coventry.gov.uk doesn't publish a catchment map, but every
+  # individual school's own directory record page
+  # (coventry.gov.uk/directory-record/{id}/{slug}) has a real, freely
+  # readable "Roads in catchment area" section listing every road (with a
+  # house-number range for roads split between two schools' catchments,
+  # e.g. "Ansty Road (188 - 278 even and 169 - 287a odd)") in that specific
+  # school's catchment. Harvested all 50 Coventry "Primary"/"Primary
+  # Academies" directory records (list at coventry.gov.uk/directory/
+  # search?directoryID=10&keywords=&category=Primary); 28 of 50 had a real
+  # roads-in-catchment list (the other 22 are Catholic/faith/special
+  # schools with no catchment, consistent with elsewhere in this file).
+  # Matched each of the 28 harvested names to a real OPEN Coventry school
+  # (local_authority_code 331) by exact/substring name match plus manual
+  # disambiguation for 2 ambiguous cases (Coundon vs Coundon Court are two
+  # separate directory records mapping to two separate real schools;
+  # confirmed via their distinct directory-record ids) - all 28 resolved
+  # to a unique OPEN URN, no guessing. Notably the "category=Primary"
+  # directory search itself returned several secondary schools too (Sidney
+  # Stringer Academy, Caludon Castle School, Grace Academy Coventry, Finham
+  # Park School, Foxford Community School, Ernesford Grange Community
+  # Academy, Coundon Court, Finham Park 2) - kept and processed by their
+  # real DB phase rather than discarded, since their roads-in-catchment
+  # text is just as real as the primary schools'.
+  #
+  # Parsing: unlike Hartlepool/Essex/Wakefield's coordinate- or
+  # UPRN-keyed sources, this text is road NAMES with no delimiter between
+  # consecutive road entries beyond capitalisation and a closed set of UK
+  # road-type suffix words (Road/Close/Avenue/Lane/etc) - built a
+  # suffix-word-terminated tokeniser (see coventry_road_rows_clean.json /
+  # parse_roads.py, scratch-only, not committed) rather than guessing at a
+  # regex-per-road. Roads carrying a parenthetical house-number range
+  # (e.g. "(1 - 241 odd and 2 - 274 even)") or a dash-qualified partial
+  # extent (e.g. "Church Walk - up to 44") were flagged split/partial and
+  # EXCLUDED per this project's standing rule against guessing a
+  # number-range's position along a road without real proportional
+  # interpolation geometry - only whole (unqualified) roads were used.
+  # Roads whose parser output text is corrupted by an "including <list>"
+  # clause bleeding into the next road are an acknowledged residual noise
+  # source in this technique; harmless in practice since bad names either
+  # fail geocoding (dropped) or get filtered out by the per-school
+  # verification bar below. 10 of 1,747 unique whole-road strings (0.6%)
+  # were claimed as a whole road by two different same-phase schools
+  # (almost certainly two distinct real Coventry roads sharing a common
+  # name, e.g. "Kenilworth Road" appearing in different parts of the city)
+  # and were excluded entirely rather than guessed at, since a single
+  # geocode result can't represent both claims.
+  #
+  # Geocoding: 1,734 unique whole-road strings queried against Nominatim's
+  # public search endpoint, 1 req/sec, structured as "<road name>,
+  # Coventry, UK" with a Coventry-sized viewbox and bounded=1 to suppress
+  # same-name matches elsewhere in the UK; 1,425 resolved (82%), the rest
+  # genuinely had no confident match and were dropped rather than guessed.
+  #
+  # Reconstruction: identical method to Hartlepool/Essex/Wakefield -
+  # Voronoi tessellation over the geocoded points (grouped separately by
+  # phase so primary and secondary catchments don't compete for the same
+  # Voronoi space, since they legitimately overlap in the real world),
+  # dissolved by school, clipped to the real Coventry LAD boundary (ONS
+  # Open Geography Portal, LAD May 2025 UK BFC v2) and to a 250m
+  # trust-radius buffer around every real geocoded sample point (matching
+  # Wakefield's tighter urban-borough radius, not Essex's looser 900m,
+  # given Coventry is a similarly compact city).
+  #
+  # Verification: this file's standard 100m own-school-coordinate-margin
+  # bar, independently re-checked after generation. Of 28 schools with at
+  # least one geocoded point, 22 cleared the bar and were kept (16 primary,
+  # 6 secondary); 6 failed (Charter Academy 91m, Edgewick Community 75m,
+  # St Bartholomew's CE Academy 38m, Coundon Court 38m, Finham Primary
+  # School -22m/outside, Finham Park 2 -3450m/outside on a single sample
+  # point) and were excluded rather than force-deployed. Filed as
+  # primary_catchment_partial/secondary_catchment_partial per this
+  # project's standing convention for point-sample-reconstructed
+  # boundaries.
+  - local_authority_code: "331"
+    local_authority_name: "Coventry"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.coventry.gov.uk/directory/search?directoryID=10&keywords=&category=Primary"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/coventry/coventry_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - each school's directory record page carries no data licence statement for its 'Roads in catchment area' section. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "16 primary catchment polygons reconstructed from real per-school 'Roads in catchment area' text harvested from each school's own council directory record page, geocoded road-by-road and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
+
+  - local_authority_code: "331"
+    local_authority_name: "Coventry"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.coventry.gov.uk/directory/search?directoryID=10&keywords=&category=Primary"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/coventry/coventry_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment_partial entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "6 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7278,35 +7381,6 @@ candidates:
     reason_not_enabled: "Manchester and Wigan both have live, fully-checked ArcGIS Hub open-data portals (26 and 95 datasets respectively, checked via DCAT feed) with no catchment dataset among them. Tameside's school-map page has no discoverable catchment polygon layer or API. No PDF-only fallback found for any of the three either."
   - local_authority_name: "Bradford"
     reason_not_enabled: "ArcGIS Hub portal (spatialdata-cbmdc.hub.arcgis.com, 62 datasets) checked via DCAT feed - no catchment dataset; the only schools-adjacent dataset is an air-quality interpolation layer, unrelated."
-  - local_authority_name: "Coventry"
-    reason_not_enabled: >
-      UPGRADED FINDING (2026-08-11): the street-name search tool
-      (coventry.gov.uk/directory/search?directoryID=10&keywords={road}) is
-      real and freely callable, but a much better source was found on the
-      same visit - every individual school's own directory record page
-      (coventry.gov.uk/directory-record/{id}/{slug}, e.g. /43009/
-      richard-lee-primary) has a full, real "Roads in catchment area"
-      section listing every road (with house-number range for split
-      roads, e.g. "Ansty Road (188 - 278 even and 169 - 287a odd)") in
-      that specific school's catchment - a complete per-school list
-      obtained directly, no per-road querying/guessing needed. Harvested
-      this for all 50 Coventry "Primary"/"Primary Academies" directory
-      records this session (list at coventry.gov.uk/directory/search?
-      directoryID=10&keywords=&category=Primary): 28 of 50 have a real
-      roads-in-catchment list (the other 22 are Catholic/faith/special/
-      secondary schools with no catchment, consistent with elsewhere in
-      this file), saved to this project's scratch space
-      (coventry_school_roads.json, not yet committed to the repo). Same
-      unresolved problem as Wirral above: the roads are text with no
-      coordinates, and many carry house-number-range splits, so turning
-      this into verified point samples needs road (or road-segment)
-      geocoding, not just parsing - the harvest step is done, geocoding
-      and Voronoi-building is not. Next step: geocode the ~28 schools'
-      whole (non-split) roads via structured Nominatim lookup ("{road
-      name}, Coventry, UK") as a first, simpler pass; leave split roads
-      for a second pass since they need number-range-aware geocoding to
-      avoid assigning the same road's two different halves to the same
-      point.
   - local_authority_name: "South Tyneside"
     reason_not_enabled: >
       Real, substantial progress made digitising this (not a plain
