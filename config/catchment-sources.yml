@@ -5134,30 +5134,49 @@ sources:
   # catchment-areas page with no map link") checked the wrong page - the
   # council's actual "find a school near you" tool
   # (cumberland.gov.uk/schools-and-education/find-school-near-you) is a
-  # LocalGov Drupal site that server-side-renders a Leaflet map, and each
-  # individual school's page (…/find-school-near-you/{des_no}) embeds a
-  # real "school catchment areas" content-type node with a genuine
-  # multipolygon geofield (drupalSettings.leaflet["leaflet-map-node-
-  # school-catchment-areas-{nid}-field-catchment-boundary"].features),
-  # server-rendered with no JS execution required - fetched with plain
-  # curl/urllib, no Playwright needed. Real WGS84 lat/lon coordinates
-  # (EPSG:4326), not estimated.
+  # LocalGov Drupal site that server-side-renders a Leaflet map. A prior
+  # session's per-school-node approach (each individual school page
+  # embedding its own "school catchment areas" content-type node,
+  # drupalSettings.leaflet["leaflet-map-node-school-catchment-areas-{nid}-
+  # field-catchment-boundary"]) hit a data-quality bug (many pages fell
+  # back to showing an unrelated shared entity when the school had no node
+  # of its own) and landed only 82 verified catchments (73 primary, 9
+  # secondary) after excluding the fallback duplicates, 2 invalid
+  # geometries and 5 name-mismatched schools.
   #
-  # Important data-quality issue found and worked around: many school
-  # pages fall back to showing entity 7864407 (the same polygon, unrelated
-  # to that school) when the school has no catchment-area node of its own
-  # - discovered because that one entity_id appeared 71 times out of 173
-  # school pages fetched. Only kept the 90 schools whose boundary entity_id
-  # was unique across the whole 177-school listing; then this project's
-  # standard point-in-polygon check (school's own DB coordinate must fall
-  # inside its own polygon) excluded 1 more (Millom School) and 2 more
-  # failed shapely validity (Gilsland CofE Primary, Stoneraise School - a
-  # non-simple/self-intersecting ring, not investigated further), leaving
-  # 82 genuinely verified catchments (73 primary, 9 secondary). 5 more
-  # unique-entity schools couldn't be matched to a DB school by name
-  # (Morton Academy, St Bridget's CofE - Cockermouth/Whitehaven, St
-  # Michael's CofE - Bothel, Wreay CofE Primary) - not investigated
-  # further, a possible small follow-up.
+  # A later session (2026-08-11, re-run of the coverage-gap audit)
+  # re-fetched 8 of those unmatched school pages and found a much better
+  # source hiding on the exact same pages: every page also embeds a
+  # second, borough-wide leaflet block -
+  # drupalSettings.leaflet["leaflet-map-view-school-list-block-3"] - a
+  # single "school list" map view containing all ~140 of Cumberland's
+  # catchment polygons at once, each with its own popup naming its
+  # school(s) directly (no per-school node/entity-fallback bug at all).
+  # Re-extracted the whole council from this one block: elision-aware
+  # splitting of joint/shared catchment names ("Ashfield Infant and
+  # Junior" -> "Ashfield Infant School" + "Ashfield Junior School",
+  # re-attaching the elided leading place name), strict-name-first
+  # matching (exact/subset core-token match tried before a weak raw
+  # token-overlap fallback - the earlier loose-overlap approach produced
+  # false ties in compact towns where several schools' real coordinates
+  # all happen to sit inside every nearby polygon regardless of which
+  # school it's actually named for, e.g. Millom's 3 schools and Wigton's
+  # Nelson Thomlinson/Thomlinson Junior pair), then this project's
+  # standard point-in-polygon check against each real DB coordinate.
+  # Result: 144 verified catchments (129 primary, 15 secondary) - net +62
+  # over the prior session's 82, with zero regressions (every
+  # previously-landed school re-verified and still included). 2 more
+  # (Monkwray Junior, 147m outside; Ewanrigg Junior via a second joint
+  # name, 112m outside) were name-matched with high confidence but left
+  # out rather than forced, since this is a live official polygon (not a
+  # hand-digitised PDF where ~75-150m jaggedness is expected/documented
+  # elsewhere in this file) and a 100m+ miss on an authoritative source is
+  # more likely a genuine boundary/edge case than measurement noise. ~30
+  # remaining open Cumberland schools (mostly Catholic-diocese primaries,
+  # a handful of special/PRU/independent schools, and a few secondaries)
+  # have no polygon anywhere in this 140-feature block at all - genuinely
+  # not published by the council via this tool, not an unsolved matching
+  # problem.
   - local_authority_code: "942"
     local_authority_name: "Cumberland"
     academic_year: "2025-2026"
@@ -5168,13 +5187,13 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - no explicit Open Government Licence statement found on the council's find-school-near-you tool."
-    last_verified_at: "2026-08-06"
+    last_verified_at: "2026-08-11"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      73 primary catchment polygons - see the block comment above for the
-      Drupal geofield discovery method and the entity-fallback-bug
-      exclusion logic.
+      129 primary catchment polygons - see the block comment above for the
+      borough-wide "school-list-block-3" discovery method that superseded
+      the original 73-polygon per-node extraction.
 
   - local_authority_code: "942"
     local_authority_name: "Cumberland"
@@ -5186,12 +5205,13 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - no explicit Open Government Licence statement found on the council's find-school-near-you tool."
-    last_verified_at: "2026-08-06"
+    last_verified_at: "2026-08-11"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      9 secondary catchment polygons - see the block comment on the
-      primary entry above for the discovery method.
+      15 secondary catchment polygons - see the block comment on the
+      primary entry above for the discovery method that superseded the
+      original 9-polygon per-node extraction.
 
   # Derby: the earlier dead-end note ("session-scoped GeognoSISRest layer
   # behind proxy.axd with no public WFS endpoint discoverable from static
