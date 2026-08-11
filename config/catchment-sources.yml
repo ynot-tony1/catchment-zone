@@ -7151,7 +7151,27 @@ candidates:
   - local_authority_name: "Salford"
     reason_not_enabled: "Official page provides PDF catchment maps only for ~25 faith schools, no GIS. map.salford.gov.uk's interactive map timed out from this sandbox on every attempt - the same unreachability pattern as Ealing/Hampshire, worth retrying from a different network origin rather than assumed empty. Re-confirmed 2026-08-11: DNS resolves (80.193.232.60) but TCP connect times out/refuses on both 443 and 80 - genuine network-level block on this host specifically (general internet egress from this sandbox is fine, confirmed against google.com/gov.uk/raw.githubusercontent.com in the same session), so a browser-fingerprint fix cannot help here."
   - local_authority_name: "Wirral"
-    reason_not_enabled: "The council's own 'school catchment area finder' embeds a legacy ASP tool (ww3.wirral.gov.uk/catchment/indexiframe.asp) that is a road/street-name text search returning a list of catchment schools per street - no polygon geometry exposed anywhere, not a map at all."
+    reason_not_enabled: >
+      Confirmed live (2026-08-11): ww3.wirral.gov.uk/catchment/
+      searchiFrame.asp (POST frmRoad={road name}&IncludeCatholic=Catch) is
+      real, freely callable by plain POST with no auth/CAPTCHA, and
+      returns actual results - e.g. "Grange Road" in Birkenhead returned 6
+      distinct road-segment results across 3 different schools. But unlike
+      Essex/Hartlepool/Wakefield's UPRN-keyed point lookups, this tool's
+      unit of data is a ROAD, sometimes split by house-number parity/range
+      ("GRANGE ROAD WEST evens and odds 71 and above" vs "odds 1 to 69" ->
+      two different schools) - harder to turn into point samples, since
+      the response gives no coordinates at all (just road name text) and
+      a resolved point would need number-range-aware geocoding (not just
+      a road-name centroid) to correctly separate split roads. Two viable
+      next steps if pursued: (a) restrict to roads with only ONE result
+      (no split) and geocode just those via structured Nominatim lookup
+      ("{road}, Wirral, UK"), accepting a smaller but higher-confidence
+      subset; (b) get a comprehensive Wirral road-name list first (OS Open
+      Roads is free and would work) rather than guessing road names to
+      query. Not attempted further this session given the extra
+      geocoding-precision problem this introduces versus Essex/Wakefield's
+      already-coordinate-bearing responses.
   - local_authority_name: "Wolverhampton"
     reason_not_enabled: "The council's own 'Schools' ArcGIS Experience app resolves to a real MapServer (maps.wolverhampton.gov.uk/arcgis/rest/services/CWC/MapServer), but its Schools layer is confirmed esriGeometryPoint (locations only) - no catchment polygon layer exists in that MapServer."
   - local_authority_name: "Manchester, Tameside, Wigan"
@@ -7159,9 +7179,66 @@ candidates:
   - local_authority_name: "Bradford"
     reason_not_enabled: "ArcGIS Hub portal (spatialdata-cbmdc.hub.arcgis.com, 62 datasets) checked via DCAT feed - no catchment dataset; the only schools-adjacent dataset is an air-quality interpolation layer, unrelated."
   - local_authority_name: "Wakefield"
-    reason_not_enabled: "Official tool is a GET-form single-address lookup (one catchment result per address), not a map or bulk polygon dataset."
+    reason_not_enabled: >
+      UPGRADED FINDING (2026-08-11) - confirmed real and freely
+      programmatically callable, the strongest untouched next lead this
+      session found but ran out of time to build. The original note's
+      "GET-form single-address lookup" is accurate but undersells it: this
+      is exactly the Hartlepool/Essex point-sampling shape of problem, and
+      is actually EASIER than either of those, because Wakefield's address-
+      picker step returns real British National Grid coordinates (e=/n=
+      params) directly in each address link's own URL - no separate
+      geocoding or postcode-centroid approximation needed at all. Two
+      plain GET endpoints, no auth/session/CAPTCHA on either (confirmed via
+      bare curl): (1)
+      wakefield.gov.uk/pick-address-for-school-catchment?where-i-live={postcode}
+      returns an address list, each as a link carrying uprn, usrn, e, n,
+      and p (postcode) as query params; (2) following one of those links -
+      wakefield.gov.uk/schools-and-education/schools/school-catchment-area-search?uprn=...&e=...&n=...&p=...
+      - returns either "No schools found in this catchment area" or a real
+      "Your catchment area schools" section naming the actual primary and
+      secondary school for that address (confirmed live: 5 Wentworth
+      Terrace, WF1 3QW -> "Wakefield St Johns CE (VA) J&I School"
+      primary, "Outwood Grange Academy" secondary). Note the same response
+      also has a "Your nearest Roman Catholic schools" section explicitly
+      labelled by distance ("Distance: 0.44 km") rather than catchment
+      membership - that section is a nearest-school calculation, not a
+      real RC catchment zone, and should NOT be treated the same way as
+      the "Your catchment area schools" section if this is built out.
+      Next step: doogal.co.uk CountyCouncilCSV-style postcode export for
+      Wakefield MDC (or equivalent), sample postcodes, follow both GET
+      steps per sample, classify by school, Voronoi + trust-radius +
+      100m-own-coordinate-margin verify exactly as done for Essex this
+      session (see the Essex block comment above for the full method).
   - local_authority_name: "Coventry"
-    reason_not_enabled: "Official tool is a street-name text search (explicitly not by postcode) returning a school-name list, not a map. No GIS presence found."
+    reason_not_enabled: >
+      UPGRADED FINDING (2026-08-11): the street-name search tool
+      (coventry.gov.uk/directory/search?directoryID=10&keywords={road}) is
+      real and freely callable, but a much better source was found on the
+      same visit - every individual school's own directory record page
+      (coventry.gov.uk/directory-record/{id}/{slug}, e.g. /43009/
+      richard-lee-primary) has a full, real "Roads in catchment area"
+      section listing every road (with house-number range for split
+      roads, e.g. "Ansty Road (188 - 278 even and 169 - 287a odd)") in
+      that specific school's catchment - a complete per-school list
+      obtained directly, no per-road querying/guessing needed. Harvested
+      this for all 50 Coventry "Primary"/"Primary Academies" directory
+      records this session (list at coventry.gov.uk/directory/search?
+      directoryID=10&keywords=&category=Primary): 28 of 50 have a real
+      roads-in-catchment list (the other 22 are Catholic/faith/special/
+      secondary schools with no catchment, consistent with elsewhere in
+      this file), saved to this project's scratch space
+      (coventry_school_roads.json, not yet committed to the repo). Same
+      unresolved problem as Wirral above: the roads are text with no
+      coordinates, and many carry house-number-range splits, so turning
+      this into verified point samples needs road (or road-segment)
+      geocoding, not just parsing - the harvest step is done, geocoding
+      and Voronoi-building is not. Next step: geocode the ~28 schools'
+      whole (non-split) roads via structured Nominatim lookup ("{road
+      name}, Coventry, UK") as a first, simpler pass; leave split roads
+      for a second pass since they need number-range-aware geocoding to
+      avoid assigning the same road's two different halves to the same
+      point.
   - local_authority_name: "South Tyneside"
     reason_not_enabled: >
       Real, substantial progress made digitising this (not a plain
