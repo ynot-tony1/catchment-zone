@@ -2075,6 +2075,50 @@ sources:
   # than a single catchment boundary - both kept "secondary"-prefixed since
   # each still represents a real geographic admissions boundary for a named
   # secondary school.
+  #
+  # UPDATE (2026-08-11): the remaining gap (Bristol has 174 open schools;
+  # only these 2 layers' ~130-school combined coverage is deployed) was
+  # investigated for a from-scratch primary source and for the 4 secondary
+  # schools missing from the "first priority" layer (Blaise High School,
+  # Oasis Academy Brislington, Oasis Academy Brightstowe, St Bede's
+  # Catholic College) - confirmed a structural dead end, not an
+  # under-searched gap:
+  #   - Primary: Bristol's determined "Admission arrangements for
+  #     community and voluntary controlled infant and primary schools"
+  #     document states the only geographic oversubscription criterion is
+  #     "3. Geography - Children living closest to the school as measured
+  #     in a direct line" - no priority-area/catchment concept at all for
+  #     LA-run primaries. Both of Bristol's ArcGIS services were fully
+  #     re-enumerated: maps2.bristol.gov.uk/.../ll_education/MapServer
+  #     (layer 6, "Infant, Junior and Primary schools") and the much
+  #     larger maps2.bristol.gov.uk/.../moving_home/FeatureServer (75
+  #     layers total, including layer 19 "Primary schools") - both are
+  #     esriGeometryMultipoint (school locations only), and neither
+  #     service has any primary-catchment polygon layer among its other
+  #     layers. A misleadingly-titled "Bristol Primary Education" ArcGIS
+  #     Experience app (experience.arcgis.com/experience/
+  #     9aa54c22c5ce4d198083e376195ab498) was checked via its item JSON
+  #     and confirmed to be a mistitled clone of the secondary schools
+  #     app, wired to the exact same "Bristol Secondary Schools" web map
+  #     and its point-only Secondary schools layer - not a real primary
+  #     source.
+  #   - Secondary: the 4 missing schools were confirmed absent from the
+  #     live "first priority" FeatureServer query itself (25 named areas,
+  #     none matching any of the 4), and each school's own published
+  #     admissions policy confirms why: Blaise High, Oasis Brislington and
+  #     Oasis Brightstowe are academies whose own oversubscription policy
+  #     is plain straight-line distance with no priority area at all. St
+  #     Bede's Catholic College does publish its own "Catchment Area Map"
+  #     page, but it resolves (both live and via Wayback Machine archives)
+  #     to a set of ~18 separate parish-boundary PDFs (Catholic Diocese of
+  #     Clifton parish boundaries used as a faith oversubscription
+  #     criterion), not one drawn school catchment polygon - a materially
+  #     different and much higher-effort source type than every other
+  #     source in this file, not pursued this session.
+  #   A handful of "Not applicable"-phase schools (special schools, PRUs,
+  #   AP units) also show up as uncovered in a point-in-polygon audit but
+  #   were not investigated - those admission types aren't geographic by
+  #   nature.
   - local_authority_code: "801"
     local_authority_name: "Bristol, City of"
     academic_year: "2025-2026"
@@ -4679,7 +4723,33 @@ sources:
       document; Wade Deacon High School) covering Widnes - see the block
       comment above this entry for the digitisation method. Halton's
       other secondary schools (Runcorn area) and primary schools are not
-      covered by this document; not yet checked for a separate map.
+      covered by this document.
+
+      UPDATE (2026-08-11): the "not yet checked" gap above is now closed
+      out as a confirmed structural dead end, not an unsearched lead. The
+      council's own 2011 Executive Board report on the Widnes zoning
+      scheme (councillors.halton.gov.uk/documents/s13393/, "School
+      Admission Arrangements 2012") states outright that "the LA sought
+      confirmation from central government that operating catchment
+      zones in Widnes and a different set of oversubscription criteria
+      in Runcorn was permitted" - i.e. Runcorn secondary schools have
+      never had catchment zones by deliberate LA design, not by omission.
+      Halton's current (2025-2026) primary and secondary admissions
+      booklets confirm every Runcorn secondary school (The Heath,
+      Ormiston Bolingbroke, Ormiston Chadwick, Sandymoor Ormiston) uses
+      pure LLPG straight-line "Distance" as its geographic
+      oversubscription criterion, with no catchment/zone concept at all;
+      primary admissions borough-wide are likewise confirmed
+      distance-only (a 2007 committee minute already described it as "a
+      circle... drawn around the area of the school" whose radius
+      "depend[s] on the choices that parents made each year", i.e. no
+      fixed boundary), with the single exception of one voluntary-aided
+      primary (St Michael with St Thomas CE) that names an undefined
+      "Catchment Area of the Academy" in its own oversubscription
+      criteria with no published map found. geodata.halton.gov.uk (the
+      council's real open-GIS portal) and its onlinemapping.aspx page
+      were both checked directly and carry no schools/catchment layer.
+      Not pursuing further without a genuinely new lead.
 
   # North Yorkshire: no adapter needed at all, unlike every digitised
   # entry above - a real, live, current ArcGIS FeatureServer, found by
