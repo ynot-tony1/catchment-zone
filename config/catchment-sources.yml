@@ -6672,6 +6672,90 @@ sources:
     enabled: true
     notes: "2 real digitised Roman Catholic secondary 'associated area' polygons (of 3 published, 1 excluded for a closed-school URN)."
 
+  # Essex: the existing candidate note (removed by this session, was in
+  # candidates: below) correctly found that secureapps.essex.gov.uk/cas/
+  # does point-in-polygon internally via a ReportProxy.aspx postcode
+  # lookup with no exposed polygon feature service - and correctly flagged
+  # it as exactly this project's point-sampling-reconstruction shape of
+  # problem. This session did that. Network capture on a live Playwright
+  # session against the tool's real page (Priority-Admissions-(Catchment)-
+  # Area.aspx) showed the actual mechanism: it's a Microsoft SQL Server
+  # Reporting Services (SSRS) instance fronted by a thin ReportProxy.aspx
+  # wrapper, with two real report endpoints - one resolves a postcode to
+  # one or more addresses (each with a UPRN,
+  # .../ReportProxy.aspx?%2fCatchment%20Area%20Search%2fReports%2f
+  # AddressListForGivenPostcode&rs:Format=XML&Postcode={pc}), the other
+  # resolves a UPRN to its Priority Admission Area primary/secondary school
+  # (.../ReportProxy.aspx?%2fCatchment%20Area%20Search%2fReports%2f
+  # PrimaryAndSecondarySearchReport&rs:Format=XML&uprn={uprn}) - both
+  # freely callable by plain unauthenticated GET, no session/cookie/
+  # CAPTCHA/signature required at all (confirmed with a bare curl request,
+  # no browser needed once the URL pattern was known).
+  #
+  # Sampling: doogal.co.uk's free postcode-CSV export gave every in-use
+  # unit postcode in the Essex County Council area (ONS county code
+  # E10000012, 39,943 real postcodes across all 12 districts). Given the
+  # county's size (far larger than Hartlepool), queried a stratified
+  # sample instead of every postcode: up to 20 postcodes per postcode
+  # sector (e.g. "CM1 1"), 4,341 points total across 237 sectors. Queried
+  # the address-lookup endpoint for each, then the school-lookup endpoint
+  # for the first returned UPRN (8,682 calls total, ~35 minutes at
+  # concurrency 10 - this server responds far slower than Hartlepool's or
+  # Stockport's, roughly 1.5-2s per call). 231 postcodes errored (timeouts,
+  # excluded), 3,822 resolved to a named Priority Admission Area school,
+  # 288 correctly resolved to "no priority area" (most Essex schools use
+  # distance-based admissions with no defined zone at all - only a real
+  # minority have a PAA, which is why the sampled postcode's own real
+  # lat/lng rather than an exhaustive per-address canvas was judged
+  # sufficient here, unlike Hartlepool's exhaustive small-borough canvas).
+  #
+  # Reconstruction: identical method to Hartlepool - Voronoi tessellation
+  # over the classified points (reprojected to EPSG:27700), dissolved by
+  # school, clipped to the real Essex county boundary (doogal.co.uk's own
+  # KML export of ONS county boundary E10000012) and to a trust-radius
+  # buffer (900m, chosen relative to this session's much coarser
+  # postcode-level - not exhaustive-address-level - sampling: median
+  # nearest-neighbour spacing between any two sampled points was 206.7m,
+  # p90 773.3m, so 900m stays within the well-sampled range without
+  # reaching deep into the large gaps inevitable at this sampling density
+  # across a whole county).
+  #
+  # Verification: matched each dissolved polygon's harvested SSRS school
+  # name against this project's own Essex schools table (name
+  # normalisation handling "C of E"/"CE" abbreviation variants and
+  # dropping voluntary-aided/voluntary-controlled/foundation qualifier
+  # words that differ between the two naming systems; genuinely ambiguous
+  # matches - e.g. multiple same-named "St Andrew's"/"St John's" schools
+  # in different villages - were disambiguated using each harvested
+  # label's own trailing ", <village>" text against the DB school's
+  # locality/town field where unambiguous, and left unmatched/excluded
+  # otherwise rather than guessed). Applied this file's standard 100m
+  # own-school-coordinate-margin bar on top. Of 305 dissolved polygons: 54
+  # had no confident name match to an open Essex school at all, 8 stayed
+  # genuinely ambiguous after disambiguation and were excluded, 44 failed
+  # the margin bar (several by tens of kilometres - a few were name
+  # mismatches from the automated disambiguation guessing wrong, correctly
+  # caught by this same margin check rather than silently landing bad
+  # data). 199 of 305 verified and kept, each individually confirmed to
+  # contain its own real school's own DB coordinate with 100m+ margin.
+  # Filed as primary_catchment_partial per this project's standing
+  # convention for point-sample-reconstructed (not digitised-from-a-real-
+  # drawn-line) boundaries.
+  - local_authority_code: "881"
+    local_authority_name: "Essex"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://secureapps.essex.gov.uk/cas/Priority-Admissions-(Catchment)-Area.aspx"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/essex/essex_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the ReportProxy.aspx/SSRS tool's pages carry no data licence statement; the underlying UPRN-keyed address data resembles an OS AddressBase-derived gazetteer typical of UK council address systems, but no explicit licence was found for the Priority Admission Area zone-membership data itself. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-11"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "199 primary Priority Admission Area polygons reconstructed from dense stratified postcode sampling of a real backend SSRS report server (see the block comment above for the full method, sampling density, and all exclusions). Point-sample-interpolated, not digitised from a published map - deliberately conservative (100m own-school-coordinate margin bar, 900m trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason. Most Essex schools use distance-based admissions with no Priority Admission Area at all; this covers only the real minority that have one."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7333,8 +7417,6 @@ candidates:
     reason_not_enabled: "Structural, not a search gap: the council does not operate school catchment areas at all - all schools are open to all applicants, oversubscription resolved purely by distance, confirmed by a published FOI response. A separate FOI specifically requesting GIS shapefiles was refused under s.43(2) (commercial/OS licensing terms), independent of the underlying catchment-area non-existence."
   - local_authority_name: "Sefton, Liverpool, Knowsley, St Helens, Bolton, Oldham, Rochdale, Sandwell, Walsall, Newcastle upon Tyne, Sunderland"
     reason_not_enabled: "No GIS/open-data catchment presence discovered for any of these 11 (checked individually: council pages, data.gov.uk/ArcGIS Hub org search where one exists, PDF fallback search) - Liverpool/St Helens/Sandwell have data.gov.uk orgs with unrelated dataset lists (checked in full), the rest have no discoverable GIS presence at all. Sunderland's own site additionally blocks unauthenticated fetches (403)."
-  - local_authority_name: "Essex"
-    reason_not_enabled: "Only a server-side postcode lookup tool (secureapps.essex.gov.uk/cas/) that does point-in-polygon internally and returns a school name via ReportProxy.aspx - no exposed polygon feature service found. Essex's own CKAN portal has no catchment dataset."
   - local_authority_name: "Kent"
     reason_not_enabled: "No catchment polygons - Kent uses distance-based admission ranking instead of catchment areas. Kent's only school-related ArcGIS Online item is a 2026/27 school-accessibility travel-time point dataset, not catchment boundaries."
   - local_authority_name: "Surrey"
