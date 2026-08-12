@@ -7179,6 +7179,115 @@ sources:
     enabled: true
     notes: "4 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
 
+  # North East Lincolnshire: previously logged as a dead end ("only official
+  # catchment artifact is a plain PDF list, not even a map") - reopened per
+  # this session's established pattern (Coventry/Wirral/Luton) that a real
+  # road-to-school text mapping is membership data the Voronoi-reconstruction
+  # pipeline can turn into geometry, not a non-starter just because it isn't
+  # already a map.
+  #
+  # Source: nelincs.gov.uk/assets/uploads/2025/09/School-catchment-list.pdf,
+  # a genuine 54-page, machine-generated (Excel-exported) borough-wide table
+  # - "Correct @ July 2025" - covering every named road split into house-
+  # number spec / road+town / primary catchment / secondary catchment
+  # columns, extracted cleanly via pdfplumber's table extraction (no OCR
+  # needed; real embedded text throughout).
+  #
+  # Parsing: 2,912 raw table rows across 54 pages. Excluded: 195 rows
+  # carrying an explicit house-number range/parity split in the house-number
+  # column (e.g. "1-55 (Odd numbers) & 2-34 (Even numbers)") per this
+  # project's standing rule against guessing a number-range's position along
+  # a road without real proportional-interpolation geometry; 6 rows in a
+  # separate "Addresses outside of North East Lincolnshire" section (roads in
+  # neighbouring LAs whose primary catchment is literally "contact the LA
+  # mentioned" rather than a real school). 2,701 unique whole-road,
+  # single-claim rows remained (16 of them had their road name glued into the
+  # house-number cell by a pdfplumber line-merge quirk on short cells -
+  # recovered by stripping the "All Numbers " prefix rather than dropped).
+  #
+  # Name matching: 43 unique primary-column strings and 10 secondary-column
+  # strings, resolved against every real OPEN North East Lincolnshire school
+  # (local_authority_code 812) by exact/near-exact normalised-name match, not
+  # string-similarity guessing. Caught two real traps: some "X & Y" strings
+  # are two DIFFERENT schools genuinely sharing one catchment (e.g. "Waltham
+  # Leas Primary Academy & Waltham Gateway Academy", "Scartho Infants School
+  # & Scartho Junior Academy & Scartho Gateway Academy" - a real 3-way
+  # infant/junior/gateway split, all fed the identical road set per this
+  # project's standing sister-school convention), while others are ONE
+  # school's own official name that happens to contain "&" (e.g. "Stanford
+  # Junior & Infant School" = the single school now named "Laceby Stanford
+  # Primary Academy", "Thrunscoe Primary & Nursery Academy" = one school) -
+  # distinguished by trying a direct single-school match first and only
+  # falling back to an &-split if the whole string didn't match one real
+  # school. One further real exclusion: "Killingholme Primary School (North
+  # Lincolnshire LA)" is explicitly a neighbouring authority's own school
+  # (confirmed in the DB under local_authority_code 813, sited well outside
+  # North East Lincolnshire's boundary) - the 28 Habrough-area roads naming
+  # it as primary catchment were excluded from primary reconstruction (their
+  # secondary claim, Oasis Academy Immingham, is a real NE Lincs school and
+  # was kept).
+  #
+  # Geocoding: all 2,701 unique road strings queried against Nominatim's
+  # public search endpoint, ~1 req/sec, structured as "<road>, <town>, United
+  # Kingdom" (or county-qualified for the 16 town-less glued rows) with a
+  # North East Lincolnshire-sized viewbox and bounded=1; 1,710 resolved
+  # (63%).
+  #
+  # Reconstruction: identical Voronoi-tessellation-plus-trust-radius-clip
+  # method as Hartlepool/Essex/Wakefield/Coventry/Wirral/Luton - tessellated
+  # separately by phase, dissolved by school, clipped to the real North East
+  # Lincolnshire LAD boundary (ONS Open Geography Portal, LAD_MAY_2025_UK_
+  # BFC_V2, E06000012) and a 300m trust-radius buffer around every real
+  # geocoded sample point. Per this project's post-Luton fragmentation fix,
+  # every school's raw reconstructed geometry was reduced to its single
+  # largest connected polygon BEFORE verification (dropping any smaller
+  # disconnected fragment), so a school whose own coordinate fell only in a
+  # minor fragment would have been excluded rather than kept on a
+  # technicality - none were in this source's kept set, but every accepted
+  # feature is confirmed a single clean Polygon, zero MultiPolygon.
+  #
+  # Verification: this file's standard 100m own-school-coordinate-margin bar
+  # against the dominant piece only. Of 40 primary schools with at least 4
+  # geocoded points, 24 cleared the bar (margins 102m-378m); of 10 secondary
+  # schools, 5 cleared (margins 106m-615m). The rest failed - several by a
+  # wide margin (East Ravendale, Healing Academy, both Waltham Toll Bar
+  # Academy and Havelock/Beacon academies at over -300m) consistent with
+  # sparser sample coverage near the school itself in more rural parts of the
+  # borough, others by a narrow margin (Grange, Stallingborough, Signhills
+  # Infant/Academy pair, both Scartho Infants/Junior/Gateway split schools)
+  # consistent with closely-packed urban catchments - and were excluded
+  # rather than force-deployed. An exhaustive pairwise intersection check
+  # across all kept features (both phases) found zero meaningful overlap.
+  - local_authority_code: "812"
+    local_authority_name: "North East Lincolnshire"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.nelincs.gov.uk/children-families-and-schools/schools-and-education/school-admissions/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/north-east-lincolnshire/nelincs_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the council's School-catchment-list.pdf carries no data licence statement. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-12"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "24 primary catchment polygons reconstructed from North East Lincolnshire's published road-to-school catchment list PDF (nelincs.gov.uk School-catchment-list.pdf, correct @ July 2025), geocoded road-by-road and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
+
+  - local_authority_code: "812"
+    local_authority_name: "North East Lincolnshire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.nelincs.gov.uk/children-families-and-schools/schools-and-education/school-admissions/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/north-east-lincolnshire/nelincs_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment_partial entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-12"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "5 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7899,8 +8008,6 @@ candidates:
       issue. GetData.aspx?service=MapSource&RequestType=JSON also always
       500s. The council's actual public catchment publication is
       PDF-only (hull.gov.uk/downloads/file/4889 and /4891).
-  - local_authority_name: "North East Lincolnshire"
-    reason_not_enabled: "Only official catchment artifact is a plain PDF list (not even a map): nelincs.gov.uk/assets/uploads/2024/08/School-catchment-list-2024-2025.pdf. Four candidate ArcGIS Hub hostnames all resolve but return zero datasets via DCAT feed. No evidence this council runs the same iShare platform as neighbouring North Lincolnshire."
   - local_authority_name: "Southampton"
     reason_not_enabled: "Council states explicitly that its catchment map is 'a digital map, not a paper map, and so is not available for inspection by the public,' and separately that no Southampton secondary school has a catchment area at all. southampton-opendata.hub.arcgis.com returns zero datasets via DCAT feed. www.southampton.gov.uk is behind an Incapsula bot-mitigation challenge from this environment, blocking direct page inspection. Re-checked 2026-08-11: www.southampton.gov.uk now loads normally with a plain curl request (no bot challenge encountered this time), but the council's own published position (verified again via fresh web search this session, at the 'catchment-statement' page) is unchanged and remains a genuine structural dead end regardless of reachability - the map is deliberately not published for public inspection. Not worth further pursuit."
   - local_authority_name: "Leicester"
