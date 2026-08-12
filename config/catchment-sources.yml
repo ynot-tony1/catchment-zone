@@ -2142,25 +2142,67 @@ sources:
   #   inside its home parish (Our Lady of the Rosary, Lawrence Weston)
   #   with a 658m margin, cross-validating the technique.
   #
-  #   Only 10 of the 20 designated parishes were digitised this session
-  #   (time-boxed, not a data limitation): each PDF needs its own
-  #   station-marker identification and coordinate lookup, and several
-  #   parishes (Thornbury, Nailsea, Portishead, Henbury, Downend,
-  #   Patchway) had contour-extraction complications (an open rather than
-  #   fully closed boundary line at this resolution, or too few/no
-  #   nearby rail stations for a reliable control-point fit) not resolved
-  #   in the time available - left for a future session rather than
-  #   guessing geometry to fill the gap. Recorded under
-  #   "secondary_catchment_partial", the same convention already used
-  #   elsewhere in this file (Hertfordshire's selective schools, several
-  #   councils' partial primary layers) specifically so partial coverage
-  #   is never mistaken for comprehensive coverage. One genuine oddity
-  #   preserved rather than "cleaned up": the three Weston-super-Mare
-  #   parishes (Corpus Christi, Our Lady of Lourdes, St Joseph's) publish
-  #   pixel-identical boundary maps - a real quirk in the source, not a
-  #   digitisation error - so the importer's existing same-checksum merge
+  #   UPDATE (2026-08-12, later session): the remaining 6 "stuck" parishes
+  #   from the first pass (Thornbury, Nailsea, Portishead, Henbury,
+  #   Downend, Patchway) plus the 4 never-attempted ones (Clevedon,
+  #   Shirehampton, Filton, Southmead) were revisited. The school's own
+  #   "Parish maps" page (pid=88) was re-crawled directly from its raw
+  #   HTML (not the earlier WebFetch markdown conversion, which had
+  #   silently truncated one PDF's hex filename) to get the authoritative
+  #   full list of all 20 parish PDF links, cross-referenced against what
+  #   was already digitised.
+  #
+  #   The "open boundary line" diagnosis from the first pass turned out to
+  #   be wrong in every case checked: skeletonising each drawn boundary
+  #   and walking it as a graph (networkx shortest path between the two
+  #   true endpoints, distinguished from false-positive skeleton artefacts
+  #   at sharp vertices by visual inspection of each candidate) showed the
+  #   line is fully drawn and closes cleanly except where it reaches the
+  #   Severn Estuary/Avon coastline - a genuine, deliberate cartographic
+  #   convention (the coast itself is the boundary there, so it is not
+  #   separately hand-drawn) rather than a rendering artefact. Thornbury,
+  #   Henbury, Portishead and Nailsea/Clevedon all close this way: the
+  #   drawn portion was traced pixel-exactly via the skeleton graph, and
+  #   the coastal portion was digitised from the same basemap's own
+  #   depicted coastline (the boundary between land and the tidal-flat/
+  #   water symbol), not invented.
+  #
+  #   A second finding fixed the "too few nearby rail stations" cases:
+  #   these basemaps carry a real 1km OS grid (confirmed at exactly
+  #   315px/1000m at 200 DPI, i.e. 1:25000 scale, independently verified
+  #   against two known station-to-station distances to within 0.1-0.5%
+  #   error) - so a single identifiable real point (a station dot, precise
+  #   to a few metres) is enough to fully anchor a map once the shared
+  #   scale/no-rotation model is trusted, without needing a second
+  #   in-frame point. Patchway's own basemap is a different (older,
+  #   scanned, red-highlighter) template without this grid; it was
+  #   anchored with a real 2-point similarity fit (Pilning and Severn
+  #   Beach stations, both visible on its own map) with rotation forced to
+  #   0 (real OS-derived maps are north-up; the raw 2-point fit implied an
+  #   implausible 5.9 degree rotation, diagnosed as pixel-picking noise
+  #   from the low-contrast scan rather than a real map rotation) and
+  #   scale cross-checked against the map's known real-world extent.
+  #
+  #   Downend (Holy Family Catholic Parish is not one of its parishes -
+  #   St Augustine of Canterbury, Downend is) remains undigitised: its
+  #   linked file is not a PDF at all but an 813x468px newsletter PNG,
+  #   confirmed via a direct re-fetch to be the only resolution the school
+  #   publishes. That native resolution is too coarse to identify any
+  #   landmark's pixel location with confidence (verified against two
+  #   candidate town-centre labels, both illegible even at 6x upscaling) -
+  #   a genuine source limitation, left undigitised rather than guessed.
+  #
+  #   19 of the 20 designated parishes are now digitised. Recorded under
+  #   "secondary_catchment_partial" still, since Downend remains
+  #   outstanding. Two genuine oddities preserved rather than "cleaned
+  #   up": the three Weston-super-Mare parishes (Corpus Christi, Our Lady
+  #   of Lourdes, St Joseph's) publish pixel-identical boundary maps, and
+  #   Nailsea and Clevedon's differently-styled basemaps publish the exact
+  #   same underlying boundary geometry (confirmed via matching endpoint
+  #   coordinates and grid scale) - real quirks in the source, not
+  #   digitisation errors - so the importer's existing same-checksum merge
   #   logic (see _merge_areas_sharing_geometry in adapters/catchments.py)
-  #   collapses them into one combined-name row at import time.
+  #   collapses each pair into one combined-name row at import time.
   #   A handful of "Not applicable"-phase schools (special schools, PRUs,
   #   AP units) also show up as uncovered in a point-in-polygon audit but
   #   were not investigated - those admission types aren't geographic by
@@ -2209,17 +2251,21 @@ sources:
     parser_name: "generic_geojson"
     enabled: true
     notes: >
-      10 of St Bede's Catholic College's 20 designated Catholic parishes
+      19 of St Bede's Catholic College's 20 designated Catholic parishes
       (its admissions policy's criterion-2 "resident in the school's
       designated parish(es)" priority group), each digitised from the
       school's own real drawn OS-referenced parish boundary PDF via a
       station-marker ground-control-point affine/similarity fit (see the
       block comment above this LA's other two entries for full method
-      and honest scope). Genuinely partial, not comprehensive - the
-      remaining 10 parishes were not digitised this session. The three
-      Weston-super-Mare parishes' PDFs publish pixel-identical boundary
-      maps (a real oddity in the source); the importer's own same-
-      checksum merge logic collapses them into one combined-name row.
+      and honest scope, including the later session's coastline-closure
+      and grid-scale techniques). Only Downend's parish PDF (in fact a
+      813x468px newsletter PNG, not a PDF) remains undigitised - too low
+      a native resolution to georeference with confidence, a genuine
+      source limitation rather than a skipped parish. The Weston-super-
+      Mare and Nailsea/Clevedon parish PDFs each publish pixel-identical
+      (or coordinate-identical) boundary maps within their pair (a real
+      oddity in the source); the importer's own same-checksum merge
+      logic collapses each pair into one combined-name row.
 
   - local_authority_code: "865"
     local_authority_name: "Wiltshire"
