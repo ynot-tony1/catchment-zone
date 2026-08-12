@@ -48,7 +48,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "825", name: "Buckinghamshire", sourceTypeCount: 5 },
   { code: "869", name: "West Berkshire", sourceTypeCount: 2 },
   { code: "892", name: "Nottingham", sourceTypeCount: 2 },
-  { code: "801", name: "Bristol, City of", sourceTypeCount: 2 },
+  { code: "801", name: "Bristol, City of", sourceTypeCount: 3 },
   { code: "865", name: "Wiltshire", sourceTypeCount: 2 },
   { code: "929", name: "Northumberland", sourceTypeCount: 3 },
   { code: "816", name: "York", sourceTypeCount: 2 },

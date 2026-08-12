@@ -2107,14 +2107,60 @@ sources:
   #     none matching any of the 4), and each school's own published
   #     admissions policy confirms why: Blaise High, Oasis Brislington and
   #     Oasis Brightstowe are academies whose own oversubscription policy
-  #     is plain straight-line distance with no priority area at all. St
-  #     Bede's Catholic College does publish its own "Catchment Area Map"
-  #     page, but it resolves (both live and via Wayback Machine archives)
-  #     to a set of ~18 separate parish-boundary PDFs (Catholic Diocese of
-  #     Clifton parish boundaries used as a faith oversubscription
-  #     criterion), not one drawn school catchment polygon - a materially
-  #     different and much higher-effort source type than every other
-  #     source in this file, not pursued this session.
+  #     is plain straight-line distance with no priority area at all.
+  #
+  #   UPDATE (2026-08-12): St Bede's Catholic College's "Catchment Area
+  #   Map" was investigated properly this session, not just noted as a
+  #   dead end. Its own admission policy PDF (bristol.gov.uk/files/
+  #   documents/4080-st-bedes-admissions/file), read in full, confirms
+  #   this genuinely is a geographic admissions criterion, not just a
+  #   faith-reference lookup: oversubscription criterion 2 is "Catholic
+  #   children who are resident in the school's designated parish(es)",
+  #   ranked above "Other Catholic children" (criterion 3) - parish
+  #   residency is a real tie-break within the Catholic applicant pool,
+  #   for 20 named Clifton Diocese parishes (note 12 of the policy). The
+  #   school's own "Parish maps to show geographical area of prime
+  #   responsibility" page (stbedescc.org, reached via a working page ID
+  #   the site's own bit.ly link redirects through, pid=88 not the dead
+  #   pid=35) links one PDF per parish, and each PDF was confirmed - not
+  #   assumed - to contain a real drawn boundary: an OS-referenced raster
+  #   basemap ("Contains OS Data (c) Crown Copyright...") with a bold
+  #   closed black polygon traced on top, the same "real drawn boundary"
+  #   pattern as this project's other raster-PDF sources (Christchurch,
+  #   Stoke Row), not a text-only parish description. No Diocese of
+  #   Clifton GIS/open-data boundary set exists publicly (checked) - the
+  #   school's own PDFs are the only real source, same as first assumed.
+  #
+  #   Digitised via real estate railway station markers (magenta dots
+  #   printed on the basemap, e.g. Sea Mills, Redland, Clifton Down)
+  #   matched to their genuine published coordinates as ground-control
+  #   points for a per-PDF affine/similarity georeferencing fit (3-4
+  #   points where visible, one map's residuals cross-checked to 12.6m,
+  #   most under 1m on an exact 3-point fit) - not traced/guessed, a real
+  #   coordinate transform same in spirit to this project's other
+  #   pixel-measured tracings. St Bede's own real DB coordinate falls
+  #   inside its home parish (Our Lady of the Rosary, Lawrence Weston)
+  #   with a 658m margin, cross-validating the technique.
+  #
+  #   Only 10 of the 20 designated parishes were digitised this session
+  #   (time-boxed, not a data limitation): each PDF needs its own
+  #   station-marker identification and coordinate lookup, and several
+  #   parishes (Thornbury, Nailsea, Portishead, Henbury, Downend,
+  #   Patchway) had contour-extraction complications (an open rather than
+  #   fully closed boundary line at this resolution, or too few/no
+  #   nearby rail stations for a reliable control-point fit) not resolved
+  #   in the time available - left for a future session rather than
+  #   guessing geometry to fill the gap. Recorded under
+  #   "secondary_catchment_partial", the same convention already used
+  #   elsewhere in this file (Hertfordshire's selective schools, several
+  #   councils' partial primary layers) specifically so partial coverage
+  #   is never mistaken for comprehensive coverage. One genuine oddity
+  #   preserved rather than "cleaned up": the three Weston-super-Mare
+  #   parishes (Corpus Christi, Our Lady of Lourdes, St Joseph's) publish
+  #   pixel-identical boundary maps - a real quirk in the source, not a
+  #   digitisation error - so the importer's existing same-checksum merge
+  #   logic (see _merge_areas_sharing_geometry in adapters/catchments.py)
+  #   collapses them into one combined-name row at import time.
   #   A handful of "Not applicable"-phase schools (special schools, PRUs,
   #   AP units) also show up as uncovered in a point-in-polygon audit but
   #   were not investigated - those admission types aren't geographic by
@@ -2148,6 +2194,32 @@ sources:
     parser_name: "generic_arcgis_feature_service"
     enabled: true
     notes: '2 secondary school "second priority" area polygons.'
+
+  - local_authority_code: "801"
+    local_authority_name: "Bristol, City of"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.stbedescc.org/page/?title=St+Bede's+Catchment+Area+Map&pid=88"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/bristol/st_bedes_parishes.geojson"
+    name_field: "SCHOOL_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no licence statement found on the school's own admissions/catchment-map pages."
+    last_verified_at: "2026-08-12"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      10 of St Bede's Catholic College's 20 designated Catholic parishes
+      (its admissions policy's criterion-2 "resident in the school's
+      designated parish(es)" priority group), each digitised from the
+      school's own real drawn OS-referenced parish boundary PDF via a
+      station-marker ground-control-point affine/similarity fit (see the
+      block comment above this LA's other two entries for full method
+      and honest scope). Genuinely partial, not comprehensive - the
+      remaining 10 parishes were not digitised this session. The three
+      Weston-super-Mare parishes' PDFs publish pixel-identical boundary
+      maps (a real oddity in the source); the importer's own same-
+      checksum merge logic collapses them into one combined-name row.
 
   - local_authority_code: "865"
     local_authority_name: "Wiltshire"
