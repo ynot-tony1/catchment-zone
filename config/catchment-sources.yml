@@ -7288,6 +7288,107 @@ sources:
     enabled: true
     notes: "5 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
 
+  # Thurrock: previously logged as a dead end for a different reason (the
+  # council's ArcGIS Online subscription is cancelled - a real finding, but
+  # about the wrong data source) with a one-line aside that its "catchment
+  # PDFs are road-name-to-school lists, not GIS" - re-investigated properly
+  # this session per the now-established pattern (Coventry/Wirral/Luton/
+  # North East Lincolnshire) that a road-to-school text list is real
+  # membership data the Voronoi-reconstruction pipeline can turn into
+  # geometry.
+  #
+  # Source: thurrock.gov.uk/sites/default/files/assets/documents/master_
+  # catchment_list_from_2026_for_web_0.pdf, a genuine 47-page Excel-exported
+  # table (Road Name / Secondary / Primary / Remarks columns), reached via
+  # the primary-school-admissions page's own "download documents and forms"
+  # link (not a guessed URL). Extracted cleanly via pdfplumber (real
+  # embedded text, no OCR needed).
+  #
+  # Parsing: 1,944 raw data rows. 109 rows (43 distinct road names) appear
+  # more than once in the table with different Remarks describing a
+  # house-number range/parity split for that specific road (e.g. "EVENS
+  # 224-280 INCLUSIVE" vs the road's other row) - excluded entirely (both/
+  # all rows for that road name) per this project's standing rule against
+  # guessing a number-range's position along a road without real
+  # proportional-interpolation geometry. 1,835 unique whole-road,
+  # single-claim rows remained. 159 of those carry a "ROAD NAME-TOWN"
+  # disambiguation suffix (common names like "Central Avenue" repeat across
+  # several Thurrock villages) - split out and used as a structured city
+  # qualifier for geocoding rather than left glued into the street name.
+  #
+  # Name matching: 25 unique primary-column and 8 unique secondary-column
+  # strings, resolved against every real OPEN Thurrock school
+  # (local_authority_code 883) by normalised exact match first, falling
+  # back to a phase-restricted unique-prefix match for the council's own
+  # truncated forms (e.g. "ABBOTS HALL PRIMARY" vs the DB's "Abbots Hall
+  # Primary School") - never a bare string-similarity guess. "NO CATCHMENT",
+  # "OUT OF AREA", "SEC. ONLY" and "PRM. ONLY" are the council's own literal
+  # non-school placeholders, not schools, and were excluded; three further
+  # genuinely ambiguous dual-school claims ("AVELEY PRIMARY/KENNINGTONS",
+  # "MOSSBOURNE PORT SIDE OR MOSSBOURNE FOBBING", a combined Harris/Tudor
+  # Court primary claim) were excluded rather than guessed at, the same
+  # standing rule used for Wirral/Luton's dual-claimed roads.
+  #
+  # Geocoding: all 1,835 unique road strings queried against Nominatim's
+  # public search endpoint, ~1 req/sec, structured as "<road>[, <town>],
+  # United Kingdom" with a Thurrock-sized viewbox and bounded=1 (falling
+  # back to an unqualified retry when the town guess didn't resolve); 1,549
+  # resolved (84%).
+  #
+  # Reconstruction: identical Voronoi-tessellation-plus-trust-radius-clip
+  # method as Hartlepool/Essex/Wakefield/Coventry/Wirral/Luton/North East
+  # Lincolnshire - tessellated separately by phase, dissolved by school,
+  # clipped to the real Thurrock LAD boundary (ONS Open Geography Portal,
+  # LAD_MAY_2025_UK_BFC_V2, E06000034) and a 300m trust-radius buffer around
+  # every real geocoded sample point. Every school's raw reconstructed
+  # geometry was reduced to its single largest connected polygon BEFORE
+  # verification per this project's post-Luton fragmentation fix; every
+  # accepted feature is confirmed a single clean Polygon, zero MultiPolygon.
+  #
+  # Verification: this file's standard 100m own-school-coordinate-margin bar
+  # against the dominant piece only. Of 18 primary schools with at least 4
+  # geocoded points, 13 cleared the bar (margins 101m-405m); of 4 secondary
+  # schools, 2 cleared (margins 245m-595m). The rest failed - Bulphan and
+  # St Clere's by a very wide margin (over -1000m, consistent with sparse
+  # sample coverage in the borough's more rural northern villages) and
+  # Aveley/Kenningtons/Somers Heath by a narrow margin (55m-75m, consistent
+  # with closely-packed urban catchments near Grays/Purfleet) - excluded
+  # rather than force-deployed. An exhaustive pairwise intersection check
+  # found zero meaningful overlap WITHIN either phase (primary-vs-primary,
+  # secondary-vs-secondary); the handful of primary-vs-secondary overlaps
+  # found are expected and not a defect, since a primary catchment and a
+  # secondary catchment covering the same real streets is normal (different
+  # phases, not competing claims on the same admission).
+  - local_authority_code: "883"
+    local_authority_name: "Thurrock"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.thurrock.gov.uk/primary-school-admissions/download-documents-and-forms"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/thurrock/thurrock_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the council's master_catchment_list PDF carries no data licence statement. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-12"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "13 primary catchment polygons reconstructed from Thurrock's published road-to-school master catchment list PDF (thurrock.gov.uk master_catchment_list_from_2026_for_web_0.pdf), geocoded road-by-road and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
+
+  - local_authority_code: "883"
+    local_authority_name: "Thurrock"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.thurrock.gov.uk/primary-school-admissions/download-documents-and-forms"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/thurrock/thurrock_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - see the primary_catchment_partial entry above for full detail; same source, same caveat."
+    last_verified_at: "2026-08-12"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "2 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -7628,8 +7729,6 @@ candidates:
     reason_not_enabled: "Structural, not a search gap: the council's admissions policy explicitly uses a pure straight-line-distance tiebreak measured by its own GIS, not catchment-area polygons. iow.gov.uk also blocks unauthenticated fetches with a Cloudflare 403."
   - local_authority_name: "Medway"
     reason_not_enabled: "Runs a Cadcorp SIS WebMap 9 application (medwaymaps.medway.gov.uk); likely OGC endpoint paths all 404. No catchment-specific layer discoverable in the static page HTML. Most Medway schools are academies/voluntary-aided setting their own admissions with no unified LA catchment polygon dataset found. Re-checked in a real Playwright session (2026-08-10, prompted by the raster-boundary-plus-address-search technique that unlocked Rotherham on this same webmap platform): the site loads and its 'Map Features' layer panel is fully explorable, but the 'Education' group contains only a single 'Schools' (locations) sub-layer - no catchment layer of any kind exists to recover, rendered or otherwise. A genuine confirmed dead end, not an under-investigated one."
-  - local_authority_name: "Thurrock"
-    reason_not_enabled: 'Confirmed structurally dead, not just unsearched: the council''s ArcGIS Online subscription has been cancelled. Its "Schools" Feature Service returns {"error":{"code":403,"messageCode":"SB_0006","message":"Subscription is canceled, the item is not accessible"}} - a genuine account-level shutdown, not a permissions or licensing question. Council''s own catchment PDFs are road-name-to-school lists, not GIS.'
   - local_authority_name: "Bath and North East Somerset"
     reason_not_enabled: "No dedicated GIS/map subdomain resolves. The one interactive tool found (app.bathnes.gov.uk/webforms/nearby) is described only generically and its own URL name strongly suggests a distance/nearest-school tool rather than catchment polygons - not confirmed as real catchment boundary data."
   - local_authority_name: "South Gloucestershire"
