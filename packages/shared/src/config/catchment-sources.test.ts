@@ -100,7 +100,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "851", name: "Portsmouth", sourceTypeCount: 3 },
   { code: "806", name: "Middlesbrough", sourceTypeCount: 1 },
   { code: "807", name: "Redcar and Cleveland", sourceTypeCount: 4 },
-  { code: "393", name: "South Tyneside", sourceTypeCount: 1 },
+  { code: "393", name: "South Tyneside", sourceTypeCount: 2 },
   { code: "884", name: "Herefordshire", sourceTypeCount: 2 },
   { code: "S12000027", name: "Shetland Islands", sourceTypeCount: 2 },
   { code: "W-681", name: "Cardiff", sourceTypeCount: 4 },

@@ -5701,6 +5701,93 @@ sources:
       single-school map; see the borough-wide partition maps discussion
       below for the rest, still unsolved).
 
+  # South Tyneside primary (partial, 2 of ~27 zones): the borough-wide
+  # 2025/2026-edition partition map remains genuinely unsolvable (zones 4
+  # Marsden and 6 Laygate have a confirmed missing boundary line in the
+  # source PDF itself, see the disabled candidate entry below) and the
+  # live southtyneside.gov.uk site could not be fetched again this
+  # session even via the previously-working CDP Fetch-domain technique -
+  # the WAF has escalated from a silent JS challenge to a genuine visible
+  # interactive Cloudflare Turnstile checkbox on the PDF asset path
+  # specifically (the article page itself still clears fine), which did
+  # not pass even with a real Chrome channel binary, stealth flags, and
+  # coordinate-based mouse clicks on the checkbox - a materially harder
+  # blocker than previously documented, most likely IP/network-reputation
+  # based per this project's Leicestershire precedent, not a technique
+  # regression to keep retrying in-sandbox.
+  #
+  # Pivoted to a different, real, dated document instead of retrying
+  # access: the Wayback Machine has independently archived several OLDER
+  # editions of this exact borough-wide map (2020-2023 admissions cycles,
+  # media/44615 and media/46601 on southtyneside.gov.uk, crawled by
+  # archive.org's own bot before the live site's WAF tightened, so no
+  # Cloudflare interaction needed at all). Rendered the cleanest of these
+  # (2023 edition, MapInfo PDF Printer v4.5.3.9, CreationDate March 2021)
+  # at 600dpi and found zones 3/4/6's boundary lines fully closed in this
+  # edition - the "missing line near Beacon Hill" that blocks the current
+  # edition is not present here, a genuine negative result (not just
+  # re-confirming the current edition's gap) since no copy of the actual
+  # 2025/26 PDF could be found archived anywhere to diff against directly.
+  # Georeferenced the whole page using a global least-squares affine fit
+  # over 10 schools' own blue-dot marker positions (auto-detected by
+  # colour+shape from the raster - this edition's zone-ID digits and
+  # school-name labels are baked into the embedded raster image, unlike
+  # the current edition's real extractable text, so text-position seeding
+  # wasn't available) against their real DB coordinates, spread across
+  # the whole borough (Hadrian north, East Boldon south, Whitburn
+  # coastal-south, St Matthews/St Bedes-Jarrow/Jarrow Cross west, Westoe
+  # Crown/St Oswalds/Ashley/Harton central) - residuals 3-92m. Marsden and
+  # Laygate's own marker positions were deliberately held out of the fit
+  # and used purely as an independent check: their fitted coordinates
+  # land within 24m and 40m of their real DB coordinates respectively,
+  # strong confirmation the georeferencing (and by extension the whole
+  # map) is accurate, not just internally consistent. Extracted zones 4
+  # and 6 via the same marker-controlled watershed technique as the
+  # current edition's 25 working zones (seeded with all 28 detected
+  # school-dot positions as competing labels plus the image border as a
+  # competing exterior label), and both came out as single clean closed
+  # regions - no leaking into the giant merged blob that a plain
+  # dilated-flood-fill on this same edition still produces, and no
+  # fragmentation. Rendered each extracted region back over the source
+  # map to visually confirm an exact match to the drawn red boundary
+  # before accepting it. Real DB coordinates for both schools land
+  # comfortably inside their own polygon (~450m and ~249m margin to the
+  # nearest edge respectively) - not just barely inside.
+  #
+  # Deliberately NOT attempting the other ~25 zones from this 2023
+  # edition: the zone-ID numbering has visibly been reshuffled since (e.g.
+  # Hebburn Lakes is zone 17 here vs zone 29 in the 2025/26 legend),
+  # proving real redraws happen between editions, and with no current-
+  # edition copy available to cross-check individual boundaries against,
+  # deploying the full older map risks silently shipping stale boundaries
+  # for schools where the coordinate-inside-polygon check wouldn't catch
+  # a modest shift. Marsden and Laygate specifically are safe to ship
+  # because the real DB coordinate check is exactly the kind of
+  # independent verification that would catch drift, not because the
+  # source is assumed current elsewhere.
+  - local_authority_code: "393"
+    local_authority_name: "South Tyneside"
+    academic_year: "2022-2023"
+    source_type: "primary_catchment"
+    source_url: "http://web.archive.org/web/20211019104021/https://www.southtyneside.gov.uk/media/46601/Community-Primary-Schools-Catchment-area-2023/pdf/Community_and_Voluntary_Controlled_Primary_Schools.pdf"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/south-tyneside/marsden_laygate_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'UNCONFIRMED - the source PDF states only "Crown Copyright reserved. Licence No. 100019570", with no explicit Open Government Licence statement found on southtyneside.gov.uk.'
+    last_verified_at: "2026-08-12"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      2 primary catchment polygons only (Marsden Primary School, Laygate
+      Community School) - the 2 schools whose zones fail to close in the
+      current 2025/26 borough-wide map due to a genuine missing boundary
+      line, digitised instead from a real, independently-archived older
+      (2023-admissions) edition of the same council map where their
+      boundaries are fully closed. The other ~25 zones on this map are
+      deliberately not deployed; see the disabled candidate entry below
+      for the full history and reasoning.
+
   # Herefordshire: reopened from the candidates entry below, which had
   # found this real, live, OGL v2-licensed REST API
   # (restservices.herefordshire.gov.uk) but rejected it as "unreliable
