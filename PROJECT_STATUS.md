@@ -3,6 +3,200 @@
 Updated 2026-08-13. Reflects what has actually been run and verified on
 disk, not what is intended.
 
+## Current state (2026-08-13)
+
+- **104 local authorities** with real pilot catchment coverage (England,
+  Scotland, Wales), **273 enabled sources** in `config/catchment-sources.yml`
+  (`packages/shared/src/config/catchment-sources.test.ts`'s
+  `PILOT_LOCAL_AUTHORITIES` list is the exact, test-enforced source of
+  truth for the LA/source-count breakdown).
+- **`catchment_areas`: 10,938 rows**, `map_catchments_cache.feature_count`:
+  10,938 (in sync).
+- **Catchment scores: 7,411 of 10,938 areas scored** (`refresh-catchment-scores`,
+  last run 2026-08-13; the remainder are areas without enough underlying
+  school-performance data to score, not a bug).
+- **84 candidate entries** recorded in `config/catchment-sources.yml`'s
+  `candidates:` section with a specific `reason_not_enabled` - the full
+  categorized breakdown (login wall / bot-check / no data published /
+  structural dead end) and a roadmap for closing the login-wall ones is in
+  "Full audit: every documented gap, categorized by blocker type, with a
+  login-wall roadmap" below.
+
+## Toolkit: methods proven this project, for reuse on the next source
+
+This project has no single ingestion method - every council publishes
+catchment data differently, and roughly half of the LAs above required
+building a bespoke extraction technique rather than just pointing the
+ingestor at an official API. This section is a reusable index of every
+distinct technique proven to work, so the next session doesn't have to
+rediscover them from 3,600 lines of chronological history. Each entry links
+to the update where it was built and first landed real data.
+
+- **Direct GIS service query (ArcGIS Feature Service / WFS / shapefile
+  download).** The easy case: the council publishes catchments through a
+  real GIS backend. Query `/query?f=geojson` (ArcGIS) or the WFS
+  `GetFeature` endpoint directly, reproject if needed, done. Covers the
+  majority of the 104 LAs and needs no bespoke code - just a new
+  `config/catchment-sources.yml` entry with `parser_name:
+generic_arcgis_feature_service` / `generic_wfs` / `generic_shapefile_zip`.
+- **Interactive council tool's own backend endpoint, queried directly (no
+  login involved).** The single most productive non-trivial technique this
+  project has used. Many councils' "interactive map" pages have no
+  documented API but make plain HTTP requests to their own backend from
+  client-side JS - open the browser network tab (or intercept via CDP
+  Fetch-domain, see below) and call that endpoint directly. Landed
+  Wakefield's address-picker tool (68+14 catchments), Coventry's road-name
+  tool (16+6), Wirral (22, a single bulk request beat exhaustive street-name
+  enumeration), Rotherham's raster/watershed platform, and Staffordshire's
+  legacy ASP.NET app (313 catchments, coordinates embedded directly in
+  server-rendered markup - zero georeferencing needed). See "Update:
+  Staffordshire's 313 catchments landed..." (2026-08-10) and the Wakefield/
+  Coventry/Wirral updates (2026-08-11).
+- **Dense point-sampling + Voronoi tessellation ("the road-list Voronoi
+  pipeline").** For "admission zone finder" tools that answer one address
+  at a time with no boundary export: enumerate every road/street in the
+  area (OS/OSM road list), query the tool once per address point along each
+  road, then reconstruct polygon boundaries from the resulting dense point
+  cloud via Voronoi tessellation, clipped to real ONS LAD administrative
+  boundaries and a trust-radius buffer around actual sampled points (never
+  extrapolating past what was actually sampled). First built for Hartlepool
+  (12 zones), then reused for Essex, Wakefield, Coventry, Wirral, Luton,
+  North East Lincolnshire, and Thurrock. See "Update: Hartlepool's Admission
+  Zone Finder cracked..." (2026-08-11) and "Update: generalising the
+  Hartlepool technique..." (2026-08-11).
+  - **Known failure mode of this technique, found and fixed by the user:**
+    naive point-in-polygon verification against a `MultiPolygon` output
+    passes if a coordinate lands in ANY fragment, including a tiny
+    disconnected sliver - producing fragmented, scattered-looking zones on
+    the live map even with zero cross-school overlap. Fix: keep only the
+    single largest connected piece per school and re-verify only against
+    that piece; drop schools that fail once fragments are removed. See
+    "Update: user caught a real fragmentation bug..." (2026-08-11) for the
+    fix and the precise checksum-based DB reconciliation used to clean up
+    the resulting orphaned rows (never a timestamp-based guess, which risks
+    deleting legitimately-unchanged rows).
+- **Landmark-pair (2-point similarity transform) anchoring for scanned/PDF
+  maps.** The core Oxfordshire technique, reused everywhere a council
+  publishes a scanned or vector-PDF map with no coordinate grid: identify
+  two real-world landmarks visible on the map (road junctions, named
+  villages, notable buildings) via Nominatim/Overpass, get their true
+  lat/lon, compute the pixel-to-geographic similarity transform (rotation +
+  scale + translation) from their pixel positions, then trace the boundary
+  in pixel space and transform it. Always cross-checked against a third,
+  independent point before accepting. Discipline established this session:
+  decline a fit if the resulting containment margin is smaller than the
+  fit's own error budget, even if the point technically lands inside (see
+  the New Marston Primary decline, "Update: Oxfordshire's original
+  non-gridded landmark-pair candidate list fully exhausted...", 2026-08-09) -
+  a comfortable margin, not just barely inside.
+  - **Named infrastructure (road/rail, Nominatim-geocoded) is the most
+    reliable anchor type**; large multi-building campuses are a real,
+    repeatable failure mode (ambiguous which building the pin represents).
+  - **Short baselines amplify rotation noise** - a small pixel-picking error
+    over a short real-world distance produces a large bearing error; prefer
+    the longest available baseline between two landmarks.
+  - **Railway-station ground-control points**, used to land Bristol's St
+    Bede's Catholic College (19 of 20 parishes): where a shared basemap
+    carries a genuine, measurable OS grid (verified independently against
+    two known real station-to-station distances), a single identifiable
+    station point is enough to anchor the whole map once that shared
+    scale/rotation model is trusted - no second in-frame point needed per
+    parish. See "Update: St Bede's Catholic College - 19 of 20 parishes..."
+    (2026-08-12).
+- **OS grid-line pixel detection.** Where a scanned map carries a visible
+  1km OS grid, detect the grid lines directly (colour/contrast threshold)
+  and use their known real-world spacing as the scale/rotation reference
+  instead of a landmark pair - more precise when available, since it uses
+  the map's own printed ground truth rather than an external geocode.
+- **Colour-mask segmentation, with an occlusion-check discipline.** For
+  colour-coded parish/priority-area maps (solid fill per zone): threshold
+  the target colour, take the largest connected component,
+  `binary_fill_holes`, extract the contour, simplify. Real trap found and
+  fixed this session: a marker/pin icon overlapping the boundary line can
+  fake a false nearby "edge," producing an artificially small containment
+  margin - always check for and patch out occluding icons before trusting a
+  colour-mask margin (an 88m-looking margin became a real 1,686m once
+  patched for Sacred Heart Henley; see the Oxfordshire update, 2026-08-13
+  later session).
+- **Marker-controlled watershed segmentation.** For raster-only platforms
+  with adjacent, unlabelled colour regions where a simple colour mask can't
+  cleanly separate touching zones - used for Rotherham's 79 primary + 14
+  secondary catchments (the secondary layer reused the primary layer's
+  already-verified affine transform rather than re-deriving one).
+- **Skeleton-graph boundary tracing for partially-drawn lines.** Where a
+  boundary line appears to have "open" gaps at first glance (an early,
+  wrong diagnosis this session almost accepted for 6 Bristol parishes):
+  skeletonise the drawn line and walk it as a graph (`networkx` shortest
+  path between true endpoints) before concluding the line is genuinely
+  incomplete. Often the line closes cleanly right up to a natural feature
+  (a coastline) that the map simply doesn't re-draw a boundary over, not a
+  resolution artefact - confirm by visually checking each flagged
+  "endpoint" individually, since sharp vertices produce false positives.
+- **Archived historical map edition recovery.** When a council's current
+  map for an area is missing, low-resolution, or otherwise undigitizable,
+  check whether an older edition of the same map (a different template,
+  sometimes hosted on an archived page or a different URL pattern) still
+  exists and is usable - resolved South Tyneside's multi-session-stuck
+  Marsden/Laygate zones this way. See "Update: South Tyneside's Marsden and
+  Laygate primary catchments landed via a different, older archived edition
+  of the same map" (2026-08-12).
+- **CDP Fetch-domain interception.** For pages where the data-bearing
+  network request isn't visible in a simple page fetch (client-side
+  JS-triggered XHR/fetch calls), intercept at the Chrome DevTools Protocol
+  Fetch domain to capture the actual request/response the page's own code
+  makes, then replay that request directly outside the browser.
+- **Legacy embedded-JS-polygon extraction (zero georeferencing).** The best
+  case when it applies: some older/legacy council tools embed catchment
+  polygon coordinates directly as WGS84 lat/lon in server-rendered
+  JavaScript or markup - no image, no transform, no landmark-pairing
+  needed, just parse the coordinates directly out of the page. Landed all
+  313 of Staffordshire's catchments this way in a single session.
+- **National aggregate integration for genuine coverage gaps.** Scotland's
+  Improvement Service publishes a national school-catchments aggregate;
+  where a specific council's own site had no usable per-school data, the
+  national aggregate closed the gap directly (East Ayrshire, Na
+  h-Eileanan an Iar, Dumfries and Galloway, Shetland). Always check whether
+  a national/regional aggregate already covers an apparent gap before
+  building a bespoke council-specific technique.
+- **User-assisted acquisition for genuinely blocked sources.** Some data
+  simply isn't reachable from this sandbox (a real login wall, a
+  Cloudflare Turnstile challenge, an IP-level geographic block) but is
+  reachable from the user's own browser/network. The user has directly
+  supplied manually-downloaded datasets (Scotland's 4 national JSON files)
+  and PDFs found independently (Brighton and Hove's admissions map) for
+  investigation and ingestion - this is a first-class, repeatable path for
+  Category A/B blockers, not a fallback.
+- **Precise checksum-based DB reconciliation.** Whenever a re-import or a
+  fix changes which rows should exist, verify orphaned/stale rows by exact
+  `geometry_checksum` comparison against what the current source file
+  actually produces, never by a timestamp heuristic (which risks deleting
+  legitimately-unchanged rows that just happen to predate a cutoff).
+
+### Operational lessons (process, not geometry)
+
+- **Git worktree isolation (`isolation: "worktree"`) is mandatory for every
+  fork** after a real concurrent-file-write race was caught corrupting a
+  Staffordshire output file mid-write from a genuinely separate, stray
+  Claude Code process on the same machine.
+- **Forks must do all waiting synchronously** - a fork that uses the
+  Monitor tool or a backgrounded command expecting to be "woken up" later
+  simply ends its turn with nothing landed, since forks are single-turn and
+  nothing wakes them back up.
+- **Always re-run `pnpm --filter @catchment-zone/shared sync-config`** after
+  any `config/catchment-sources.yml` edit, before trusting a test run - the
+  gitignored generated JSON goes stale otherwise and produces confusing
+  false test failures.
+- **Verify a fork's claimed push actually landed** via `git fetch` +
+  `git log origin/main` comparison before importing from it, never just
+  trust the fork's own report.
+- **The ingestor fetches from `raw.githubusercontent.com`, not local
+  files** - any local edit must be pushed to `origin/main` before
+  importing, and the raw CDN caches a branch URL for a few minutes; verify
+  freshness via a commit-SHA-pinned URL (full 40-char SHA) when in doubt.
+- **`config/catchment-sources.yml` list items use 2-space indentation** -
+  a 0-space entry silently breaks the whole file's YAML parse at
+  `sync-config` time.
+
 ## Completed and verified
 
 - **2026-08-13 (later session): 5 more Oxfordshire remaining-schools-triage

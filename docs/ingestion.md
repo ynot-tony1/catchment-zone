@@ -45,8 +45,10 @@ ingestor run                Run the full pipeline in order
 
 ## Geometry pipeline
 
-1. Query the configured source (currently: ArcGIS Feature Service `/query`
-   endpoint with `f=geojson`).
+1. Fetch the configured source: an ArcGIS Feature Service `/query` endpoint,
+   a WFS endpoint, a shapefile/GeoJSON download, or a static GeoJSON file
+   committed to this repository (for boundaries digitized from a published
+   map or PDF that has no queryable API — see `docs/data-sources.md`).
 2. Reproject to WGS84 if the source CRS is not already EPSG:4326 (pyproj).
 3. Validate and, where possible, conservatively repair each geometry
    (Shapely). Reject and log, rather than crash on, an unrepairable geometry.

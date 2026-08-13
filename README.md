@@ -82,8 +82,13 @@ database), Vercel (hosting, preview and production deployments).
 
 See `docs/data-sources.md` for the full, current list with licences. In
 summary: DfE's Get Information about Schools (GIAS), the DfE Explore
-Education Statistics API, and, for catchment boundaries, a small pilot list
-of official local-authority sources starting with Sheffield City Council.
+Education Statistics API, and, for catchment boundaries, over 100 local
+authorities across England, Scotland, and Wales, pulled from official
+council GIS services where available and, where a council publishes only a
+static map or PDF with no API, digitized in-house from that published
+source and committed to this repository as GeoJSON. Licence status is
+recorded per source and disclosed honestly even where unconfirmed; see
+`docs/data-sources.md` for what that means in practice.
 
 ## Admissions disclaimer
 
@@ -97,8 +102,11 @@ See `docs/admissions-and-catchments.md` for the full policy.
 
 ## Catchment coverage
 
-Pilot only, currently Sheffield (DfE local authority code 373). Nationwide
-coverage is not claimed. See `config/catchment-sources.yml`.
+Over 100 local authorities across England, Scotland, and Wales, growing
+steadily. Nationwide coverage is not claimed, and large gaps remain
+(especially London boroughs and several county councils behind a login
+wall or bot-check). See `config/catchment-sources.yml` for the current
+source list and `PROJECT_STATUS.md` for the full coverage/gap audit.
 
 ## Local setup
 
@@ -146,10 +154,10 @@ See `docs/privacy.md`.
 
 ## Free-tier controls
 
-Import starts with a bounded pilot (10,000 representative schools, trust
+Import started with a bounded pilot (10,000 representative schools, trust
 relationships, selected metrics, Sheffield catchments), with cluster storage
 and compute usage measured before and after, and a 30%-margin projection
-before any larger import proceeds. See `docs/operations.md`.
+before any larger import proceeded. See `docs/operations.md`.
 
 ## Known limitations
 

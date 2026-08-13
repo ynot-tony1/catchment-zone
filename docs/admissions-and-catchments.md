@@ -69,20 +69,26 @@ Every result, regardless of status, renders this disclaimer:
 
 catchment-zone does not claim, and has never claimed, nationwide
 catchment coverage. See `config/catchment-sources.yml` for the current
-source list. As of this writing that list has one pilot local authority:
-
-- **Sheffield** (DfE local authority code 373), primary and secondary
-  catchment boundaries for academic year 2025-2026, published under the Open
-  Government Licence via the council's own ArcGIS Feature Service. Sheffield's
-  own dataset description states these boundaries are legally defined by
-  postcode and street number, not by the mapped polygon, and that the map is
-  illustrative only. That caveat is preserved verbatim in the UI, not
-  softened.
+source list and `docs/data-sources.md` for how coverage is expanded and how
+licensing is handled. As of this writing the list covers over 100 local
+authorities across England, Scotland, and Wales, with more added regularly.
+Coverage is uneven by design: some authorities have full primary and
+secondary boundaries from an official GIS service, others have only a
+partial or single-phase set hand-digitized from a published PDF or image map
+where no API exists, and large gaps remain (see `PROJECT_STATUS.md` for the
+current gap list). Every source's own caveats about the legal basis of its
+boundaries (e.g. Sheffield's dataset description stating boundaries are
+legally defined by postcode and street number, not the mapped polygon) are
+preserved verbatim in the UI, not softened.
 
 Expanding coverage means adding a verified entry to
-`config/catchment-sources.yml` (see the `data_source` issue template), never
-scraping an interactive council map that has no documented reuse licence or
-API.
+`config/catchment-sources.yml` (see the `data_source` issue template) backed
+by boundaries that are either pulled from an official machine-readable
+source or carefully digitized from a genuinely published council map — never
+invented, estimated, or extrapolated. A genuine login/credential wall is a
+hard stop; querying an interactive council map tool's own public-facing
+backend endpoint, where no login is required, is in scope. See
+`docs/data-sources.md` for the full policy.
 
 ## Postcode handling
 

@@ -44,7 +44,10 @@ a threshold to plan around.
 
 ## Catchment coverage is partial by design
 
-We do not import unlicensed data or scrape interactive council tools to
-manufacture the appearance of national coverage. Coverage grows one verified
-source at a time; see `docs/data-sources.md` and
-`config/catchment-sources.yml` for exactly what is covered today.
+We do not fabricate coverage to manufacture the appearance of a complete
+national map: every boundary shown is traced from a real published source,
+verified with a comfortable containment margin, never invented or
+estimated. Coverage grows one verified source at a time and still has real
+gaps, including several major cities and county councils; see
+`docs/data-sources.md` and `config/catchment-sources.yml` for exactly what
+is covered today, and `PROJECT_STATUS.md` for the current gap list.
