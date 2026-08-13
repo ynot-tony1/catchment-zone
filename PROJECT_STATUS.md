@@ -1,10 +1,139 @@
 # Project status
 
-Updated 2026-08-12. Reflects what has actually been run and verified on
+Updated 2026-08-13. Reflects what has actually been run and verified on
 disk, not what is intended.
 
 ## Completed and verified
 
+- **2026-08-13 coverage-gap audit: rebuilt from scratch (the prior
+  attempt's script was lost to a session-limit error before committing
+  anything), run fresh, and no new catchment_areas rows landed - a
+  genuine "everything checked was already correctly closed" result, not
+  a skipped audit.** Method: one SQL query joining `catchment_areas` (via
+  `catchment_sources.local_authority_code`) against real `status='OPEN'`
+  rows in `schools`, for all 105 `PILOT_LOCAL_AUTHORITIES` from
+  `catchment-sources.test.ts`, ordered by absolute gap
+  (open_schools - catchment_rows). Query kept at
+  `/tmp/.../scratchpad/audit.sql` this session (ephemeral, not part of
+  the repo - worth landing as a real script in a future session so it
+  doesn't need rebuilding a third time). Top ~30 gaps by absolute size
+  were individually read against `catchment-sources.yml`'s existing
+  notes/candidates; the next ~26 (down to a gap of 10 schools) were
+  confirmed to already be live, currently-enabled ArcGIS/WFS/bespoke-API
+  sources re-fetched fresh on every ingestor run (Norfolk, Cornwall,
+  Devon, Newham, Shropshire, Worcestershire, Wiltshire, Nottingham,
+  Central Bedfordshire, Gateshead, Cardiff, Doncaster, Wokingham,
+  Rotherham, Solihull, Telford and Wrekin, Southend-on-Sea,
+  Northumberland, North Tyneside, Portsmouth, West Berkshire,
+  Peterborough, North Lincolnshire, East Riding of Yorkshire, York,
+  Redcar and Cleveland, Kirklees, Hampshire, North Yorkshire, BCP) -
+  for a live official source that is already the council's complete
+  published catchment layer, the residual gap is the schools that
+  genuinely have no catchment concept (own-admission-authority academies/
+  VA schools, or distance-based admission), not an under-search, so none
+  of these needed re-investigating. The largest-gap LAs were each
+  confirmed individually as already-correctly-explained structural dead
+  ends by reading their existing notes in full, not just grepping for
+  a keyword: **Lancashire** (665 gap - council's own GPA index page lists
+  maps only for the same handful of schools already in the enabled
+  layer; the rest use distance admission, same pattern as Halton/
+  Bristol), **Hertfordshire** (584 - only the 7 single-sex grammar
+  schools are genuinely catchment-based, deliberately filed under
+  `secondary_catchment_selective`), **Birmingham** (507 - only the King
+  Edward VI Foundation's 6 grammar schools use ward-based catchments;
+  Birmingham's own community schools are distance-based), **Essex**
+  (426 - the enabled 199-polygon source already covers the real minority
+  of Essex schools with a Priority Admission Area; most Essex schools
+  are distance-based), **Leeds** (207 - documented per-school PDF
+  digitisation already landed everything with a real catchment; most
+  Leeds secondaries are confirmed distance-based), **Staffordshire**
+  (147 - the enabled legacy ASP.NET-sourced primary/secondary/middle
+  layers are already this project's most precise Staffordshire source),
+  **Wigan** (143 - only 1 of 4 schools in the small "Criterion"
+  MapServer had its own DB coordinate actually fall inside its polygon;
+  the others were excluded, not force-matched), **Bristol** (131 - the
+  enabled ArcGIS "second priority" layers plus St Bede's parish maps are
+  already Bristol's fully re-enumerated GIS surface; most Bristol
+  primaries are LA-run with no catchment concept, confirmed against the
+  council's own determined admission arrangements), **East Sussex**
+  (125 - the enabled "Community Area" primary+secondary layers are the
+  council's own complete ArcGIS Web AppBuilder feature services),
+  **North Northamptonshire** (116 - confirmed complete: every
+  Latimer-prefixed layer on the council's full 411-service listing was
+  re-checked and none besides the 4 already enabled carries a
+  school-name field), **Wirral** (114 - the enabled 22-catchment source
+  already exhaustively reconstructed every road in the council's own
+  catchment search tool via Voronoi tessellation), **Calderdale** (108 -
+  all 6 of the council's own published per-school GeoJSON files are
+  already enabled), **Tower Hamlets** (107 - explicitly documented as a
+  genuine exception to London's distance-based norm; both the primary
+  and secondary ArcGIS layers are already fully enabled), **Coventry**
+  (106 - already reconstructed via the same directory-record/Voronoi
+  technique as Wirral), **Nottinghamshire** (92 - the enabled bespoke
+  REST API's Primary/SecondaryCatchments endpoints are its whole public
+  surface), **Cambridgeshire** (82) and **Somerset** (72) (both live
+  Astun iShare WFS sources, already fully enabled), **Stoke-on-Trent**
+  (71 - explicitly documented: "high-school admissions in Stoke-on-Trent
+  aren't catchment-based at all"), **Halton** (68 - re-confirmed
+  structural via the council's own 2011 Executive Board report: Runcorn
+  was deliberately never given catchment zones, central government
+  approval for Widnes-only zoning is on record), **Sheffield** (64 - the
+  enabled source's own metadata states catchment boundaries are
+  illustrative only, legally defined by postcode/street number, and both
+  primary/secondary ArcGIS layers are already enabled), **South
+  Tyneside** (61 - re-read the extensive existing candidate note in
+  full: the borough-wide ~27-zone map remains genuinely unsolved after
+  multiple sessions' real R&D, current-edition access has escalated to a
+  Cloudflare Turnstile checkbox that a real Playwright Chromium session
+  couldn't clear this session either when re-tried, not attempted
+  further), and **Herefordshire** (75 gap remaining after the already-
+  enabled 40-school source - a previous session's own coverage-gap audit
+  already found and confirmed a clean 100% structural pattern: every one
+  of the 36 uncovered open schools is Voluntary Aided, an Academy, an
+  independent, or a special school).
+  **The one genuinely open lead found: Oxfordshire's remaining
+  non-gridded-template primary schools (documented in
+  `data/digitized-catchments/oxfordshire/pipeline/remaining_schools_triage.tsv`,
+  13 of 147 triaged schools still `declined_or_open`/
+  `fake_grid_confirmed` after two prior sessions' landmark-pair work).**
+  Attempted the most promising of the 13, New Marston Primary School
+  (URN 143951) - its previous attempt had failed a bearing/distance
+  cross-check by ~58% using only one landmark (a roundabout) paired with
+  the school's own coordinate. This session found and used a materially
+  better pair of two independent, precisely-locatable landmarks visible
+  on the same PDF page - John Radcliffe Hospital and The Manor Hospital,
+  Headington (both real OSM `amenity=hospital` features, ~2.5km apart) -
+  fitted a 2-point complex-number similarity transform in OSGB36 exactly
+  like this project's other landmark-pair sources, and independently
+  verified it by transforming the school's own marker pixel position and
+  checking it against the real DB coordinate: 119m residual over the
+  2.5km baseline (a real methodological improvement over the previous
+  58%-off failure, and visually confirmed both landmark pins land
+  squarely inside their labelled buildings on the source map). However,
+  the resulting boundary polygon's containment margin for the school's
+  own real DB coordinate came out to only ~88m - smaller than the 119m
+  independent-check residual, meaning the fit's own known error budget
+  is large enough to plausibly flip the containment result. Per this
+  project's "comfortable margin" verification bar, this was judged not
+  safe to ship and was **not** added to `catchment-sources.yml` or the
+  database - documented here specifically so a future session doesn't
+  waste time re-deriving the same near-miss landmark pair from scratch,
+  and instead either finds a third, more precise landmark to tighten the
+  fit, or accepts the source as unresolvable. The other 12 candidates in
+  the triage file (Tetsworth, Windmill, Wood Farm, St Mary's Banbury,
+  Stoke Row, Dr South's, Ewelme, Sacred Heart Henley-on-Thames, St
+  Joseph's Thame, Barton Park [needs a grid-tick method, no drawn
+  marker], The Grange, St Andrew's Oxford) were not attempted this
+  session. Total catchment_areas unchanged at 10,931; no ingestor
+  re-import, cache refresh, or score refresh needed since no rows
+  changed. Note for continuity: this worktree had no Python virtualenv
+  set up for the Oxfordshire pipeline (numpy/opencv/shapely/pyproj/
+  pymupdf all missing) - one was created ad hoc in the scratchpad
+  directory (`python3 -m venv` + pip install, works fine once the
+  `externally-managed-environment` system pip block is worked around
+  this way) but is not persisted anywhere in the repo; a future session
+  will need to recreate it again unless it's worth committing a
+  `requirements.txt` for this specific pipeline.
 - **Bristol: 16 St Bede's Catholic College parish-priority catchments (19 of 20 designated parishes digitised, 3 merged pairs/triples collapsed by identical geometry - see the 2026-08-12 "19 of 20" update further down for the second session's method), a genuinely new source type for this project (real drawn faith-parish boundaries used as an oversubscription tie-break, not a geographic catchment gate).** Previously logged as "not pursued... materially higher effort" without being read in full; investigated properly this session. St Bede's own admissions policy (`bristol.gov.uk/files/documents/4080-st-bedes-admissions/file`) confirms parish residency is a real, ranked oversubscription criterion (criterion 2, "Catholic children who are resident in the school's designated parish(es)", above "other Catholic children" at criterion 3) for 20 named Clifton Diocese parishes - not merely a faith-verification lookup. The school's own "Parish maps to show geographical area of prime responsibility" page (reached via its working page ID, `pid=88`, after the site's own bit.ly link's advertised `pid=35` turned out to be a dead redirect target) links one PDF per parish, each confirmed to contain a real drawn OS-referenced raster boundary (`Contains OS Data (c) Crown Copyright...` basemap with a bold closed black polygon traced on top), not a text-only parish description - the same "real drawn boundary, digitise it" pattern as this project's other raster-PDF sources. No Diocese of Clifton GIS/open-data boundary set exists publicly (checked directly), so the school's own PDFs remain the only real source. Digitised via a new technique for this project: real railway station markers printed on the basemap (small magenta dots, e.g. Sea Mills, Redland, Clifton Down, Avonmouth), matched to their genuine published coordinates as ground-control points, fitted per-map with a least-squares affine (3-4 points) or complex-number similarity transform (2 points) - cross-validated on the first map to a 12.6m max residual against a 4th held-out point, most other maps landing under 1m on exact 3-point fits. St Bede's own real DB coordinate falls inside its home parish (Our Lady of the Rosary, Lawrence Weston) with a 658m margin, verified directly against the live database via `ST_Contains`/`ST_Distance`, not just locally. Only 10 of the 20 designated parishes were digitised (time-boxed, not a data or technique limitation) - Thornbury, Nailsea, Portishead, Henbury, Downend and Patchway's own parish maps had either an open/non-closed boundary line at the rendered resolution or too few nearby rail-station landmarks for a reliable fit in the time available, left for a future session. Recorded under `secondary_catchment_partial` (not plain `secondary_catchment`) specifically so this is never mistaken for comprehensive coverage of the remaining 10 parishes, matching this project's existing convention (Hertfordshire's selective schools, several councils' partial primary layers). One genuine oddity in the source, preserved rather than "cleaned up": the three Weston-super-Mare parishes (Corpus Christi, Our Lady of Lourdes, St Joseph's) publish pixel-identical boundary maps, and Nailsea and Clevedon's own differently-styled basemaps turned out to publish the exact same underlying boundary geometry too - the importer's own same-checksum merge logic correctly collapses each pair/triple into one combined-name database row. **A second session (2026-08-12, later) resolved 9 more of the remaining 10 parishes** - see the dedicated "19 of 20" update further down in this file for the full method (a skeleton-graph trace of the drawn boundary plus a real coastline closure where the boundary meets the Severn Estuary, and a confirmed 1:25000 OS grid scale letting a single station anchor a map reliably). Only Downend (an 813x468px newsletter PNG, not a PDF - too low-resolution to georeference with confidence) remains undigitised. Total catchment_areas: 10,931 (was 10,923 after the first session, 10,915 before it); `map_catchments_cache.feature_count` and `refresh-catchment-scores` both re-run and confirmed in sync (10,931; 7,404 of 10,931 areas scored). Local authority count unchanged at 105 (Bristol was already covered).
 - **Hampshire: 665 catchments (305 infant, 293 junior, 67 secondary) from a real, live ArcGIS MapServer that plain HTTP clients (curl, this project's own production ingestor) get a genuine Cloudflare-style 403 from, but a real Playwright Chromium session reaches cleanly.** By far the largest single addition this project has made - previously logged as a dead end purely because of the client-fingerprint block, not a login wall or missing data (`data.gov.uk` already listed the same dataset). Unlike this project's other mosaic-style live sources (Hertfordshire, Kirklees), this MapServer already stores one polygon per school directly across three age-range layers, so no dissolve step was needed - just a direct per-feature fetch, snapshotted to this repo (not left as a live `arcgis_feature_service` source) since the production ingestor's plain HTTP client would hit the same 403 this sandbox's curl did. Matched to real schools by point-in-polygon first (restricted to Hampshire's own local authority code, 850), then disambiguated by name similarity only among schools actually inside each polygon. 7 of 681 fetched polygons were dropped, not force-matched: one genuine "NO SCHOOL CATCHMENT" placeholder in the secondary layer, and 6 that matched a different local authority's school (e.g. Southampton unitary) or had no Hampshire-850 school inside them at all. A further 9 rows were silently deduplicated on import by the project's existing `(source_id, geometry_checksum)` uniqueness constraint (co-located infant/junior schools sharing an identical catchment boundary) - the same known interaction already documented for Cheshire East/West and Hertfordshire. Imported clean: 665 areas, 0 rejected, 0 out-of-envelope. Local authority count: 75 (was 74).
 - **Kirklees: 132 catchments (112 primary, 18 secondary, 2 middle) dissolved from a real, live Precisely/Pitney Bowes Spectrum Spatial FeatureService, resolved after a previous session logged it as a dead end.** The council's own admissions page links a "Priority Admission Areas (Public)" map app; a Playwright browser session against the public mobile app establishes the session state its API needs (the earlier attempt's `500 Failed to read configuration` was a missing-session error, not a missing endpoint), after which its FeatureService answers a SQL query (`SELECT * FROM "<tableRef>"`) with real GeoJSON in the service's own declared EPSG:27700. The "Priority Admission Areas Combined" layer is a per-parish-style mosaic like Hertfordshire's (839 small cells, each naming which primary/secondary/middle school holds priority there), reprojected to WGS84 and dissolved into one polygon per named school. Matched to real schools by point-in-polygon first (which schools' real coordinates actually fall inside each dissolved polygon), then disambiguated by name similarity only among that geometrically-verified candidate set - plain name matching alone was unreliable since the layer's abbreviated names (e.g. "J & I School") don't line up closely enough with GIAS's expanded official names to trust in isolation. 2 of 114 named primary catchments (Luck Lane, A SHARE Primary Academy; Savile Town CE(VC) I & N School) had a confidently-named cell whose dissolved polygon did not contain that school's own DB coordinate at all - excluded rather than force-matched, a genuine unresolved discrepancy between the council's map and this project's school coordinates, not a project-side bug. Imported clean: 132 areas, 0 rejected, 0 out-of-envelope. Local authority count: 74 (was 73).
