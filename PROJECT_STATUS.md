@@ -5,6 +5,99 @@ disk, not what is intended.
 
 ## Completed and verified
 
+- **2026-08-13 (later session): 5 more Oxfordshire remaining-schools-triage
+  primaries landed - Windmill Primary, St Andrew's CE Primary (Oxford),
+  Ewelme CofE Primary, Stoke Row CofE Primary, and Sacred Heart Catholic
+  Primary (Henley-on-Thames).** Started from the 13-school
+  `declined_or_open`/`fake_grid_confirmed` backlog in
+  `data/digitized-catchments/oxfordshire/pipeline/remaining_schools_triage.tsv`.
+  Baseline at the start of this session: 10,931 `catchment_areas` rows.
+  Set up a fresh Python venv for the digitisation pipeline via `uv`
+  (now checked in as `data/digitized-catchments/oxfordshire/pipeline/requirements.txt`
+  so future worktrees don't need to rediscover the package list) and
+  copied the gitignored `.env` files from the main checkout.
+  **Windmill Primary (URN 123047) and St Andrew's CE Primary, Oxford
+  (URN 123140)**: both previously failed on a Green Road Roundabout
+  anchor paired with an unreliable second point (an unconfirmed
+  unnamed icon for Windmill; the Headington Quarry Nursery/First
+  School's shared-postcode-centroid marker for St Andrew's). Re-landed
+  both using Headington County Library (Overpass `amenity=library`, a
+  small precise building) as the shared second landmark - paired with
+  Green Road Roundabout itself for St Andrew's (0.84deg rotation,
+  852m baseline) and with the Nuffield Orthopaedic Centre building
+  complex's colour-mask centroid for Windmill (937m baseline). Both
+  cross-checked cleanly (St Andrew's: -0.45deg bearing/0.90 dist ratio
+  against its own marker; Windmill: 42m residual/2.19deg/1.03 ratio
+  against Green Road Roundabout as an independent third point). This
+  also resolved an open question from a prior session about whether
+  Green Road Roundabout's real-world layout (rebuilt since these
+  2014-dated OS basemaps were printed) makes it an untrustworthy
+  anchor - it does not; the roundabout, the library, and the Nuffield
+  building complex are all mutually consistent, and the real source of
+  Windmill's previous borderline result was discovered to be Windmill
+  Primary's own DB coordinate sitting ~280m from OSM's siting of the
+  same school (confirmed via Nominatim) - a good school-specific
+  landmark for THAT school, but not reusable as a landmark for
+  neighbouring schools (tried and failed for Wood Farm this session,
+  see triage file). DB coordinate margins: Windmill 297m, St Andrew's
+  190m.
+  **Three more resolved by re-reading their source documents more
+  carefully rather than any new digitisation technique** - all three
+  had been filed as document-type dead ends by an earlier session, but
+  in each case the actual document contains an explicit, traceable
+  polygon, just not the standard blue-marker grid template:
+  **Ewelme CofE Primary (URN 123197)** - the "4 ambiguous parish
+  polygons" note undersold page 8 of the admissions PDF, which has an
+  explicit legend ("Boundary of Ewelme" yellow vs "Boundary of
+  benefice" blue); extracted the yellow region via colour mask,
+  landmark-paired on Benson + Chalgrove village nodes (Overpass
+  `place=village`, 5.56km baseline), cross-checked against Ewelme's own
+  village label (90m residual/-0.04deg/0.965 ratio - excellent). Margin
+  365m, area 12.03km2.
+  **Stoke Row CofE Primary (URN 123136)** - re-confirmed the OS grid is
+  genuinely unrecoverable (0.0/0.0 confirmed_grid_line_fraction even
+  with the broadened paler-cyan mask), but the source PDF is an
+  "APPENDIX A: CATCHMENT MAP" explicitly captioned "Stoke Row Parish
+  Boundary - Red". Since Stoke Row is a real, current OSM civil parish
+  (relation 1859212), fetched and used the authoritative OSM boundary
+  directly instead of pixel-tracing the scan - arguably more accurate
+  than digitising a scanned red line would have been. Margin 399m, area
+  5.34km2.
+  **Sacred Heart Catholic Primary, Henley-on-Thames (URN 123204)** -
+  the "written text description, not a traced polygon" note also
+  undersold the document: it's captioned "Parish Boundary Map (shown
+  here in orange)" and shows a real shaded Google-Maps-style polygon.
+  Colour-mask extracted after explicitly patching the black pin icon's
+  footprint back to the fill colour first - discovered that a Google
+  Maps pin occludes the colour underneath it, which without patching
+  produces a false nearby "edge" right at the pin (a margin-check trap
+  worth remembering for any future Google-Maps-screenshot source: an
+  88m-looking margin turned into a real 1686m once patched). Landmark-
+  paired on Nettlebed + Reading (Nominatim/Overpass place nodes, 13.4km
+  baseline), cross-checked against Twyford railway station (a third,
+  independent point): -3.48deg bearing/0.96 dist ratio, 1016m residual
+  over ~15km - reasonable precision for a Google Maps screenshot's
+  label placement. Margin 1686m, area 39.4km2.
+  **St Joseph's Catholic Primary, Thame was attempted with the same
+  technique as Sacred Heart Henley but not landed** - the landmark pair
+  (Long Crendon + Great Milton village nodes) checked out well (Tetsworth
+  cross-check: 275m residual/-2.2deg/0.996 ratio), but the green colour
+  mask bled into a neighbouring parish's colour, producing an
+  implausible 153km2 result versus Sacred Heart's sane 39km2. Left
+  undone rather than forced - the transform is trustworthy, only the
+  mask extraction needs a tighter threshold next session.
+  **Also investigated but not landed: The Grange Community Primary,
+  Barton Park Primary, Wood Farm Primary** (all documented in detail in
+  the triage file) - see "most promising next lead" below.
+  Ran `sync-config`, the shared package's 45 vitest tests, and the
+  ingestor's 127 pytest tests (all passing) before each commit;
+  imported via `import-catchments --local-authority 931` (178 primary
+  areas built, 0 rejected) and ran `refresh-catchment-overview-cache`
+  (10,936 `map_catchments_cache.feature_count`, in sync) and
+  `refresh-catchment-scores` (7,409 of 10,936 areas scored) synchronously
+  after landing. **Oxfordshire primary total: 173 -> 178. Running
+  catchment_areas total: 10,931 -> 10,936.**
+
 - **2026-08-13 coverage-gap audit: rebuilt from scratch (the prior
   attempt's script was lost to a session-limit error before committing
   anything), run fresh, and no new catchment_areas rows landed - a
