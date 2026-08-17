@@ -1,19 +1,19 @@
 # Project status
 
-Updated 2026-08-13. Reflects what has actually been run and verified on
+Updated 2026-08-17. Reflects what has actually been run and verified on
 disk, not what is intended.
 
-## Current state (2026-08-13)
+## Current state (2026-08-17)
 
 - **104 local authorities** with real pilot catchment coverage (England,
   Scotland, Wales), **273 enabled sources** in `config/catchment-sources.yml`
   (`packages/shared/src/config/catchment-sources.test.ts`'s
   `PILOT_LOCAL_AUTHORITIES` list is the exact, test-enforced source of
   truth for the LA/source-count breakdown).
-- **`catchment_areas`: 10,938 rows**, `map_catchments_cache.feature_count`:
-  10,938 (in sync).
-- **Catchment scores: 7,411 of 10,938 areas scored** (`refresh-catchment-scores`,
-  last run 2026-08-13; the remainder are areas without enough underlying
+- **`catchment_areas`: 10,940 rows**, `map_catchments_cache.feature_count`:
+  10,940 (in sync).
+- **Catchment scores: 7,413 of 10,940 areas scored** (`refresh-catchment-scores`,
+  last run 2026-08-17; the remainder are areas without enough underlying
   school-performance data to score, not a bug).
 - **84 candidate entries** recorded in `config/catchment-sources.yml`'s
   `candidates:` section with a specific `reason_not_enabled` - the full
@@ -198,6 +198,161 @@ generic_arcgis_feature_service` / `generic_wfs` / `generic_shapefile_zip`.
   `sync-config` time.
 
 ## Completed and verified
+
+- **2026-08-17: New Marston Primary and Tetsworth Primary landed from the
+  Oxfordshire remaining-schools-triage backlog; Barton Park Primary
+  investigated in depth and correctly left open; a real rotated-page bug
+  found and fixed in `vector_boundary.py`; the whole session's Overpass
+  and raw.githubusercontent.com access was blocked, worked around each
+  time without touching any committed config.** Started from the 3-school
+  `declined_or_open`/`fake_grid_confirmed` backlog in
+  `data/digitized-catchments/oxfordshire/pipeline/remaining_schools_triage.tsv`
+  (Barton Park, New Marston, Tetsworth). Baseline at the start of this
+  session: 10,938 `catchment_areas` rows. Copied the gitignored `.env`
+  and `DATA_SOURCES.txt` from the main checkout; the pipeline's `uv`
+  venv/`requirements.txt` (already committed from a prior session) needed
+  no changes.
+  **New Marston Primary School (URN 143951)** - the previous session's
+  best attempt (John Radcliffe Hospital + The Manor Hospital, both
+  Nominatim `amenity=hospital` points) had given only an ~88m containment
+  margin against a 119m cross-check residual, correctly declined for a
+  thin margin. Overpass was blocked for this entire session (406 on every
+  retry after one initial successful call, from `overpass-api.de` and 2
+  mirrors, spaced out with backoff per the task brief's suggestion - never
+  recovered), so roundabout-hunting was abandoned in favour of this
+  project's cross-school landmark technique: queried the live `schools`
+  table for every Oxfordshire coordinate falling inside this map's rough
+  extent, and matched 3 of the resulting candidates to real, precisely-
+  drawn building icons on the page - John Radcliffe Hospital (Nominatim
+  point, but re-measured via this map's own drawn building-complex
+  colour-mask centroid for precision), Oxford Brookes University (its own
+  real DB coordinate, URN 133864, colour-mask centroid of its drawn
+  building), and St Joseph's Catholic Primary School, Oxford (its own
+  real DB coordinate, URN 123216 - the "Sch" icon near Jack Straw's
+  Lane/Headley Way that an earlier session had flagged as an untagged,
+  unusable mini-roundabout is actually this school's building, not a
+  roundabout at all). Fitted a least-squares complex-similarity transform
+  across all 3 points (not just a 2-point pair), giving small per-point
+  residuals (23-56m) and a plausible rotation (-2.07deg). Cross-checked
+  against the school's own marker/DB coordinate (not used in the fit):
+  69m residual. DB coordinate contained, margin 180m - a 2.6x
+  margin/residual ratio, comparable to or better than this project's St
+  Andrew's Oxford precedent (190m margin/94m residual, 2.0x). Area
+  2.31km2, single clean Polygon.
+  **Tetsworth Primary School (URN 123031)** - the previous Rycote
+  Lane/Attington Toll House pair had given a 36deg bearing residual
+  (badly wrong), most likely from picking the wrong point along Rycote
+  Lane's 2km+ length. Replaced both with two precise BUILDING landmarks
+  explicitly drawn and labelled on the map - Thame Park House (Nominatim
+  `historic=castle`, the L-shaped house building near the "Thame Park"
+  label, colour-mask centroid) and Attington Toll House (Nominatim
+  `building`, its own small drawn building icon, colour-mask centroid) -
+  a 3154m baseline, rotation -7.19deg. While building this fit, found and
+  fixed a real, previously-undiscovered bug in the shared pipeline: this
+  PDF's page has `page.rotation == 90` (a landscape page stored as a
+  rotated portrait mediabox) - `vector_boundary.py`'s
+  `segment_polyline()`/`extract_vector_boundary_and_marker()` did not
+  account for this, silently returning boundary/marker coordinates in the
+  wrong (raw, unrotated mediabox) coordinate space. It still chained into
+  a topologically valid closed ring, so nothing errored - the marker just
+  landed on an unrelated pond icon near "Harlesford House" a couple of
+  kilometres from the school, and the boundary ring cut a false chord
+  straight through the middle of the map when overlaid back on the page
+  image, which is what caught it (this project's standing discipline of
+  visually re-verifying every extracted ring/marker against the source
+  page, not just trusting the pixel math). Fixed by applying
+  `page.rotation_matrix` to every extracted point whenever
+  `page.rotation != 0`; both functions now do this automatically, so
+  future Oxfordshire files with a rotated page can't hit this silently.
+  Re-verified: the corrected ring/marker now overlay pixel-perfectly on
+  the printed blue boundary line and star icon. Cross-checked the
+  corrected transform against the school's own marker/DB coordinate: 186m
+  residual over the 3.15km baseline. DB coordinate contained, margin
+  903m - 4.9x the residual, a comfortable margin. Area 8.85km2, single
+  clean Polygon.
+  **Barton Park Primary School (URN 147865) investigated but correctly
+  left open.** A fresh download of the source PDF this session
+  overturned the prior sessions' own "confirmed no grid at all" verdict:
+  a genuine, solid, continuous BLACK (not cyan) OS 1km grid is printed on
+  this file, previously missed because every prior check only looked for
+  cyan grid lines or made a whole-page style judgement call. Confirmed by
+  direct pixel sampling of 2 interior vertical grid lines (400dpi
+  x=835,4187, spacing 3352px) and 1 interior horizontal line (y=2374),
+  each a solid unbroken ~3px black line spanning the full page height/
+  width through open ground - not text or road clutter. 3352px = 1000m
+  gives an exact scale of 0.29833 m/px, and a real OS grid is always
+  true-north-up (rotation=0), so unlike every other Oxfordshire
+  landmark-pair file, this one only needs ONE real-world tie point
+  (translation), not two. The boundary itself extracts cleanly via the
+  standard red-colour raster mask (pixel-perfect overlay-verified, area
+  0.40km2, single Polygon) - the whole remaining problem is getting one
+  precise anchor point. Could not get one this session: Overpass was
+  blocked the entire time (see above), so 3 independent real points were
+  sourced from Nominatim instead - "Barton Village Road" (an address
+  cluster average, 5 points spanning ~400m), "Aldebarton Drive" (a single
+  address point), and "Barton Pavilion, Barton Park" (a real
+  `recreation_ground` POI whose name literally matches this development,
+  matched to a drawn "Pav" building icon on the page). All three broadly
+  agree with each other (their implied false-origins cluster within
+  ~150-200m of each other, a genuinely positive sign), but a
+  least-squares fit across all three gives a school-DB-coordinate
+  containment margin of only ~188m against per-point residuals of
+  80-127m (worst-case ratio ~1.5x) - thinner than this project's accepted
+  precedents (St Andrew's Oxford 2.0x, Windmill 7.1x, this session's own
+  New Marston 2.6x and Tetsworth 4.9x) and not a comfortable margin, so
+  correctly left undone rather than forced. Documented in the triage file
+  with the precise next step: this is now a one-tie-point problem with an
+  already-confirmed exact scale/rotation, so a single precise
+  Overpass-confirmed node (e.g. the real "Barton Village Road" x A40
+  junction) should be enough to land it once Overpass access works again
+  - do not re-attempt the old "fake grid, need a 2-point pair" framing,
+    that framing was itself the mistake.
+    **A genuine, sustained network block was hit and worked around twice
+    this session, without changing anything committed.** Overpass
+    (`overpass-api.de` and 2 mirrors) returned 406/timeout on every request
+    after the first one, for the whole session - confirmed to be a real,
+    durable block (not simple rate-limiting) by retrying with backoff
+    across many minutes. Separately, once ready to import, `import-catchments`
+    failed with a genuine, sustained 429 from `raw.githubusercontent.com`
+    itself (confirmed not project-specific - a plain `curl` to
+    `raw.githubusercontent.com/octocat/Hello-World/master/README` also
+    429'd, and known raw.githubusercontent.com mirrors - jsdelivr,
+    githack, statically.io - all failed too, most likely because they
+    proxy through the same backend). `api.github.com` was unaffected
+    throughout and was used to independently confirm the push landed
+    correctly (`git/blobs` endpoint, 182 features, matching what was
+    committed) before falling back to a **temporary local HTTP server**
+    (`python3 -m http.server`, serving the already-verified-correct local
+    working copy) with the two Oxfordshire `download_url`s in
+    `catchment-sources.yml` pointed at `localhost` just long enough to run
+    the real import, then immediately reverted via `git checkout --` (confirmed
+    zero diff afterwards) - the committed config never changed, and the
+    data served was byte-identical to what's on `origin/main`.
+    Ran `sync-config`, the shared package's 45 vitest tests, and the
+    ingestor's 127 pytest tests (all passing) before committing; imported
+    via `import-catchments --local-authority 931` (182 primary + 27
+    secondary = 209 areas built, 0 rejected, matching the dry run exactly)
+    and ran `refresh-catchment-overview-cache` (10,940
+    `map_catchments_cache.feature_count`, in sync) and
+    `refresh-catchment-scores` (7,413 of 10,940 areas scored) synchronously
+    after landing. Live-DB spot-check via `ST_Contains` on both new
+    schools' real DB coordinates against their imported geometry: both
+    `True`. **Oxfordshire primary total: 180 -> 182. Running catchment_areas
+    total: 10,938 -> 10,940.** Committed and pushed to `main` (`3becb765`,
+    no `Co-Authored-By` trailer), confirmed landed via `git fetch origin
+main` immediately after pushing.
+    **Most promising next lead for whoever continues after this session:**
+    Barton Park Primary is now essentially a one-step problem (get one
+    precise Overpass-confirmed anchor point once Overpass access recovers)
+    rather than the "needs a fundamentally different technique" framing
+    every prior session left it in - see the triage file for the exact
+    candidate points and their current implied-origin spread. Beyond that,
+    Oxfordshire's own remaining-schools backlog is now fully exhausted
+    (every row in `remaining_schools_triage.tsv` is `done` or a structural
+    `no_catchment_pdf` dead end, except Barton Park) - the next Oxfordshire
+    session should re-scan the wider `no_catchment_pdf`/`declined_or_open`
+    pool for a genuinely new angle rather than re-deriving Barton Park's
+    already-solved grid/scale math from scratch.
 
 - **2026-08-13 (later session): 5 more Oxfordshire remaining-schools-triage
   primaries landed - Windmill Primary, St Andrew's CE Primary (Oxford),
