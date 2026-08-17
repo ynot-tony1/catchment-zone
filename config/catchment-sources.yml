@@ -8606,7 +8606,16 @@ candidates:
       number is present, worth checking against OS OpenData terms before
       enabling if this is completed.
   - local_authority_name: "Na h-Eileanan an Iar (Western Isles)"
-    reason_not_enabled: "Catchment areas published only as plain HTML text tables of school-name-to-area-name (cne-siar.gov.uk/education-and-learning/schools/catchment-areas) - not even a PDF map exists, let alone structured boundary data."
+    reason_not_enabled: >
+      RESOLVED - now digitised via the Scotland national school-catchments
+      aggregate (data.spatialhub.scot), not the council's own HTML text
+      tables noted below. See the "S12000013" primary_catchment_nd /
+      secondary_catchment_nd entries in sources: above (17 primary + polygons
+      matched via seed_code, landed 2026-08-11). This entry is kept only to
+      record that the council's own site (cne-siar.gov.uk) publishes
+      catchments as plain HTML text tables of school-name-to-area-name, not
+      even a PDF map - true and still relevant if the national aggregate
+      ever goes stale and a direct council source is needed instead.
   - local_authority_name: "Shetland Islands"
     reason_not_enabled: >
       RESOLVED - now digitised, see the Shetland Islands entry in
