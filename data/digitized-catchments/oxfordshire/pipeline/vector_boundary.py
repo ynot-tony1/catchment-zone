@@ -24,6 +24,7 @@ found this way: a school with a disjoint two-ring designated area, and a
 school with a real interior hole excluding a separately-schooled town).
 """
 import numpy as np
+import pymupdf
 
 
 def item_endpoints(item):
@@ -60,23 +61,47 @@ def _cubic_bezier_points(p0, p1, p2, p3, n=12):
     return pts
 
 
-def segment_polyline(d):
+def segment_polyline(d, rotation_matrix=None):
     """Flatten one get_drawings() path dict into an ordered list of
     (x, y) points, relying on each item's end point equalling the next
     item's start point within the same path (verified true in every
     file checked so far). Bezier curve ('c') items are sampled at 12
     intermediate points rather than collapsed to a straight chord
-    between their start/end - see _cubic_bezier_points()."""
+    between their start/end - see _cubic_bezier_points().
+
+    `rotation_matrix`: pass `page.rotation_matrix` for any page whose
+    `page.rotation != 0` (e.g. a landscape page stored as a rotated
+    portrait mediabox - confirmed on Tetsworth Primary's PDF,
+    rotation=90). page.get_drawings() always returns coordinates in
+    the page's raw, UNROTATED mediabox space, not the rotated space
+    page.get_pixmap()/page.rect use - passing None here (the previous,
+    buggy default before 2026-08-17) silently returns geometry in the
+    wrong coordinate system on any rotated page: it still chains into a
+    topologically valid closed ring (so nothing errors), but the
+    resulting ring/marker position is wrong relative to the rendered
+    raster image by exactly that rotation. Always check
+    `page.rotation` before calling this and pass the matrix whenever it
+    is nonzero; verify by rendering the result back over the page
+    image, never trust silently."""
     pts = []
     for item in d["items"]:
         kind = item[0]
         if kind == "l":
             s, e = item[1], item[2]
+            if rotation_matrix is not None:
+                s, e = s * rotation_matrix, e * rotation_matrix
             if not pts:
                 pts.append((s.x, s.y))
             pts.append((e.x, e.y))
         elif kind == "c":
             p0, p1, p2, p3 = item[1], item[2], item[3], item[4]
+            if rotation_matrix is not None:
+                p0, p1, p2, p3 = (
+                    p0 * rotation_matrix,
+                    p1 * rotation_matrix,
+                    p2 * rotation_matrix,
+                    p3 * rotation_matrix,
+                )
             if not pts:
                 pts.append((p0.x, p0.y))
             pts.extend(_cubic_bezier_points(p0, p1, p2, p3))
@@ -111,22 +136,38 @@ def extract_vector_boundary_and_marker(page, color="blue", min_items=5):
     find_all_rings) into one or more closed rings; marker_point is the
     (x, y) centroid of the small filled same-colour square that marks
     the school's own location on the map (used later as the real-world
-    anchor point). Both are in raw PDF point space (page.get_drawings()
-    coordinates, top-left origin, y increasing downward - confirmed to
-    match pymupdf's pixmap rendering convention by rendering a test
-    marker position back over the page image and seeing it land exactly
-    on the printed school-location icon)."""
+    anchor point). Both are in the page's RENDERED/display point space -
+    i.e. the same space page.get_pixmap()/page.rect use, matching what a
+    raster overlay check expects - NOT necessarily raw
+    page.get_drawings() space, which pymupdf always returns in the raw,
+    unrotated mediabox coordinate system regardless of page.rotation.
+    For any page with page.rotation != 0 (confirmed on Tetsworth
+    Primary's PDF, rotation=90 - a landscape page stored as a rotated
+    portrait mediabox), this function now automatically applies
+    page.rotation_matrix to every extracted point so the output always
+    matches the rendered page. Before 2026-08-17 this function did not
+    do that and silently returned geometry in the wrong coordinate
+    space on any rotated page - it still chained into a topologically
+    valid closed ring so nothing errored, it just landed in the wrong
+    place. Always re-verify by rendering the result back over the page
+    image before trusting it, the same discipline this project already
+    applies everywhere else."""
     drawings = page.get_drawings()
+    rot = page.rotation_matrix if page.rotation else None
     boundary_segs = []
     marker = None
     for d in drawings:
         c = d.get("color")
         n = len(d["items"])
         if is_boundary_color(c, color) and n >= min_items and d.get("fill") is None:
-            boundary_segs.append(segment_polyline(d))
+            boundary_segs.append(segment_polyline(d, rotation_matrix=rot))
         elif d.get("fill") is not None and is_boundary_color(d.get("fill"), color) and n < 50:
             x0, y0, x1, y1 = d["rect"]
-            marker = ((x0 + x1) / 2, (y0 + y1) / 2)
+            cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+            if rot is not None:
+                p = pymupdf.Point(cx, cy) * rot
+                cx, cy = p.x, p.y
+            marker = (cx, cy)
     return boundary_segs, marker
 
 
