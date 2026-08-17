@@ -6983,6 +6983,126 @@ sources:
     enabled: true
     notes: "199 primary Priority Admission Area polygons reconstructed from dense stratified postcode sampling of a real backend SSRS report server (see the block comment above for the full method, sampling density, and all exclusions). Point-sample-interpolated, not digitised from a published map - deliberately conservative (100m own-school-coordinate margin bar, 900m trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason. Most Essex schools use distance-based admissions with no Priority Admission Area at all; this covers only the real minority that have one."
 
+  # Suffolk: the existing candidate note (removed by this session, was in
+  # candidates: below) said "Suffolk's catchment information is published
+  # per-school as PDF/list, not as a map" and stopped there without
+  # opening the actual PDFs - a fresh re-scan of the candidates list this
+  # session found suffolk.gov.uk publishes a genuine flat table (not a
+  # map): "Villages and Parishes Catchment Area List" (25 pages, real
+  # extractable text confirmed via pdfplumber, not a scan), listing every
+  # Suffolk village/parish alongside its assigned primary and high school
+  # by name - the same road/place-list shape as Hartlepool/Essex/Wakefield/
+  # Coventry/Wirral/Luton/North East Lincolnshire/Thurrock, except here the
+  # council supplies the definitive village-to-school assignment directly
+  # rather than needing per-address point-sampling to infer it.
+  #
+  # Technique: rather than reconstructing boundaries via Voronoi
+  # tessellation over sampled points (this project's usual approach for a
+  # road/place list with no coordinates), each clean village/parish name
+  # was matched by exact name to its REAL civil parish administrative
+  # boundary polygon from ONS's Open Geography Portal ("Parishes and Non
+  # Civil Parished Areas (May 2025) Boundaries EW BGC", a live public
+  # ArcGIS FeatureServer, no auth) - the PDF's own explanatory note
+  # confirms this is the right approach ("for villages and parishes, most
+  # catchment boundaries follow the parish boundary line"). This is a real
+  # digitised-equivalent source (an authoritative administrative boundary),
+  # not a point-sample reconstruction, though still filed as _partial per
+  # this project's convention below given the real coverage gaps described
+  # next.
+  #
+  # Parsing: pdfplumber word-position extraction (3 fixed columns by x0
+  # threshold: village name / primary school / high school), reconstructing
+  # wrapped multi-line cells (a continuation line has an empty school-name
+  # column, or a non-empty village-name column but empty school columns on
+  # its own line) - 1,111 raw table rows recovered. Of these, only the 430
+  # "clean" single-condition rows (no "except"/"only" qualifier, no
+  # embedded postcode, no ambiguous same-line locality disambiguator like
+  # "Denham, Bury St Edmunds" vs "Denham, Eye") were used - the other ~680
+  # are genuine postcode-split/conditional sub-areas within a parish
+  # (deliberately excluded rather than guessed at, since assigning a
+  # fraction of a parish without knowing exactly where the split line falls
+  # would be exactly the geometry invention this project does not do) or
+  # references to a separate town-specific catchment document ("See Bury
+  # St Edmunds Area Schools Catchment List" etc. - Suffolk publishes 7
+  # more of these for its towns, not yet attempted this session).
+  #
+  # Name matching: village/school names normalised (abbreviation expansion
+  # - CEVC/CEVA/C of E -> full "Church of England Voluntary
+  # Controlled/Aided" phrasing, apostrophe-stripping) and matched against
+  # this project's own open Suffolk schools (365 candidates) by token
+  # containment, restricted to the right phase (primary vs
+  # secondary/middle) and augmented with each DB school's own
+  # locality/town field so a source string's disambiguating suffix (e.g.
+  # "Sir Robert Hitcham CEVA, Debenham") can match even where the school's
+  # official name doesn't literally contain that place-name - 150 distinct
+  # primary and 32 distinct high school short-names all matched
+  # unambiguously (containment >=0.99, no ties), except a handful of
+  # genuine cross-references to the other town documents (correctly
+  # excluded, not a matching failure).
+  #
+  # Parish resolution: of 384 distinct clean village/parish names, 316
+  # matched exactly one real ONS civil parish polygon confirmed to lie
+  # inside Suffolk's own real county boundary (also fetched from ONS, used
+  # to disambiguate same-named parishes elsewhere in England, and to catch
+  # simple punctuation variants like "Capel St Mary" vs the ONS "Capel St.
+  # Mary"). The other 68 were correctly left unresolved: most are small
+  # hamlets/greens/tyes that are not their own separate civil parish at all
+  # (e.g. "Shingle Street", "Bower House Tye"), and 5 are genuinely
+  # ambiguous because Suffolk has two distinct real civil parishes sharing
+  # the same name (Brettenham, Langham, Middleton each appear twice) -
+  # left out rather than guessed at either way.
+  #
+  # Dissolve + verify: per school, unioned every matched parish polygon,
+  # reduced to the single largest connected piece (per this project's
+  # standing rule for any assembled/reconstructed geometry, even though
+  # each input piece here is a real administrative boundary), then required
+  # the school's own real DB coordinate to fall inside with a comfortable
+  # >=100m margin to the nearest boundary edge (this project's standard
+  # bar for point-precision uncertainty in DB school coordinates) - not
+  # merely technically contained. 130 primary and 20 high schools had at
+  # least one matched parish; 32 primary and 13 high schools failed this
+  # check and were dropped, almost all for the same structural reason: the
+  # parish the school itself physically sits in is a town parish handled
+  # by one of the other 7 town-specific documents, not the Villages and
+  # Parishes list, so the assembled polygon (built only from the outlying
+  # villages that DO feed into it) never covers the school's own ground -
+  # confirmed on inspection (e.g. Dennington Church of England Primary:
+  # its own home-parish row was itself a postcode-conditional "except
+  # Owl's Green" entry, correctly excluded upstream, leaving only
+  # neighbouring villages assigned to it). Not a mapping/scale bug -
+  # spot-checked against Aldeburgh Primary School (a single, unqualified,
+  # unambiguous village-equals-parish case) which passed cleanly, showing
+  # the pipeline mechanics themselves are sound.
+  - local_authority_code: "935"
+    local_authority_name: "Suffolk"
+    academic_year: "2026-2027"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.suffolk.gov.uk/children-families-and-learning/schools/school-places/school-catchment-areas"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/suffolk/suffolk_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the catchment-list PDF itself carries no data licence statement (only the usual 'correct at time of publication, guide only' disclaimer); the parish boundary geometry is ONS Open Geography Portal data, published under the Open Government Licence, but the village-to-school assignment layered on top of it is Suffolk County Council's own unlicensed publication. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-17"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "98 primary catchment polygons built by dissolving real ONS civil parish boundaries per the village-to-school assignments in Suffolk's own 'Villages and Parishes Catchment Area List' PDF (see the block comment above for the full method). Filed as primary_catchment_partial because this is a genuine subset: only the ~38% of the source table that was an unqualified single-parish assignment could be used (excluding postcode-split sub-areas and cross-references to Suffolk's 7 other town-specific catchment documents, not yet attempted), and every result required a real, verified, >=100m-margin containment of the school's own DB coordinate."
+
+  - local_authority_code: "935"
+    local_authority_name: "Suffolk"
+    academic_year: "2026-2027"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.suffolk.gov.uk/children-families-and-learning/schools/school-places/school-catchment-areas"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/suffolk/suffolk_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the catchment-list PDF itself carries no data licence statement (only the usual 'correct at time of publication, guide only' disclaimer); the parish boundary geometry is ONS Open Geography Portal data, published under the Open Government Licence, but the village-to-school assignment layered on top of it is Suffolk County Council's own unlicensed publication. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-17"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "7 high-school ('Catchment Area List') polygons built the same way as the primary layer above (see the block comment above), each dissolving the many rural villages/parishes assigned to that school across the 'Villages and Parishes' document - typically 12-38 parishes per school, since Suffolk's high schools serve much wider rural catchments than its primaries. All 7 passed the same >=100m own-coordinate-margin verification with comfortable margins (579m-2,417m). 13 of the 20 candidate high schools were dropped for the same structural reason described above (the school's own town parish is covered by a different document)."
+
   # Wakefield: the existing candidate note (removed by this session, was in
   # candidates: below) correctly identified this as the Hartlepool/Essex
   # point-sampling shape of problem, and correctly flagged it as easier
@@ -7955,22 +8075,25 @@ candidates:
       point layers (school locations), no catchment polygons.
   - local_authority_name: "Rotherham"
     reason_not_enabled: >
-      PARTIALLY RESOLVED - primary catchments now digitised, see the
-      Rotherham entry in sources: above. The original finding stands as
-      real (a real session is opened via POST .../GeognoSis/Rotherham/
-      {orgId}/Sessions and all 77 overlay layers, including "Primary
-      Catchment", are served only as .../Overlay/{n}/Image?bbox=...
-      rendered raster PNG tiles - no Features.json vector endpoint exists
-      here unlike Derby/Stoke-on-Trent's identical-looking platform,
-      re-confirmed 404 this session too), but raster-only turned out not
-      to be a hard stop: the rendered boundary-line network is clean
-      enough for this project's marker-controlled-watershed technique
-      (previously proven on Portsmouth/Middlesbrough), georeferenced via
-      6 real postcode ground-control points read from the webmap's own
-      address-search API. 79 of 95 in-view open primary schools recovered
-      and validated - full method in the sources: block comment. The
-      "Secondary Catchment" overlay in the same Education group was not
-      attempted this pass. A previously-noted FOI request titled "School
+      RESOLVED (both layers) - primary AND secondary catchments are both
+      now digitised, see the two Rotherham entries in sources: above (79
+      primary, 14 secondary - the secondary layer, noted below as "not
+      attempted this pass" in an earlier version of this note, was in fact
+      built out in a later session by reusing the primary layer's already-
+      verified affine transform, per PROJECT_STATUS.md's "Rotherham's 14
+      secondary catchments landed..." update). Kept only for the real
+      original-investigation history: a real session is opened via POST
+      .../GeognoSis/Rotherham/{orgId}/Sessions and all 77 overlay layers,
+      including "Primary Catchment", are served only as
+      .../Overlay/{n}/Image?bbox=... rendered raster PNG tiles - no
+      Features.json vector endpoint exists here unlike Derby/
+      Stoke-on-Trent's identical-looking platform, re-confirmed 404 this
+      session too), but raster-only turned out not to be a hard stop: the
+      rendered boundary-line network is clean enough for this project's
+      marker-controlled-watershed technique (previously proven on
+      Portsmouth/Middlesbrough), georeferenced via 6 real postcode
+      ground-control points read from the webmap's own address-search API.
+      A previously-noted FOI request titled "School
       Catchment Area Coordinates" exists on WhatDoTheyKnow but that site
       is Cloudflare-blocked from this environment, the same block already
       documented for Brighton/Islington's FOI attachments elsewhere in
@@ -8249,8 +8372,6 @@ candidates:
     reason_not_enabled: "No catchment polygons - Kent uses distance-based admission ranking instead of catchment areas. Kent's only school-related ArcGIS Online item is a 2026/27 school-accessibility travel-time point dataset, not catchment boundaries."
   - local_authority_name: "Surrey"
     reason_not_enabled: "Surrey's 'Find a School' tool is powered by a real ArcGIS Server layer (AP2116_School_gates_dissolve_join, sccmaps.surreycc.gov.uk) but it is MultiPoint geometry (school gate locations), a distance-radius input, not catchment polygons. No catchment polygon layer found anywhere in Surrey's REST service folder list."
-  - local_authority_name: "Suffolk"
-    reason_not_enabled: "Only a 'Nearest School Checker' distance tool (nearestschool.suffolk.gov.uk) found; no GIS polygon layer. Suffolk's catchment information is published per-school as PDF/list, not as a map."
   - local_authority_name: "Gloucestershire"
     reason_not_enabled: "A real interactive catchment map exists (gcc.dynamicmaps.co.uk/MapThatPublic/) but is gated behind a genuine login page (Angular login form requiring credentials) - a hard stop per this project's standing rule against bypassing authentication, not a licensing question."
   - local_authority_name: "County Durham"

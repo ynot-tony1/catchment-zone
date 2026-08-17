@@ -119,6 +119,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "821", name: "Luton", sourceTypeCount: 2 },
   { code: "812", name: "North East Lincolnshire", sourceTypeCount: 2 },
   { code: "883", name: "Thurrock", sourceTypeCount: 2 },
+  { code: "935", name: "Suffolk", sourceTypeCount: 2 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
