@@ -10,9 +10,9 @@ disk, not what is intended.
   (`packages/shared/src/config/catchment-sources.test.ts`'s
   `PILOT_LOCAL_AUTHORITIES` list is the exact, test-enforced source of
   truth for the LA/source-count breakdown).
-- **`catchment_areas`: 11,087 rows**, `map_catchments_cache.feature_count`:
-  11,087 (in sync).
-- **Catchment scores: 7,559 of 11,087 areas scored** (`refresh-catchment-scores`,
+- **`catchment_areas`: 11,122 rows**, `map_catchments_cache.feature_count`:
+  11,122 (in sync).
+- **Catchment scores: 7,594 of 11,122 areas scored** (`refresh-catchment-scores`,
   last run 2026-08-17; the remainder are areas without enough underlying
   school-performance data to score, not a bug).
 - **81 candidate entries** recorded in `config/catchment-sources.yml`'s
@@ -4148,3 +4148,181 @@ directly, and Kesgrave's own document in particular has a real chance of
 finally landing Kesgrave High School and Heath Primary School, Kesgrave,
 both declined this session only because their own site sits outside the
 Ipswich-document's clipping boundary.
+
+## Update: Suffolk's remaining 9 town documents attempted - 28 primary + 7 secondary landed, including the flagged Kesgrave High/Heath Primary target (2026-08-17, later session)
+
+Continuation of the previous update's flagged next lead: attempted all 9 of
+the further Suffolk town-specific "Catchment Area List" documents found live
+on `suffolk.gov.uk` but not yet parsed (Kesgrave/Martlesham/Martlesham
+Heath, Lowestoft, Mildenhall, Newmarket, RAF Lakenheath, RAF Mildenhall,
+Stowmarket, Sudbury and Great Cornard, Woodbridge) - the same pdfplumber/
+Voronoi/ONS-parish pipeline proven twice already this project. Started from
+11,087 `catchment_areas` rows.
+
+**A real parsing bug was found and fixed before trusting any result.** The
+previous two sessions' "clean row" filter (excluding postcode-conditional/
+"except"/"only" partial-street assignments, so a fractional street
+assignment is never treated as if the whole street belongs to one school)
+only checked the SCHOOL-NAME column for these qualifiers - it never checked
+the STREET-NAME column for the same thing, even though several documents
+carry qualifiers on the street side too (e.g. "Beccles Road, Lowestoft, odd
+No's 1-169, even No's 2-166 and Dutchman Court only"). Fixed by adding a
+matching filter on the street column. Re-running every earlier town's
+Voronoi job (from both this session and the previous one) with the fix
+applied confirmed nothing already-shipped had been corrupted - every
+previously-landed school's result came back materially unchanged - while
+fixing a real, measurable failure this session: Dell Primary School
+(Lowestoft) went from a confident-looking but wrong -591m failure to a
+genuine +113m pass once the conditional streets stopped polluting its
+Voronoi cell.
+
+**RAF Lakenheath and RAF Mildenhall: both fully declined, 0 usable rows.**
+Every single street in both documents reads "Please see note above" - these
+US airbase housing areas have no real catchment scheme published at all.
+Confirmed by opening both PDFs in full, not assumed from the pattern in
+other documents.
+
+**Per-town results** (full method and every decline reason also documented
+in the block comment above the two Suffolk entries in
+`config/catchment-sources.yml`):
+
+- **Kesgrave, Martlesham and Martlesham Heath:** primary 4/4 (Heath,
+  Gorseland, Cedarwood, Birchwood - Bucklesham and Waldringfield were
+  already covered by the Villages and Parishes layer and correctly
+  deduplicated; Kyson had only 1 source street). High: Kesgrave High School
+  landed via the direct union of the real Kesgrave and Martlesham ONS
+  parish boundaries, 340m margin - this is the specific school flagged as
+  the strongest remaining target from the previous session, now landed.
+  Heath Primary School, Kesgrave (the other flagged target) also landed,
+  255m margin - both were declined by the earlier Ipswich-document attempt
+  only because their own site sits outside that document's own clipping
+  boundary; Kesgrave's own document supplies streets that actually reach
+  it.
+- **Newmarket:** primary 4/4 (Houldsworth Valley, All Saints CE, Laureate,
+  Paddocks - Moulton CEVCP had only 1 source street; streets assigned to a
+  school "Cambridgeshire" were correctly excluded as genuine cross-border
+  assignments, not a matching failure). High: Newmarket Academy landed via
+  the direct Newmarket ONS parish boundary (single-school town-wide
+  assignment), 1268m margin.
+- **Stowmarket:** primary 3/4 (Abbot's Hall, Combs Ford, Chilton; Wood Ley
+  declined - a genuine 92m margin even at full 16/16-street density, not a
+  sampling problem). High: Stowmarket High School landed via the direct
+  Stowmarket ONS parish boundary, 367m margin.
+- **Mildenhall:** primary St Mary's Church of England Academy landed via a
+  direct ONS parish boundary lookup, 830m margin - Suffolk's parish
+  reorganisation renamed Mildenhall town's own civil parish "Mildenhall
+  High" in ONS's dataset (the plain name "Mildenhall" resolves to an
+  unrelated same-named parish in Wiltshire), found by checking which real
+  parish geometrically contains Mildenhall town rather than trusting a name
+  match. Every other Mildenhall street reads "Please see note above" - a
+  genuine single-school document. High: none - no real high-school
+  assignment exists in this document at all.
+- **Sudbury and Great Cornard:** primary 5/5 (St Gregory CEVC, Woodhall,
+  Wells Hall, Pot Kiln, Tudor CE Primary - Great Waldingfield had only 1
+  source street). High: Ormiston Sudbury Academy landed via the direct
+  union of the real Sudbury and Great Cornard ONS parish boundaries, 508m
+  margin.
+- **Woodbridge:** primary 5/5 of the unambiguous single-school claims
+  (Rendlesham, Kyson, Sandlings, Melton, Woodbridge - Eyke CE and Hollesley
+  were already covered by the Villages and Parishes layer and correctly
+  deduplicated). Three "X/Y" dual-school claims covering most of the
+  document (Kyson/St Mary's CE, Melton/St Mary's CE, Woodbridge/St Mary's
+  CE) were correctly excluded as genuinely ambiguous. Sandlings Primary
+  School's own real coordinate was found to sit just outside the "Sutton"
+  ONS parish (its own DB locality field) and inside a separate, smaller
+  "Sutton Heath" parish next to it - confirmed by a direct point-in-polygon
+  lookup against the ONS FeatureServer rather than assumed. High: Farlingaye
+  High School landed, but only via the dominant connected piece of
+  Woodbridge+Melton's own ONS parish union (280m margin) - Woodbridge,
+  Melton, Rendlesham, Sutton/Sutton Heath, and Hollesley/Eyke turned out to
+  be geometrically disconnected from each other in the real parish boundary
+  data (real gaps between them, not a bug), so the full union was reduced
+  to its single largest connected piece per this project's standing rule,
+  which is the Woodbridge+Melton pair where the school itself actually
+  sits.
+- **Lowestoft** (the largest and most complex of the 9): primary 6/8
+  (Carlton Colville, Elm Tree, Dell, Corton CEVAP, Roman Hill, Poplars).
+  Carlton Colville Primary School's own real coordinate was found to sit
+  just outside the "Carlton Colville" civil parish and inside the adjacent
+  "Gisleham" parish - confirmed by point-in-polygon lookup and added to the
+  clip boundary, fixing what was otherwise a consistent -40m failure
+  regardless of street-sampling density (618m margin once fixed). Two
+  primary declines, both genuine: Blundeston CEVC Primary - every one of
+  its assigned streets is in a place called "Oulton" (a real, separate area
+  from both "Oulton Broad" and the village of Blundeston itself), so a
+  polygon built only from Oulton streets can never reach the school's own
+  site in Blundeston village - the same "school's own home area isn't in
+  its own document" structural pattern as Great Whelnetham/Dennington in
+  earlier sessions, confirmed on inspection not assumed. Oulton Broad
+  Primary School - a genuine thin 82m margin, capped by real Nominatim
+  coverage gaps for that specific pocket of streets (most of its own source
+  streets, e.g. "Allen Road, Lowestoft", "Berry Close, Lowestoft", simply
+  don't resolve via Nominatim in any query form tried - checked live, not
+  assumed to be a code bug). High: both of Lowestoft's real high-school
+  assignments landed - Ormiston Denes Academy (773m margin) and Pakefield
+  High School (629m margin) - via the road-list Voronoi pipeline split
+  between the two.
+
+**Result: 35 new schools passed verification (28 primary + 7 secondary)**,
+all with a real, verified >=100m own-coordinate margin except the two
+dominant-piece-reduction cases (Farlingaye High, and every other dominant-
+piece Voronoi cell), which are still real and independently re-verified
+after reduction - `primary_catchment_partial` 131 -> 159,
+`secondary_catchment_partial` 16 -> 23. Three schools were declined for
+genuine, inspected reasons (Wood Ley Community Primary 92m, Blundeston CEVC
+Primary structural, Oulton Broad Primary 82m/geocoding-gap-limited), same
+standard as every other decline this project has shipped.
+
+**Verification, same rigor as every other source this project ships:**
+`pnpm --filter @catchment-zone/shared sync-config` (parsed clean) + `test`
+(45 passed) and the ingestor's full pytest suite (127 passed) both pass
+clean. `pnpm exec prettier --write` scoped to `config/catchment-sources.yml`
+only (unchanged - already correctly formatted); both GeoJSON files stayed
+single-line minified (never run through prettier, per this project's
+convention) - confirmed via `wc -l` returning 0 both before and after.
+Committed (`bb364f4`, no `Co-Authored-By` trailer) and pushed to `main`;
+landing confirmed via both `git fetch origin main` and `api.github.com`'s
+commits endpoint, and `raw.githubusercontent.com` confirmed serving the
+updated 159-feature primary file before importing.
+`import-catchments --local-authority 935` built 159 + 23 = 182 areas, 0
+rejected. `catchment_areas` went from 11,087 -> **11,122** (35 new rows,
+matching 182 total Suffolk rows now in the DB minus the 147 that existed
+before this session). `refresh-catchment-overview-cache` confirmed
+`map_catchments_cache.feature_count` = 11,122, in sync.
+`refresh-catchment-scores` re-run synchronously to completion with an
+explicit extended tool-call timeout (the default 2-minute one is not
+enough over 11k+ areas, same lesson as every previous session): 7,594 of
+11,122 areas scored (all 35 new areas scored). A live, independent
+post-import query confirmed: all 182 Suffolk rows (across both sources) are
+single clean `Polygon` geometry (zero `MultiPolygon`), and joining
+`catchment_areas` to `schools` **filtered first by
+`catchment_sources.local_authority_code = '935'`, then spot-checked each
+matched school's own `local_authority_code` to confirm it was really the
+Suffolk school and not a same-named school elsewhere** (several of this
+session's own school names turned out to be nationally ambiguous - e.g.
+"Birchwood Primary School" exists 4 times across England - making this
+check a real one, not a formality) found all 35 new schools' own live DB
+coordinates fall inside their assigned polygon with zero containment
+failures, plus a random 6-row spot-check individually printed and
+confirmed.
+
+**Beccles's primary layer (flagged as a possible reconsideration target)
+was reviewed but not re-attempted.** The previous session's decline reason
+
+- almost every Beccles street reads "Please see note above", with only
+  Worlingham CEVC (an outlying-village school, not a Beccles-town one)
+  getting a real assignment across just 2 streets, too thin to build a
+  polygon from - is a genuine no-data-published situation identical in shape
+  to Mildenhall's high layer, Felixstowe's high layer, and Haverhill's high
+  layer, all confirmed again this session: some Suffolk schools' own
+  admissions policies just don't use a catchment-area scheme, and the
+  council's own document correctly reflects that with no addresses assigned.
+  There is no different technique that would recover data the source itself
+  doesn't publish - re-attempting would mean forcing a fit against the
+  project's own standing rule, so this remains correctly declined.
+
+**Suffolk's candidate pool for this technique is now essentially
+exhausted.** All 9 further town documents found live last session have now
+been attempted (7 landed real data, 2 - both RAF documents - confirmed to
+have none). The only remaining known gap is Beccles's primary layer, now
+confirmed twice to have no usable source data at all.
