@@ -10,9 +10,9 @@ disk, not what is intended.
   (`packages/shared/src/config/catchment-sources.test.ts`'s
   `PILOT_LOCAL_AUTHORITIES` list is the exact, test-enforced source of
   truth for the LA/source-count breakdown).
-- **`catchment_areas`: 11,045 rows**, `map_catchments_cache.feature_count`:
-  11,045 (in sync).
-- **Catchment scores: 7,517 of 11,045 areas scored** (`refresh-catchment-scores`,
+- **`catchment_areas`: 11,087 rows**, `map_catchments_cache.feature_count`:
+  11,087 (in sync).
+- **Catchment scores: 7,559 of 11,087 areas scored** (`refresh-catchment-scores`,
   last run 2026-08-17; the remainder are areas without enough underlying
   school-performance data to score, not a bug).
 - **81 candidate entries** recorded in `config/catchment-sources.yml`'s
@@ -3997,3 +3997,154 @@ Only the "Villages and Parishes" county-wide document was attempted this session
 - **Scotland's national aggregate (`data.spatialhub.scot`)** re-confirmed still behind a genuine free-registration/account gate for bulk WFS/CSV access ("you can only browse and preview datasets without an account," and full API/WFS use is restricted to One Scotland Mapping Agreement members) - unchanged from the existing note, a real credential wall, not attempted further per this project's hard rule.
 
 **Most promising next lead for whoever continues after this session:** Suffolk's own 7 town-specific street-list documents (Bury St Edmunds, Ipswich/Purdis Farm/Rushmere St Andrew, Beccles, Brandon, Felixstowe and Trimley, Hadleigh, Haverhill) - all confirmed real, downloadable, pdfplumber-parseable street-to-school tables in the same format already proven this session, and specifically the ones that would fill in the exact "school's own home parish" gap that caused today's 32 primary + 13 secondary containment failures (several of those excluded schools, e.g. the Bury St Edmunds ones like Guildhall Feoffment/Westgate/Tollgate, would very likely pass cleanly once their own town's street list is parsed the same way, since these are urban roads rather than parish-boundary hamlets and would need the road-list Voronoi/geocoding approach rather than parish-polygon matching). Beyond that, the candidate pool is close to exhausted for genuinely new leads - this session's careful re-read of all 81 remaining entries found nothing else matching a proven technique shape beyond Suffolk and the Rotherham documentation fix.
+
+## Update: Suffolk's 7 town-specific catchment documents landed - 34 primary + 10 secondary (2026-08-17, later session)
+
+Continuation of the previous update's flagged next lead: attempted all 7 of
+Suffolk's town-specific "Catchment Area List" PDFs (Bury St Edmunds, Ipswich/
+Purdis Farm/Rushmere St Andrew, Beccles, Brandon, Felixstowe and Trimley,
+Hadleigh, Haverhill) - the 7 remaining of the 8 documents `suffolk.gov.uk`
+publishes, after last session landed the 8th (county-wide Villages and
+Parishes). Started from 11,045 `catchment_areas` rows.
+
+**Bonus find before starting:** opening the live council page again turned up
+more than the 7 named documents - Suffolk actually publishes at least 9
+_further_ town lists (Kesgrave/Martlesham/Martlesham Heath, Lowestoft,
+Mildenhall, Newmarket, RAF Lakenheath, RAF Mildenhall, Stowmarket, Sudbury and
+Great Cornard, Woodbridge), all real, downloadable, same shape - flagged below
+as the next lead rather than attempted this session (scope stayed to the 7
+originally flagged).
+
+**Parsing, extending last session's pdfplumber word-position technique.** Same
+3-column x0-threshold extraction (street name / primary school / high school),
+but the continuation-line rule was tightened after a real bug: a genuine new
+row always carries a - possibly placeholder ("Please see note above") -
+high-school value, so any row with an _empty_ high-school column is always a
+wrapped continuation of the previous row, whichever of its own columns carry
+text (a wrapped street name, a wrapped "X/Y CofE"-style primary, or
+occasionally a wrapped high-school name). The bug this caught: a page-footer
+number landing in the high-school column's x-range (right-aligned page
+numbers happen to fall past the col3 threshold) was initially mis-merged into
+the preceding entry's high-school text before a "whole row is just digits"
+skip was added - would have silently corrupted a handful of entries' high-
+school claims with a trailing page number. "X/Y" dual-school entries (e.g.
+"Castle Hill I/Castle Hill J", "Ranelagh/Sproughton CofE") and house-number
+sub-range splits of one street (e.g. "Barons Road ... 1-11 only" vs
+"...12-104 only") were excluded from the point sample the same way last
+session excluded postcode-conditional sub-areas - never guessing which part
+of a street goes where. Checked and confirmed no claim string's "/" was
+actually a single real school's own name (this project's known trap from
+North East Lincolnshire/Thurrock) - every "/" case really was two distinct
+schools. Bare trailing "I"/"J" abbreviations (Castle Hill, Fairfield/Colneis,
+Springfield) were expanded to Infant/Junior and matched to the correct
+distinct school via a small manual override table (12 ambiguous/unmatched
+claim strings out of 58 distinct primary + 15 distinct high claims, checked
+individually against the live `schools` table rather than trusted to a
+generic matcher). "Henley Gate (school to open Sept 2027)" - a genuinely
+future, not-yet-open school with no DB record - was excluded outright.
+
+**Two techniques, chosen per document rather than assumed.** Where a document
+puts effectively the whole town under one school (Beccles's and Brandon's
+high layers, both of Hadleigh's layers), that school's real ONS civil
+parish/town-council boundary (the same `PARNCP_MAY_2025_EW_BGC` FeatureServer
+used last session) was used directly - no Voronoi needed, since the source
+itself assigns the entire town to one school with no split to reconstruct.
+Where a town splits across several schools (Bury St Edmunds, Felixstowe and
+Trimley, Haverhill, Ipswich), this project's road-list Voronoi pipeline was
+used instead: every distinct street geocoded via Nominatim (evenly
+subsampled per school up to a cap - 20-60 depending on town size - to keep
+within a realistic single-session request budget while respecting Nominatim's
+1 req/s policy), Voronoi-tessellated (`shapely.voronoi_polygons`), clipped to
+the town's own ONS civil parish (or, for unparished Ipswich, the Ipswich LAD
+boundary unioned with the real neighbouring parishes its own streets actually
+sit in - Rushmere St Andrew, Sproughton, Claydon), reduced to the single
+largest connected piece per school, and required a >=100m own-coordinate
+margin, identical bar to every other source this project ships.
+
+**Results by town** (full detail also in the block comment above the two
+Suffolk entries in `config/catchment-sources.yml`):
+
+- **Bury St Edmunds:** primary 7/9, high 2/2. Declines: Great Whelnetham CE
+  Primary (its streets sit in the outlying village, not literally in town, so
+  geocoding under a "Bury St Edmunds" context mostly failed to resolve) and
+  Abbots Green Primary Academy (a genuine 96m margin, just under the bar).
+- **Beccles:** primary declined entirely - almost every Beccles street reads
+  "Please see note above" (no catchment); only Worlingham CEVC (itself an
+  outlying-village school) had a real assignment, 2 streets, too thin to
+  build a polygon from. High: Sir John Leman High landed via the direct
+  town-parish boundary (the whole town maps to this one school).
+- **Brandon:** primary 1/2 (Glade Academy; Forest Academy declined - a real
+  82m margin even at full 69-street density, the two academies' catchment
+  streets are interleaved within ~100m of Forest's own site, not a sampling
+  problem). High: Breckland School landed via the direct town-parish
+  boundary.
+- **Felixstowe (and Trimley St Mary/St Martin):** primary 5/5, all
+  comfortable margins (247m-657m). High: declined entirely - the document
+  has no real per-school high-school assignment at all.
+- **Hadleigh:** primary Beaumont Community Primary landed via the direct
+  town-parish boundary - literally every Hadleigh street in the document maps
+  to this one school (Hadleigh CP never appears at all, meaning it doesn't
+  operate a catchment scheme, not a parsing gap). High: Hadleigh High landed
+  the same way.
+- **Haverhill:** primary 2/8 (Clements Primary Academy, Coupals Primary
+  Academy). Of the 6 declines: Kedington and Thurlow are structurally outside
+  the town's own clipping boundary (both already covered by the Villages and
+  Parishes layer anyway); New Cangle Community Primary is a genuine Voronoi-
+  fragmentation case - its own coordinate fell inside a real but
+  non-dominant fragment once the town's other schools' points were added,
+  exactly the failure mode this project's "keep only the largest connected
+  piece" rule exists to catch; Westfield, Place Farm, and Burton End were
+  thin/negative margins even at available sampling density. High: declined
+  entirely, same "Please see note above" pattern as Felixstowe.
+- **Ipswich (Purdis Farm and Rushmere St Andrew):** primary 18/24, high 5/7
+  (1 primary and 1 secondary of those, Claydon Primary and Claydon High, were
+  already covered by the Villages and Parishes layer and correctly
+  deduplicated rather than double-listed or counted as new declines).
+  Declines: Copdock and Heath Primary School, Kesgrave (both physically
+  outside this document's own town/parish clipping boundary - Heath's real
+  site is in the separate town of Kesgrave), Bucklesham (already covered by
+  Villages and Parishes), St Helen's Primary and Chantry Academy (thin
+  margins), Kesgrave High School (same out-of-boundary reason as Heath), and
+  Bealings/Piper's Vale (only 1 source street each, too thin to geocode a
+  usable sample from).
+
+**Result: 44 schools passed verification (34 primary + 10 secondary), 42 of
+which were genuinely new** (33 primary + 9 secondary after deduplicating the
+2 already covered by Villages and Parishes) - `primary_catchment_partial`
+98 -> 131, `secondary_catchment_partial` 7 -> 16. Filed as `_partial` still:
+several individual schools and Beccles's whole primary layer were declined,
+and the 9 further town documents found above remain unattempted.
+
+**Verification, same rigor as every other source this project ships:**
+`pnpm --filter @catchment-zone/shared sync-config` (parsed clean) + `test`
+(45 passed) and the ingestor's full pytest suite (127 passed) both pass
+clean. `npx prettier --write` scoped to `config/catchment-sources.yml` only
+(unchanged - already correctly formatted); the two GeoJSON files stayed
+minified (never run through prettier, per this project's convention).
+Committed (`7a5a270`, no `Co-Authored-By` trailer) and pushed to `main`;
+landing confirmed via both `git fetch origin main` and `api.github.com`'s
+commits endpoint. `import-catchments --local-authority 935` built 131 + 16 =
+147 areas, 0 rejected. `catchment_areas` went from 11,045 -> **11,087** (42
+new rows). `refresh-catchment-overview-cache` confirmed
+`map_catchments_cache.feature_count` = 11,087, in sync. `refresh-catchment-
+scores` re-run synchronously to completion (had to pass an explicit extended
+tool-call timeout rather than the default 2-minute one, same as last
+session): 7,559 of 11,087 areas scored (all 42 new areas scored). A live,
+independent post-import query joined `catchment_areas` to `schools` by exact
+name **and by the two new sources' own `source_id`s** (a plain name join
+alone double-counts, since generic names like "The Willows Primary School"
+or "Grange Community Primary School" also exist as real open schools in
+other, unrelated local authorities - caught and corrected before trusting
+the result) - confirmed all 147 Suffolk rows (villages/parishes + all 7 town
+lists combined) are single clean `Polygon` geometry (zero `MultiPolygon`)
+and all 147 contain their own school's live DB coordinate with zero
+containment failures.
+
+**Most promising next lead for whoever continues after this session:**
+Suffolk's further ~9 town documents found above (Kesgrave/Martlesham,
+Lowestoft, Mildenhall, Newmarket, RAF Lakenheath, RAF Mildenhall, Stowmarket,
+Sudbury and Great Cornard, Woodbridge) - same proven pipeline should apply
+directly, and Kesgrave's own document in particular has a real chance of
+finally landing Kesgrave High School and Heath Primary School, Kesgrave,
+both declined this session only because their own site sits outside the
+Ipswich-document's clipping boundary.
