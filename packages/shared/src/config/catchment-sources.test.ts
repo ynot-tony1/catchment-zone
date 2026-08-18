@@ -109,7 +109,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "372", name: "Rotherham", sourceTypeCount: 2 },
   { code: "S12000018", name: "Inverclyde", sourceTypeCount: 4 },
   { code: "860", name: "Staffordshire", sourceTypeCount: 3 },
-  { code: "841", name: "Darlington", sourceTypeCount: 2 },
+  { code: "841", name: "Darlington", sourceTypeCount: 3 },
   { code: "805", name: "Hartlepool", sourceTypeCount: 1 },
   { code: "356", name: "Stockport", sourceTypeCount: 4 },
   { code: "881", name: "Essex", sourceTypeCount: 2 },
