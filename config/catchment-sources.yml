@@ -8049,11 +8049,11 @@ sources:
     name_field: "db_school_name"
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
-    licence: "UNCONFIRMED - the council's master_catchment_list PDF carries no data licence statement. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
-    last_verified_at: "2026-08-12"
+    licence: "UNCONFIRMED - neither the council's master_catchment_list PDF nor its catchment-areas-20240823-v01.pdf carries a data licence statement. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
-    notes: "13 primary catchment polygons reconstructed from Thurrock's published road-to-school master catchment list PDF (thurrock.gov.uk master_catchment_list_from_2026_for_web_0.pdf), geocoded road-by-road and Voronoi-reconstructed (see the block comment above for the full method, exclusions, and verification detail). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
+    notes: "17 primary catchment polygons reconstructed from two of Thurrock's published road-to-school catchment PDFs, geocoded road-by-road and Voronoi-reconstructed. 13 from the master catchment list (thurrock.gov.uk master_catchment_list_from_2026_for_web_0.pdf, see block comment above for full method/exclusions). 4 more landed 2026-08-18: a separate, genuinely different document (catchment-areas-20240823-v01.pdf, same admissions page) carries a 4th 'Denominational School' column the master list doesn't have, covering Thurrock's 4 Catholic primary schools (Holy Cross, St Joseph's, St Mary's, St Thomas of Canterbury) that the original harvest never saw - 1,678 unique roads across the 4 schools, 1,384 geocoded, same Voronoi-plus-trust-radius-clip method, all 4 schools cleared the 100m margin bar comfortably (296m-1186m). Point-sample/text-derived, not digitised from a published map - filed as primary_catchment_partial for that reason."
 
   - local_authority_code: "883"
     local_authority_name: "Thurrock"
