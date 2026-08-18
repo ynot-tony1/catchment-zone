@@ -121,6 +121,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "883", name: "Thurrock", sourceTypeCount: 2 },
   { code: "935", name: "Suffolk", sourceTypeCount: 2 },
   { code: "355", name: "Salford", sourceTypeCount: 1 },
+  { code: "803", name: "South Gloucestershire", sourceTypeCount: 1 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
