@@ -7933,6 +7933,73 @@ sources:
     enabled: true
     notes: "2 secondary catchment polygons reconstructed from the same harvest and method as the primary_catchment_partial entry above (see the block comment above for full detail and exclusions)."
 
+  # Salford: the existing candidate note ("per-school PDF maps... community
+  # primaries reportedly have no catchments at all") was technically true but
+  # undersold the source, the same lesson learned on Suffolk this session -
+  # the council's real "parish boundary and catchment area maps" page
+  # (salford.gov.uk/schools-and-learning/schools-admissions/parish-boundary-and-catchment-area-maps)
+  # links 24 individual per-school PDF boundary maps (RC/CE faith schools'
+  # real parish catchments, not "no catchments"). Each is a genuine OS
+  # OpenData-style vector basemap with a real, precise pale-cyan 1km
+  # National Grid overlay (true north-up, confirmed by perfectly horizontal/
+  # vertical grid lines with matching spacing on both axes) and a solid black
+  # hand-drawn boundary line plus a blue star marking the school itself -
+  # the same landmark-pair/OS-grid family of technique already proven for
+  # Oxfordshire and Inverclyde, but with the grid itself supplying scale and
+  # rotation directly (no landmark pair needed for those two), leaving only
+  # one real per-file question: absolute translation. Solved by anchoring on
+  # each school's own already-known-precise DB (GIAS) coordinate matched to
+  # its own drawn blue star - not circular for accuracy purposes, since scale
+  # and rotation come independently from the grid's own measured pixel
+  # spacing, not from the school. Where a second real landmark was available
+  # (another named school drawn on the same page, matched to its own DB
+  # coordinate the same way this project used Oxford Brookes/St Joseph's for
+  # New Marston Primary), the fit was independently cross-checked: Christ
+  # Church CofE Primary via New Park Academy's own main building (Green
+  # Lane, Eccles) - 23m residual over a 250m baseline; St Edmund's RC
+  # Primary via Bridgewater Primary School's own building (Bridgewater
+  # Street, Little Hulton, both schools drawn on the same page) - 42.5m
+  # residual over a 241m baseline. Both comfortably tight, giving confidence
+  # in the grid-based method generally. A real trap found and fixed this
+  # session: automatically detected grid-line spacing is not always safe to
+  # trust blind - St Charles' RC Primary's map has its M60/M61 Worsley
+  # Interchange sitting directly across 2 of its grid lines, and an early
+  # cross-axis "spacing agreement" check was fooled into accepting a false
+  # 3x-too-large spacing (both axes had independently lost the same 2
+  # intermediate grid lines to motorway occlusion, so their surviving gaps
+  # coincidentally agreed with each other while both being 3x the true
+  # value) - caught by a real-world plausibility check (the implied page
+  # width was under 1.4km for a map that visibly spans Worsley to Swinton,
+  # a real ~4km) and confirmed by direct pixel inspection of a genuine thin
+  # grid line at the predicted position, distinguishing it from the much
+  # thicker motorway-casing colour. Every other school's spacing was
+  # confirmed via multiple independent *adjacent* (not summed/multiplied)
+  # grid-line-pair measurements before being trusted. 7 of the 24 linked
+  # PDFs landed this session (the ones whose grid lines were cleanly
+  # measurable without per-file manual intervention); the other 17 need the
+  # same technique applied with more individual attention (weaker/more
+  # occluded grid detection, e.g. All Hallows RC High School and Ellesmere
+  # Park High School's secondary maps) - a real, proven-workable, not-yet-
+  # exhausted lead for a future session, not a dead end. The digitisation
+  # pipeline (services/ingestor-independent, Python/OpenCV/shapely/pyproj)
+  # is not yet committed to the repo; the next session should rebuild it
+  # from this note's description rather than assume it survives between
+  # worktrees.
+  - local_authority_code: "355"
+    local_authority_name: "Salford"
+    academic_year: "2026-2027"
+    source_type: "primary_catchment_partial"
+    source_url: "https://www.salford.gov.uk/schools-and-learning/schools-admissions/parish-boundary-and-catchment-area-maps"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/salford/salford_primary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the individual PDF boundary maps carry no explicit data licence statement of their own (only the usual council branding); the OS OpenData-style basemap underneath is Crown-copyright/OS-derived per standard local-authority mapping agreements. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-17"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "7 primary catchment polygons digitised from Salford's real per-school 'parish boundary map for school admissions' PDFs (Christ Church CofE, St Charles' RC, St Edmund's RC, St Luke's RC, St Mark's RC, St Teresa's RC, Holy Family VA RC) - each map has a genuine pale-cyan 1km OS National Grid overlay (true north-up, scale read directly from measured grid-line pixel spacing, independently confirmed consistent on both axes for every school landed) and a hand-drawn black parish boundary line plus a blue star marking the school; anchored in absolute position via each school's own real DB/GIAS coordinate matched to its drawn star, with scale and rotation coming independently from the grid itself (not circular). Cross-checked against a second real landmark (another named school drawn on the same page, matched to its own DB coordinate) for 2 of the 7: Christ Church CofE via New Park Academy's building (23m residual/250m baseline) and St Edmund's RC via Bridgewater Primary School's building (42.5m residual/241m baseline) - both comfortable. All 7 verified as single clean Polygons (dominant-piece reduction applied, zero MultiPolygon features) containing their own school's real DB coordinate with a margin of 209-1106m. 17 of the 24 linked PDFs remain undigitised (weaker/motorway-occluded grid detection needing individual attention, not a dead end) - see the block comment above for the full method, the St Charles false-3x-spacing trap found and fixed, and the exact remaining candidate list."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -8324,8 +8391,6 @@ candidates:
       Brighton and Hove/Islington entry for full detail on both attempts).
   - local_authority_name: "Bury"
     reason_not_enabled: "Runs a Cadcorp SIS webmap platform (map.bury.gov.uk/externalwebmap/) with no discoverable data-layer/API. Actual catchment information is published only as per-school PDF maps; community primaries reportedly have no catchments at all."
-  - local_authority_name: "Salford"
-    reason_not_enabled: "Official page provides PDF catchment maps only for ~25 faith schools, no GIS. map.salford.gov.uk's interactive map timed out from this sandbox on every attempt - the same unreachability pattern as Ealing/Hampshire, worth retrying from a different network origin rather than assumed empty. Re-confirmed 2026-08-11: DNS resolves (80.193.232.60) but TCP connect times out/refuses on both 443 and 80 - genuine network-level block on this host specifically (general internet egress from this sandbox is fine, confirmed against google.com/gov.uk/raw.githubusercontent.com in the same session), so a browser-fingerprint fix cannot help here."
   - local_authority_name: "Wolverhampton"
     reason_not_enabled: "The council's own 'Schools' ArcGIS Experience app resolves to a real MapServer (maps.wolverhampton.gov.uk/arcgis/rest/services/CWC/MapServer), but its Schools layer is confirmed esriGeometryPoint (locations only) - no catchment polygon layer exists in that MapServer."
   - local_authority_name: "Manchester, Tameside, Wigan"
