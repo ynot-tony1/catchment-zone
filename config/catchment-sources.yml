@@ -7980,11 +7980,54 @@ sources:
   # same technique applied with more individual attention (weaker/more
   # occluded grid detection, e.g. All Hallows RC High School and Ellesmere
   # Park High School's secondary maps) - a real, proven-workable, not-yet-
-  # exhausted lead for a future session, not a dead end. The digitisation
-  # pipeline (services/ingestor-independent, Python/OpenCV/shapely/pyproj)
-  # is not yet committed to the repo; the next session should rebuild it
-  # from this note's description rather than assume it survives between
-  # worktrees.
+  # exhausted lead for a future session, not a dead end.
+  #
+  # 2026-08-18 follow-up session: attempted all 17 remaining PDFs and landed
+  # 10 more (17 of 24 total now digitised). The digitisation pipeline is now
+  # committed to the repo at data/digitized-catchments/salford/pipeline/
+  # (grid_digitise.py + schools.py + build_geojson.py) so it no longer needs
+  # rebuilding from this note each session. Two real bugs found and fixed in
+  # the grid-spacing estimator: (1) wide cyan-ish fills (lakes, highlighted
+  # boxes) were previously counted the same as thin grid lines when scoring
+  # candidate line positions - fixed via a distance-transform thinness
+  # filter (a pixel deep inside a filled blob is far from any non-cyan
+  # pixel; every pixel of a true ~1-3px grid line is close to its own edge).
+  # (2) the raw single MINIMUM adjacent gap per axis was sometimes a
+  # spurious short gap from a surviving non-grid thin feature (e.g. a
+  # river's parallel double-border) rather than the real grid unit - fixed
+  # by taking the MODAL adjacent gap (the value that recurs across several
+  # line pairs) instead of the bare minimum, falling back to the minimum
+  # only when an axis has too few lines to have a repeat. Landed this
+  # session: Christ The King RC, St Joseph's RC (Ordsall), St Joseph the
+  # Worker RC (Irlam, gold star not blue - the page also has a second,
+  # decorative gold star inside its own legend box, disambiguated by trying
+  # every star-coloured blob and keeping whichever anchor makes the
+  # resulting polygon actually contain the school's own DB coordinate),
+  # St Mary's RC (Swinton), St Peter's CE, St Philip's RC, The Cathedral
+  # School of St Peter & St John RC, St Thomas of Canterbury RC - all via
+  # fully automatic dual-axis grid detection, margins 313-2100m. Two more
+  # (St Philip's CE and St Paul's CE Cross Lane) share an identical
+  # underlying basemap render (same pixel dimensions, same River Irwell
+  # loop at the same pixel position, different boundary overlays) where
+  # only one grid line survives cleanly per file - landed using that one
+  # file's own clean single-axis measurement (640px, a sharp peak ~25x
+  # stronger than any competing candidate) applied to both, independently
+  # verified safe since containment holds with a comfortable margin across
+  # the *entire* plausible spacing range (400-1000px/km) for both schools,
+  # not just at the chosen value. Declined, each for a genuine documented
+  # reason (see schools.py): All Hallows RC High School and Ellesmere Park
+  # High School (clean grid+star detection, but ~31m/~104m short of their
+  # own DB coordinate - real near-misses, not forced); Holy Cross and All
+  # Saints RC, St Mary's RC (Eccles), and St Mark's CE (three sibling
+  # uploads with NO OS grid overlay at all - a different, older basemap
+  # style with the school marked by a plain dot/text label, confirmed by
+  # direct pixel inspection, not just automatic-detection failure);
+  # St Gilbert's RC (a completely different high-resolution cadastral
+  # raster scan, no grid, school shown as a shaded building footprint not a
+  # star); St Paul's CE (Crompton Street, Walkden) (a third source type - a
+  # diocesan "Digital map from Dotted Eyes... Church Commissioners" parish
+  # map with a different grid/colour system not yet calibrated - a genuine
+  # lead for a future session, not exhausted).
   - local_authority_code: "355"
     local_authority_name: "Salford"
     academic_year: "2026-2027"
@@ -7995,10 +8038,10 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - the individual PDF boundary maps carry no explicit data licence statement of their own (only the usual council branding); the OS OpenData-style basemap underneath is Crown-copyright/OS-derived per standard local-authority mapping agreements. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
-    last_verified_at: "2026-08-17"
+    last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
-    notes: "7 primary catchment polygons digitised from Salford's real per-school 'parish boundary map for school admissions' PDFs (Christ Church CofE, St Charles' RC, St Edmund's RC, St Luke's RC, St Mark's RC, St Teresa's RC, Holy Family VA RC) - each map has a genuine pale-cyan 1km OS National Grid overlay (true north-up, scale read directly from measured grid-line pixel spacing, independently confirmed consistent on both axes for every school landed) and a hand-drawn black parish boundary line plus a blue star marking the school; anchored in absolute position via each school's own real DB/GIAS coordinate matched to its drawn star, with scale and rotation coming independently from the grid itself (not circular). Cross-checked against a second real landmark (another named school drawn on the same page, matched to its own DB coordinate) for 2 of the 7: Christ Church CofE via New Park Academy's building (23m residual/250m baseline) and St Edmund's RC via Bridgewater Primary School's building (42.5m residual/241m baseline) - both comfortable. All 7 verified as single clean Polygons (dominant-piece reduction applied, zero MultiPolygon features) containing their own school's real DB coordinate with a margin of 209-1106m. 17 of the 24 linked PDFs remain undigitised (weaker/motorway-occluded grid detection needing individual attention, not a dead end) - see the block comment above for the full method, the St Charles false-3x-spacing trap found and fixed, and the exact remaining candidate list."
+    notes: "17 of 24 primary/secondary parish-boundary PDFs digitised from Salford's real per-school 'parish boundary map for school admissions' pages (7 landed 2026-08-17: Christ Church CofE, St Charles' RC, St Edmund's RC, St Luke's RC, St Mark's RC, St Teresa's RC, Holy Family VA RC; 10 more landed 2026-08-18: Christ The King RC, St Joseph's RC (Ordsall), St Joseph the Worker RC (Irlam), St Mary's RC (Swinton), St Peter's CE, St Philip's RC, St Philip's CE, St Paul's CE (Cross Lane), The Cathedral School of St Peter & St John RC, St Thomas of Canterbury RC) - each map has a genuine pale-cyan 1km OS National Grid overlay (true north-up, scale read directly from measured grid-line pixel spacing, independently confirmed consistent on both axes for every school landed except St Philip's CE/St Paul's CE Cross Lane, a documented single-axis exception - see block comment) and a hand-drawn black (or, on a couple of files, gold star / red boundary) parish boundary line plus a marker for the school; anchored in absolute position via each school's own real DB/GIAS coordinate matched to its drawn marker, with scale and rotation coming independently from the grid itself (not circular). All 17 verified as single clean Polygons (dominant-piece reduction applied, zero MultiPolygon features) containing their own school's real DB coordinate with a margin of 209-2100m. 7 of the 24 linked PDFs remain undigitised for genuine, individually-documented reasons (no OS grid on that particular basemap style, or a different diocesan map product) - see schools.py in the pipeline directory and the block comment above for the exact per-file reasons and the full method, including the St Charles false-3x-spacing trap and this session's distance-transform/modal-gap fixes. Digitisation pipeline committed at data/digitized-catchments/salford/pipeline/."
 
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
