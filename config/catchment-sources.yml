@@ -6851,11 +6851,11 @@ sources:
     name_field: "AREA_NAME"
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
-    licence: "UNCONFIRMED - no OGL or other licence statement found anywhere on the admissions page or its footer; ONS Open Geography Portal ward boundary geometry itself is Open Government Licence, but the council's own designation of this ward as Hummersknott Academy's Associated Area is an unlicensed council publication."
+    licence: "UNCONFIRMED - no OGL or other licence statement found anywhere on the admissions page or its footer; ONS Open Geography Portal ward/parish boundary geometry itself is Open Government Licence, but the council's own designation of these areas as Hummersknott/Hurworth priority-area criteria is an unlicensed council publication."
     last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
-    notes: "2 secondary oversubscription-priority-area polygons for Hummersknott Academy's 'Associated Area' criterion (oversubscription criterion (iv), ranked above Distance): (1) the real 'Heighington & Coniscliffe' electoral ward boundary (ONS Open Geography Portal, WD_MAY_2026_UK_BFC, E05010419), used directly per the school's own admission policy PDF explicitly defining this associated area as the whole ward; (2) Park East (part of that ward only, per the policy's own 'hatched area... within the Ward of Park East' wording), landed 2026-08-18 via real pixel georeferencing of the source PDF's raster scan (printed scale bar + north arrow + single school ground-control point, 5 further independent Nominatim-geocoded points cross-checked 5/5 correct) - see the block comment above for both the original 9/9 ward cross-check and the Park East digitisation method in full. Same structural caveat for both: an alternative-priority admissions area, not Hummersknott's own designated catchment, so the school's own site is not expected to fall inside either. Hurworth School's own separate Priority 5/6 maps, landed the same day in a later session, are a separate source row below."
+    notes: "4 secondary oversubscription-priority-area polygons on the same Hummersknott & Hurworth Academies admissions page, kept in one file/source row since the ingestor resolves catchment_sources by (local_authority_code, academic_year, source_type) - a second row with the same triple would silently collide with this one rather than creating a separate source. Hummersknott Academy's 'Associated Area' criterion (oversubscription criterion (iv), ranked above Distance): (1) the real 'Heighington & Coniscliffe' electoral ward boundary (ONS Open Geography Portal, WD_MAY_2026_UK_BFC, E05010419), used directly per the school's own admission policy PDF explicitly defining this associated area as the whole ward; (2) Park East (part of that ward only, per the policy's own 'hatched area... within the Ward of Park East' wording), landed 2026-08-18 via real pixel georeferencing of the source PDF's raster scan (printed scale bar + north arrow + single school ground-control point, 5 further independent Nominatim-geocoded points cross-checked 5/5 correct) - see the block comment above for both the original 9/9 ward cross-check and the Park East digitisation method in full. Hurworth School's own Priority 5 'Hurworth and Hurworth Place' (pixel-georeferenced, 5/5 independent verification points correct, both open Hurworth schools fall inside as expected for this base priority tier) and Priority 6 'Associated Areas' Map B only - Bishopton, Sadberge, Great Stainton and Little Stainton, landed as a union of their real ONS civil parish boundaries per the school's own policy text naming them as whole villages (9/9 independent verification points correct) - see the later block comment below for the full method on both. Same structural caveat for the two Hummersknott polygons and the Priority 6 polygon: an alternative-priority admissions area, not the school's own designated catchment, so the school's own site is not expected to fall inside them (and does not). Priority 5 is different: it is Hurworth village's own base priority tier, so Hurworth School's site IS expected to fall inside it (and does). Priority 6 Maps A (Middleton St George/Middleton One Row/Low Dinsdale) and C (Hurworth Moor/Neasham/Sockburn) were investigated but not landed - see the block comment below for why pixel-georeferencing them could not be made to reach a comfortable containment margin this session."
 
   # UPDATE (2026-08-18, Hurworth School Priority 5/6 session): closed part of
   # the "genuinely open, not-yet-attempted lead" flagged above. Darlington's
@@ -6932,21 +6932,12 @@ sources:
   # would need genuine from-scratch pixel tracing not attempted this
   # session. Both are left as confirmed-real, not-yet-attempted leads for a
   # future session, per this project's standing practice of declining rather
-  # than shipping a fit without a comfortable containment margin.
-  - local_authority_code: "841"
-    local_authority_name: "Darlington"
-    academic_year: "2025-2026"
-    source_type: "secondary_catchment_partial"
-    source_url: "https://www.darlington.gov.uk/education-and-learning/school-years/admissions/hummersknott-hurworth-academies/"
-    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/darlington/darlington_hurworth_associated_areas.geojson"
-    name_field: "AREA_NAME"
-    format: "geojson"
-    coordinate_reference_system: "EPSG:4326"
-    licence: "UNCONFIRMED - no OGL or other licence statement found anywhere on the admissions page or its footer; ONS Open Geography Portal parish boundary geometry itself is Open Government Licence, but the council's own designation of these areas as Hurworth School's Priority 5/6 oversubscription criteria is an unlicensed council publication."
-    last_verified_at: "2026-08-18"
-    parser_name: "generic_geojson"
-    enabled: true
-    notes: "2 polygons for Hurworth School's own oversubscription criteria: Priority 5 'Hurworth and Hurworth Place' (pixel-georeferenced from the council's own raster map, 5/5 independent verification points correct, both open Hurworth schools fall inside as expected for this base priority tier) and Priority 6 'Associated Areas' Map B only - Bishopton, Sadberge, Great Stainton and Little Stainton, landed as a single union of their real ONS civil parish boundaries per the school's own policy text naming them as whole villages (9/9 independent verification points correct). Priority 6 Maps A (Middleton St George/Middleton One Row/Low Dinsdale) and C (Hurworth Moor/Neasham/Sockburn) were investigated but not landed - see the block comment above for why pixel-georeferencing them could not be made to reach a comfortable containment margin this session."
+  # than shipping a fit without a comfortable containment margin. Landed as
+  # 2 more features in the existing Hummersknott source row above (same
+  # source_url page, and the ingestor resolves catchment_sources by
+  # (local_authority_code, academic_year, source_type) - a second row here
+  # with the same triple as the Hummersknott row would silently collide
+  # with it rather than becoming its own source), not a new row.
 
   # 2026-08-11 cross-cutting fix, applies to every point-sample-reconstructed
   # source below (Hartlepool, Essex, Wakefield, Coventry, Wirral, Luton):
