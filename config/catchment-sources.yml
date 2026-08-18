@@ -4199,10 +4199,37 @@ sources:
     format: "geojson"
     coordinate_reference_system: "EPSG:4326"
     licence: "UNCONFIRMED - each source PDF states only '© Crown Copyright. All rights reserved 100023343 [year]', no explicit Open Government Licence statement."
-    last_verified_at: "2026-08-09"
+    last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
     notes: >
+      2026-08-18 update (later session): landed Barton Park Primary
+      School (URN 147865, code 2034) - the last open school in this
+      file's own long-running digitisation backlog
+      (data/digitized-catchments/oxfordshire/pipeline/remaining_schools_triage.tsv).
+      A prior session had already confirmed this file has a genuine,
+      solid black (not cyan) OS 1km grid, true north-up, spacing 3352px
+      at 400dpi, but got stuck because Overpass was blocked and only
+      thin Nominatim-derived landmark candidates were available
+      (~1.5x margin/residual ratio, declined as too thin). This session
+      found a cleaner method entirely: since a real OS National Grid's
+      lines always fall on exact 1000m multiples, the two confirmed
+      vertical grid lines (x=836px, x=4187px) and the one confirmed
+      horizontal grid line (y=2376px) were matched directly to their
+      real OSGB36 easting/northing (E=454000/455000, N=208000) using
+      only the school's own approximate DB coordinate to disambiguate
+      which km square, with NO landmark pairing needed at all for the
+      anchor itself. Independently cross-checked against two real,
+      Overpass-confirmed OSM features visible on this same map extent -
+      the "Dunstan Park" park way and the "Foxwell Drive" cul-de-sac
+      loop way - both landed within a few pixels of their true printed
+      positions under this grid-derived transform, strongly confirming
+      it. The traced boundary (red raster colour-mask, single clean
+      Polygon, 0.40km2) overlays pixel-perfectly on the source PDF's
+      printed boundary line. DB coordinate contained with a 146m
+      margin - comfortably clears this project's 100m+ bar. Oxfordshire
+      primary catchments: 182 -> 183.
+
       101 primary catchment polygons digitised from Oxfordshire's
       per-school "Location and Designated Area" PDFs: 94 using the
       council's own OS-grid-referenced basemap for georeferencing (90
@@ -8024,10 +8051,32 @@ sources:
   # direct pixel inspection, not just automatic-detection failure);
   # St Gilbert's RC (a completely different high-resolution cadastral
   # raster scan, no grid, school shown as a shaded building footprint not a
-  # star); St Paul's CE (Crompton Street, Walkden) (a third source type - a
-  # diocesan "Digital map from Dotted Eyes... Church Commissioners" parish
-  # map with a different grid/colour system not yet calibrated - a genuine
-  # lead for a future session, not exhausted).
+  # star).
+  #
+  # 2026-08-18 follow-up session: landed St Paul's CE (Crompton Street,
+  # Walkden), the last of the 24 - previously declined as "a third source
+  # type... not yet calibrated". It IS a genuinely different diocesan
+  # "Digital map from Dotted Eyes... Church Commissioners" parish-map
+  # product (magenta boundary, not the council's own OS OpenData basemap),
+  # but it turned out to have both a real (fainter/greyer) raster OS 1km
+  # grid AND a real VECTOR-drawn boundary in get_drawings() - 11 separate
+  # closed magenta rings, since this wide-area deanery sheet draws every
+  # neighbouring parish's boundary too, not just the target one; picked
+  # out by matching the ring whose huge extent matches the page-dominating
+  # loop and whose georeferenced position plausibly contains the school.
+  # Anchored the grid's absolute position via Nominatim/Overpass's
+  # "Blackleach Reservoir" polygon centroid (colour-mask-extracted from the
+  # raster basemap, matched to the OSM way's own centroid) - the implied
+  # grid-line eastings/northings landed within ~15m of exact 1000m
+  # multiples, strong confirmation the anchor is right. Independently
+  # cross-checked: under this transform, a building explicitly labelled
+  # "School" on the map sits exactly on "Crompton Street", matching the
+  # predicted pixel position of the school's own real DB coordinate almost
+  # exactly. Traced ring overlays pixel-perfectly on the source PDF's
+  # printed boundary. Area 4.01km2, single clean Polygon, DB coordinate
+  # contained with a 493m margin. All 24 of Salford's primary/secondary
+  # parish-boundary PDFs are now resolved: 18 landed, 6 genuinely declined
+  # (see schools.py for the exact per-file reasons).
   - local_authority_code: "355"
     local_authority_name: "Salford"
     academic_year: "2026-2027"
@@ -8041,7 +8090,7 @@ sources:
     last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
-    notes: "17 of 24 primary/secondary parish-boundary PDFs digitised from Salford's real per-school 'parish boundary map for school admissions' pages (7 landed 2026-08-17: Christ Church CofE, St Charles' RC, St Edmund's RC, St Luke's RC, St Mark's RC, St Teresa's RC, Holy Family VA RC; 10 more landed 2026-08-18: Christ The King RC, St Joseph's RC (Ordsall), St Joseph the Worker RC (Irlam), St Mary's RC (Swinton), St Peter's CE, St Philip's RC, St Philip's CE, St Paul's CE (Cross Lane), The Cathedral School of St Peter & St John RC, St Thomas of Canterbury RC) - each map has a genuine pale-cyan 1km OS National Grid overlay (true north-up, scale read directly from measured grid-line pixel spacing, independently confirmed consistent on both axes for every school landed except St Philip's CE/St Paul's CE Cross Lane, a documented single-axis exception - see block comment) and a hand-drawn black (or, on a couple of files, gold star / red boundary) parish boundary line plus a marker for the school; anchored in absolute position via each school's own real DB/GIAS coordinate matched to its drawn marker, with scale and rotation coming independently from the grid itself (not circular). All 17 verified as single clean Polygons (dominant-piece reduction applied, zero MultiPolygon features) containing their own school's real DB coordinate with a margin of 209-2100m. 7 of the 24 linked PDFs remain undigitised for genuine, individually-documented reasons (no OS grid on that particular basemap style, or a different diocesan map product) - see schools.py in the pipeline directory and the block comment above for the exact per-file reasons and the full method, including the St Charles false-3x-spacing trap and this session's distance-transform/modal-gap fixes. Digitisation pipeline committed at data/digitized-catchments/salford/pipeline/."
+    notes: "18 of 24 primary/secondary parish-boundary PDFs digitised from Salford's real per-school 'parish boundary map for school admissions' pages (7 landed 2026-08-17: Christ Church CofE, St Charles' RC, St Edmund's RC, St Luke's RC, St Mark's RC, St Teresa's RC, Holy Family VA RC; 10 more landed 2026-08-18: Christ The King RC, St Joseph's RC (Ordsall), St Joseph the Worker RC (Irlam), St Mary's RC (Swinton), St Peter's CE, St Philip's RC, St Philip's CE, St Paul's CE (Cross Lane), The Cathedral School of St Peter & St John RC, St Thomas of Canterbury RC; 1 more landed later the same day: St Paul's CE (Crompton Street, Walkden), a different diocesan Dotted Eyes/Church Commissioners parish-map product with its own real raster OS grid and, unusually, a real VECTOR-drawn boundary - see block comment for the full method) - 17 of the 18 use a genuine pale-cyan 1km OS National Grid overlay baked into the raster basemap (true north-up, scale read directly from measured grid-line pixel spacing, independently confirmed consistent on both axes for every school landed except St Philip's CE/St Paul's CE Cross Lane, a documented single-axis exception - see block comment) and a hand-drawn black (or, on a couple of files, gold star / red boundary) parish boundary line plus a marker for the school, anchored in absolute position via each school's own real DB/GIAS coordinate matched to its drawn marker, with scale and rotation coming independently from the grid itself (not circular); St Paul's CE (Crompton Street) alone uses the vector-path + Blackleach-Reservoir-anchored method described in the block comment. All 18 verified as single clean Polygons (dominant-piece reduction applied, zero MultiPolygon features) containing their own school's real DB coordinate with a margin of 209-2100m (17 grid-anchored schools) or 493m (St Paul's Crompton Street). All 24 of the linked PDFs are now resolved: 18 landed, 6 genuinely declined for individually-documented reasons (no OS grid on that particular basemap style, or a different unrecoverable document type) - see schools.py in the pipeline directory and the block comment above for the exact per-file reasons and the full method, including the St Charles false-3x-spacing trap and this session's distance-transform/modal-gap fixes. Digitisation pipeline committed at data/digitized-catchments/salford/pipeline/."
 
   # South Gloucestershire: the candidates note ("no GIS/map subdomain
   # resolves") was wrong - it never opened the council's real admissions

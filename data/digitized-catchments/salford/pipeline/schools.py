@@ -175,17 +175,38 @@ SCHOOLS = {
         lat=53.52219870701866,
         phase="primary",
         pdf_url=f"{BASE_URL}/media/381147/st-pauls-crompton-street-boundary-map.pdf",
-        landed=False,
-        decline_reason=(
+        landed=True,
+        landed_note=(
             "A third source type entirely: 'Digital map from Dotted Eyes... "
             "PS Licence No. 100019818. Church Commissioners' - a diocesan "
-            "ecclesiastical-parish map product (magenta boundary, a faint "
-            "grey grid in a different style, no blue star - the school is "
-            "marked with a small lettered symbol keyed elsewhere on the "
-            "page) rather than the council's own OS OpenData basemap. "
-            "Different colour system and grid style not yet calibrated - "
-            "declined this session rather than guessing thresholds; a "
-            "genuine lead for a future session with dedicated attention."
+            "ecclesiastical-parish map product (magenta boundary, a real "
+            "raster OS 1km grid baked into the basemap - fainter/greyer "
+            "than the council's own cyan-grid template but genuine and "
+            "square, spacing 1497px at 400dpi - and a small lettered 'B' "
+            "symbol, ~640m from the school, most likely marking the "
+            "parish church rather than the school itself) rather than the "
+            "council's own OS OpenData basemap. Landed 2026-08-18 by "
+            "extracting the boundary as a REAL VECTOR path (get_drawings() "
+            "has 11 separate closed magenta rings - one per parish visible "
+            "on this wide-area deanery sheet, not just the target parish; "
+            "disambiguated by which ring's bounds match the huge loop "
+            "dominating the page and by checking which ring, once "
+            "georeferenced, plausibly contains the school) using the same "
+            "segment-chaining approach as Oxfordshire's vector_boundary.py. "
+            "Anchored the grid's absolute position via Nominatim/Overpass's "
+            "'Blackleach Reservoir' polygon centroid (color-mask-extracted "
+            "from the raster basemap and matched to the OSM way's own "
+            "centroid) - implied grid-line eastings/northings landed within "
+            "~15m of exact 1000m multiples (E=373000, N=404000 at the "
+            "measured grid line pixels), strong confirmation. Independently "
+            "cross-checked: under this transform, a building on the map "
+            "explicitly labelled 'School' sits exactly on 'Crompton "
+            "Street', pixel-matching the predicted position of the school's "
+            "own real DB coordinate almost exactly. Traced ring overlays "
+            "pixel-perfectly on the source PDF's printed magenta boundary "
+            "line. Area 4.01km2, single clean Polygon. DB coordinate "
+            "contained, margin 493m - comfortably clears this project's "
+            "100m+ bar."
         ),
     ),
     "st-pauls-crosslane": dict(
