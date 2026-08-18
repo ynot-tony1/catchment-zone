@@ -6804,6 +6804,44 @@ sources:
   # likely apply) - not attempted this session for time reasons, left as a
   # genuine, confirmed-real, not-yet-attempted lead for a future session
   # rather than declined as a dead end.
+  #
+  # UPDATE (2026-08-18, later session): Park East (hummersknott-associated-
+  # area-2.pdf) digitised this session via real pixel georeferencing, closing
+  # this specific open thread. The rendered PDF page (PyMuPDF, matrix 3x, no
+  # embedded /Measure GeoPDF metadata unlike some other councils' exports -
+  # checked and confirmed absent via pikepdf) carries a genuine printed scale
+  # bar (0/75/150/300m, measured at 9 evenly-spaced tick marks -> 1.1257 m/px)
+  # and a north arrow confirming north-up (rotation 0), the same OS-map
+  # convention used elsewhere in this project. The thick hand-drawn boundary
+  # line was colour-masked (near-black, excluding the legend box and page
+  # frame border, both confirmed as separate, larger, non-boundary contours
+  # by bounding-box inspection) and closed via morphology; the true boundary
+  # split into two disconnected arcs after closing (a raster gap where the
+  # line crosses a coloured road symbol) - fixed by filling both arcs and
+  # unioning them rather than forcing a bigger closing kernel, which
+  # reconstructs the correct single interior region directly from the two
+  # touching arcs. Anchored via a single real ground-control point (Skerne
+  # Park Academy, URN 139195, the only school printed on this specific page,
+  # matched building-icon-centroid to its own real DB coordinate) plus the
+  # independently-measured scale and zero rotation - the same single-point-
+  # plus-known-scale technique already proven for Bristol/Patchway in this
+  # project. Verified using 5 further real points NOT used for anchoring,
+  # each geocoded via Nominatim and checked for the correct inside/outside
+  # relationship against the map's own drawn line: South Park (inside,
+  # 563m margin), Tees Drive/Skerne Park estate (inside, 129m), Victoria
+  # Embankment (inside, 201m), Neasham Road/Firthmoor (outside, 394m from
+  # boundary) and Salters Lane North/Harrowgate Hill (outside, 3.0km) -
+  # 5/5 correct, spanning most of the polygon's real extent, giving strong
+  # independent confidence in the fit beyond the single anchor point.
+  # Polygon simplified (shapely, ~2.5m tolerance) from 958 to 289 vertices
+  # with all 6 verification points re-confirmed unchanged after
+  # simplification; single clean Polygon, not MultiPolygon. Same structural
+  # caveat as the rest of this source: an alternative-priority associated
+  # area, not Hummersknott's own designated catchment, so the school's own
+  # site is not expected to fall inside it (and does not - Hummersknott
+  # Academy sits several km to the west). Hurworth's own Priority 5/6 maps
+  # remain the one genuinely open, not-yet-attempted lead from this family
+  # of documents - not reached this session.
   - local_authority_code: "841"
     local_authority_name: "Darlington"
     academic_year: "2025-2026"
@@ -6817,7 +6855,7 @@ sources:
     last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
-    notes: "1 secondary oversubscription-priority-area polygon for Hummersknott Academy's 'Associated Area' criterion (oversubscription criterion (iv), ranked above Distance) - the real 'Heighington & Coniscliffe' electoral ward boundary (ONS Open Geography Portal, WD_MAY_2026_UK_BFC, E05010419), used directly per the school's own admission policy PDF explicitly defining this associated area as the whole ward, not a digitised/traced scan. See the block comment above for the full re-audit, the 9/9 real-village point-in-polygon cross-check, and the remaining undigitised Park East/Hurworth Priority 5-6 leads found but not attempted this session. Same structural caveat as the rural Areas A-H above: this is an alternative-priority admissions area, not Hummersknott's own designated catchment, so the school's own site is not expected to fall inside it."
+    notes: "2 secondary oversubscription-priority-area polygons for Hummersknott Academy's 'Associated Area' criterion (oversubscription criterion (iv), ranked above Distance): (1) the real 'Heighington & Coniscliffe' electoral ward boundary (ONS Open Geography Portal, WD_MAY_2026_UK_BFC, E05010419), used directly per the school's own admission policy PDF explicitly defining this associated area as the whole ward; (2) Park East (part of that ward only, per the policy's own 'hatched area... within the Ward of Park East' wording), landed 2026-08-18 via real pixel georeferencing of the source PDF's raster scan (printed scale bar + north arrow + single school ground-control point, 5 further independent Nominatim-geocoded points cross-checked 5/5 correct) - see the block comment above for both the original 9/9 ward cross-check and the Park East digitisation method in full. Same structural caveat for both: an alternative-priority admissions area, not Hummersknott's own designated catchment, so the school's own site is not expected to fall inside either. Hurworth School's own separate Priority 5/6 maps remain the one genuinely open, not-yet-attempted lead from this document family."
 
   # 2026-08-11 cross-cutting fix, applies to every point-sample-reconstructed
   # source below (Hartlepool, Essex, Wakefield, Coventry, Wirral, Luton):
