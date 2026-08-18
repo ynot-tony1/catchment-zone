@@ -8045,24 +8045,38 @@ sources:
 
   # South Gloucestershire: the candidates note ("no GIS/map subdomain
   # resolves") was wrong - it never opened the council's real admissions
-  # PDF booklet. South Glos LIFE (life.southglos.gov.uk, Cloudflare-
+  # PDF booklets. South Glos LIFE (life.southglos.gov.uk, Cloudflare-
   # challenged for plain curl but clears with a real Playwright session)
-  # links a genuine 228-page "Primary Schools Admission guide" PDF
-  # (search3.openobjects.com/mediamanager/southglos/directory/files/) with
-  # real vector-drawn (not raster) "Area of Prime Responsibility" maps, one
-  # per named consortium/school, each with a single closed boundary path
-  # (colour ~RGB(98,79,151)) plus an exact textual boundary description.
-  # Anchored per page using this project's own real DB school coordinates
-  # as ground-control points (a 2-point exact similarity fit for the
-  # single-school zones, a least-squares Umeyama similarity fit for the
-  # 3- and 14-school consortium zones) rather than external geocoding -
-  # every anchor is already a verified real point in this project's own
-  # data, and every included school was re-verified to fall inside its
-  # zone with a margin comfortably larger than the fit's own
-  # cross-validated residual error. See the (partially resolved) South
-  # Gloucestershire candidate note elsewhere in this file for the full
-  # per-map breakdown, including which 4 of 8 real zones remain
-  # undigitised and the untouched secondary-schools booklet.
+  # links two genuine PDF booklets - a 228-page "Primary Schools Admission
+  # guide" and a 132-page secondary equivalent
+  # (search3.openobjects.com/mediamanager/southglos/directory/files/) - each
+  # with real vector-drawn (not raster) "Area of Prime Responsibility" maps,
+  # one per named consortium/school, each with a single closed boundary path
+  # plus an exact textual boundary description. The primary booklet's
+  # boundary colour is ~RGB(98,79,151); the secondary booklet uses a
+  # different but equally consistent green, ~RGB(0,148,68). Anchored per
+  # page using this project's own real DB school coordinates as
+  # ground-control points, fitted with a full 6-parameter least-squares
+  # affine transform (not a pure similarity/Umeyama fit - the source maps
+  # turned out not to be perfectly conformal at this scale; switching from
+  # similarity to affine took per-point residuals on the 4+ GCP consortium
+  # pages from several hundred metres down to single/low-double-digit
+  # metres) wherever 3 or more of a page's own real schools are available.
+  # Every included school was re-verified to fall inside its zone with a
+  # margin comfortably larger than the fit's own cross-validated residual
+  # error. Where a page has only one real school GCP (no second school
+  # plotted on the same base-map crop), a cross-page tie-point technique was
+  # tried - transferring shared place-name label positions from an
+  # already-well-anchored neighbouring page - but this was tested
+  # explicitly on three different single-school pages (primary Map 17,
+  # secondary Marlwood School, and a rescue attempt on the secondary
+  # Bradley Stoke/Abbeywood/Patchway consortium) and every attempt produced
+  # either an outright failure (the school landing outside its own
+  # polygon) or residuals in the hundreds-to-1000+ metre range - too
+  # unreliable to trust, so all single-GCP pages were declined rather than
+  # shipped. See the South Gloucestershire candidate note elsewhere in this
+  # file for the full per-map breakdown of what was landed vs declined and
+  # why.
   - local_authority_code: "803"
     local_authority_name: "South Gloucestershire"
     academic_year: "2025-2026"
@@ -8076,7 +8090,22 @@ sources:
     last_verified_at: "2026-08-18"
     parser_name: "generic_geojson"
     enabled: true
-    notes: "4 of 13 primary 'Area of Prime Responsibility' zones digitised (19 schools total): Map 8 Frenchay CE Primary School (single school); Map 11 Bradley Stoke Community School (single school, primary phase of an all-through academy); Map 12 Filton Primaries Consortium (Charborough Road/Shield Road/Filton Hill, 3 schools sharing one zone); Map 15 Kingswood North/Downend/Emersons Green Consortium (14 schools sharing one zone, 1 more - St Augustine of Canterbury Catholic Primary - explicitly excluded per the source document despite sitting geographically inside the polygon, a faith-school admissions exclusion, correctly left out of the combined area_name). 4 more real zones (Maps 16/17/18/19) and the entire secondary-schools booklet remain undigitised - a genuine, promising, time-bounded stopping point, not a technical dead end."
+    notes: "7 of 13 primary 'Area of Prime Responsibility' zones digitised (33 schools total): Map 8 Frenchay CE Primary School (single school); Map 11 Bradley Stoke Community School (single school, primary phase of an all-through academy); Map 12 Filton Primaries Consortium (Charborough Road/Shield Road/Filton Hill, 3 schools); Map 15 Kingswood North/Downend/Emersons Green Consortium (14 schools, 1 more - St Augustine of Canterbury Catholic Primary - explicitly excluded per the source document despite sitting geographically inside the polygon, a faith-school admissions exclusion); Map 16 Kingswood South & Hanham Primaries Consortium (Samuel White's Infant, Hanham Abbots Junior, Christ Church Hanham CE Primary, Beacon Rise Primary, Courtney Primary, The Park Primary - 6 schools, 1 more - Our Lady of Lourdes Catholic Primary - explicitly excluded, same faith-school pattern); Map 18 Cadbury Heath/Longwell Green Consortium (Barrs Court, Cadbury Heath, Longwell Green, Parkwall - 4 schools); Map 19 Warmley/Bitton Consortium (Cherry Garden, Redfield Edge, St Anne's CE, St Barnabas CE - 4 schools, 1 more - The Meadows Primary - explicitly excluded and, unlike the other two exclusions, geometrically confirmed OUTSIDE the fitted polygon too, consistent with it being a plain proximity/geographic exclusion rather than a faith-school admissions one). Margins for all 33 included schools ranged 351-963m against fit residuals of 7-73m (Maps 16/18/19, full affine fit) or exact 0-residual fits with 592-908m margins (Maps 8/11/12/15, from the prior session's similarity fit). Map 17 (King's Oak Academy Primary Phase) remains genuinely undigitised: it is the only primary APR page with just one real school GCP and no second school plotted on its own base-map crop; a cross-page tie-point fit was built and tested (transferring 6 shared place-name label positions from Map 16's well-anchored fit) but left a ~700-900m systematic disagreement at the one real anchor against only a 165m containment margin - well short of this project's comfort bar, so declined rather than shipped. The secondary-schools booklet is now partially landed too - see the separate secondary_catchment_partial entry below."
+
+  - local_authority_code: "803"
+    local_authority_name: "South Gloucestershire"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://life.southglos.gov.uk/kb5/southglos/directory/advice.page?id=cs6DhXBVYyE&familychannel=2-2&channel=family"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/south-gloucestershire/south_gloucestershire_secondary_apr.geojson"
+    name_field: "area_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - the source PDF booklet states '© Crown copyright and database rights 2025 Ordnance Survey 100023410' but does not separately state a re-use/open licence for the admissions booklet itself. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-18"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "3 of 7 secondary 'Area of Prime Responsibility' zones digitised (9 schools total), full 6-parameter affine fit from each page's own real school GCPs: Yate and Chipping Sodbury Consortium (Brimsham Green, Yate Academy, Chipping Sodbury - 3 schools, exact 0-residual 3-point fit, margins 1565-3823m); Downend School/King's Oak Academy/Mangotsfield School/Winterbourne Academy Consortium (4 schools, this King's Oak Academy zone is the SECONDARY phase of the same all-through academy whose PRIMARY phase is Map 17 in the primary booklet above - a distinct catchment_area, not a duplicate; residuals 36-241m, margins 1264-2303m); Hanham Woods Academy and the Sir Bernard Lovell Academy Consortium (2 schools; John Cabot Academy and Digitech Studio School are both explicitly excluded per the source text and independently confirmed geometrically outside the fitted polygon, 285m and 343m respectively - a strong cross-validation signal that this fit is correctly oriented and scaled; residuals 79-132m, margins 281-964m). 4 zones declined: The Castle School and Marlwood School are both single-school pages with no second real GCP on their own base-map crop (same structural problem as primary Map 17) - a cross-page tie-point fit was tried for Marlwood specifically (transferring 3 shared place-name positions from the well-anchored Yate/Chipping Sodbury page) and it placed Marlwood School 702m OUTSIDE its own reconstructed polygon, an outright failure, so both were declined without shipping. The Bradley Stoke Community School/Abbeywood Community School/Patchway Community School Consortium has 3 real GCPs (an exact 0-residual fit, same as Yate/Chipping Sodbury) but left Bradley Stoke Community School only 63m inside its own polygon - under this project's 100m comfort bar - and a rescue attempt adding 5 cross-page tie points from the Downend consortium's fit pushed Bradley Stoke's margin up to 508m but only by introducing 344-1626m of its own residual, i.e. an untrustworthy correction, not a genuine fix; declined rather than shipped. Lyde Green Community School has a real, drawn APR zone and boundary text, but the school itself (URN 152456) has status PROPOSED_TO_OPEN with no lat/lon yet in this project's DB - it is literally due to open for Year 7 entry from September 2026, weeks after this session - so there is no anchor point to fit or verify against; a clean candidate for a future session once it opens and gets real GIAS coordinates."
 
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
@@ -8439,52 +8468,59 @@ candidates:
       now-thoroughly-confirmed data-absence finding, not an access barrier.
   - local_authority_name: "South Gloucestershire"
     reason_not_enabled: >
-      PARTIALLY RESOLVED 2026-08-18 - see the South Gloucestershire entry in
-      sources: above (4 primary Areas of Prime Responsibility landed: Map 8
-      Frenchay, Map 11 Bradley Stoke Community School, Map 12 Filton
-      Primaries Consortium, Map 15 Kingswood North/Downend/Emersons Green
-      Consortium - 19 schools total). The original "no GIS/ArcGIS/map
-      subdomain resolves" finding was wrong - it never actually opened the
-      council's real admissions PDF booklets. South Glos LIFE
-      (life.southglos.gov.uk) is Cloudflare-challenged from this sandbox but
-      clears with a real Playwright browser session and links two real,
-      large, genuinely vector-drawn (PyMuPDF get_drawings() confirms real
-      path objects, not raster scans) PDF booklets - "Primary Schools
-      Admission guide" (228 pages) and a secondary-schools equivalent - at
-      search3.openobjects.com/mediamanager/southglos/directory/files/. The
-      primary booklet contains 13 "Map N - <area> Area of Prime
-      Responsibility" pages (Maps 8-20); 8 of those 13 draw a real closed
-      boundary polygon (a single vector path, colour ~RGB(98,79,151), per
-      page) with an accompanying precise textual boundary description (e.g.
-      "defined by the A4174 to the north... then along the River Frome...");
-      the other 5 (Maps 9, 10, 13, 14, 20) are explicitly "no schools with
-      an Area of Prime Responsibility on this map" (location-context only,
-      nothing to digitise). Digitised 4 of the 8 real zones this session
-      (single-school zones Map 8/11 and consortium zones Map 12/15, all
-      anchored using this project's own real DB school coordinates as
-      ground-control points - a 2-point exact fit for the single-school
-      zones and a least-squares Umeyama similarity fit for the 3- and
-      14-school consortiums, both far more precise than external geocoding
-      since every anchor is already a verified real point in this project's
-      own data). Every included school re-verified to fall inside its
-      polygon with a margin comfortably larger than the fit's own
-      cross-validated residual error (144m-1200m margins against 3-126m
-      residuals); Map 15's St Augustine of Canterbury Catholic Primary
-      School is correctly left out of its zone's combined name despite
-      sitting geographically inside the polygon, matching the source
-      document's own explicit "(not included within this Area of Prime
-      Responsibility)" annotation - the same Roman-Catholic-voluntary-aided-
-      school exclusion pattern already seen for Cardiff/Monmouthshire.
-      3 more real zones remain undigitised for time reasons, not a
-      technical blocker (Map 16 Kingswood South & Hanham Consortium, Map 17
-      King's Oak Academy Primary Phase, Map 18 Cadbury Heath/Longwell Green
-      Consortium, Map 19 Warmley/Bitton Consortium - Map 19 additionally
-      uses a differently-shaded boundary colour, ~RGB(107,87,165) with a
-      light fill, found and confirmed extractable but not yet processed) -
-      each needs the same technique, just more per-page anchor-finding
-      time. The secondary-schools booklet (same site, same real vector
-      format) was not opened at all this session - a genuinely promising,
-      completely fresh lead for a future session.
+      PARTIALLY RESOLVED, updated 2026-08-18 (second session) - see the two
+      South Gloucestershire entries in sources: above (primary_catchment_partial:
+      7 of 13 primary Areas of Prime Responsibility landed, 33 schools;
+      secondary_catchment_partial: 3 of 7 secondary Areas of Prime
+      Responsibility landed, 9 schools). This session switched the fit
+      method from a pure similarity (scale+rotation+translation) transform
+      to a full 6-parameter least-squares affine transform wherever 3+ real
+      school GCPs are available on a page - the source maps are not
+      perfectly conformal at this scale, and the affine fit took per-point
+      residuals on multi-school pages from several hundred metres down to
+      single/low-double-digit metres, fixing two zones (secondary Map 19
+      equivalent geometry, primary Maps 16/18/19) where the older similarity
+      fit had left one or more schools outside their own polygon entirely.
+      Landed this session: primary Map 16 (Kingswood South & Hanham
+      Primaries Consortium, 6 schools + 1 correctly excluded), Map 18
+      (Cadbury Heath/Longwell Green Consortium, 4 schools), Map 19
+      (Warmley/Bitton Consortium, 4 schools + 1 excluded, that exclusion
+      also confirmed geometrically outside the polygon - a plain proximity
+      exclusion, not a faith-school one); secondary Yate and Chipping
+      Sodbury Consortium (3 schools), Downend/King's Oak Academy/
+      Mangotsfield/Winterbourne Consortium (4 schools - this King's Oak
+      Academy zone is the secondary phase of the all-through academy, a
+      distinct catchment_area from the primary-phase zone below), Hanham
+      Woods Academy and the Sir Bernard Lovell Academy Consortium (2
+      schools + 2 explicitly-excluded schools independently confirmed
+      geometrically outside the fitted polygon, a strong cross-validation
+      signal). Declined this session, each for a documented reason rather
+      than a technical dead end: primary Map 17 (King's Oak Academy Primary
+      Phase) and secondary The Castle School and Marlwood School are all
+      single-school pages with no second real school GCP on their own
+      base-map crop; a cross-page tie-point technique (transferring shared
+      place-name label positions from an already-well-anchored neighbouring
+      page) was built and tested on all three and failed every time - either
+      landing the target school outside its own reconstructed polygon
+      (Marlwood, by 702m) or leaving residuals in the 700-1000m range
+      against only a ~165m containment margin (King's Oak Primary Phase) -
+      so none were shipped. The secondary Bradley Stoke/Abbeywood/Patchway
+      Consortium has 3 real GCPs and an exact 0-residual fit, but leaves
+      Bradley Stoke Community School only 63m inside its own polygon, under
+      this project's 100m comfort bar; a rescue attempt using 5 more
+      cross-page tie points pushed the margin up to 508m but only by
+      introducing 344-1626m of its own fit residual - an untrustworthy
+      correction, so declined. Secondary Lyde Green Community School (URN
+      152456) has a real drawn zone and boundary text but the school itself
+      has status PROPOSED_TO_OPEN with no lat/lon yet in this project's DB -
+      it opens for Year 7 entry from September 2026, weeks after this
+      session - so there's no anchor point to fit against yet; a clean
+      candidate once it opens and gets real GIAS coordinates. Remaining
+      after this session: primary Map 17 (declined, documented above);
+      secondary Castle School, Marlwood School, Bradley Stoke/Abbeywood/
+      Patchway Consortium and Lyde Green Community School (all declined,
+      documented above) - every South Gloucestershire APR page in both
+      booklets has now been opened and attempted at least once.
   - local_authority_name: "Plymouth"
     reason_not_enabled: "The council's own 'Plymouth GIS' portal (plymouth.mapxpress.net) has no school/catchment mention on its data-downloads page, and no separate catchment map tool was found on plymouth.gov.uk."
   - local_authority_name: "Torbay"
