@@ -7158,6 +7158,100 @@ sources:
     enabled: true
     notes: "199 primary Priority Admission Area polygons reconstructed from dense stratified postcode sampling of a real backend SSRS report server (see the block comment above for the full method, sampling density, and all exclusions). Point-sample-interpolated, not digitised from a published map - deliberately conservative (100m own-school-coordinate margin bar, 900m trust-radius-clipped territory) and filed as primary_catchment_partial rather than primary_catchment for that reason. Most Essex schools use distance-based admissions with no Priority Admission Area at all; this covers only the real minority that have one."
 
+  # Essex secondary: the same SSRS PrimaryAndSecondarySearchReport endpoint
+  # used for the primary layer above returns a second, previously-unused
+  # report region (Tablix3/Details4_Collection, field SchoolName2) alongside
+  # the primary one (Tablix2/SchoolName) in every single response - so no
+  # new endpoint discovery was needed, only re-querying with the secondary
+  # field extracted this time.
+  #
+  # Sampling: doogal.co.uk (the primary layer's postcode-CSV source) was
+  # still returning HTTP 400 site-wide this session, so postcodes.io's
+  # autocomplete search (GET /postcodes?q=<prefix>&limit=100) was used
+  # instead for both the postcode list AND the coordinate for each postcode
+  # in one call - it returns full postcode records (postcode, lat/lon,
+  # admin_district, admin_county) for any prefix match, which doubles as a
+  # free substitute for doogal's CSV export. Essex CC's 12 real districts
+  # (Basildon, Braintree, Brentwood, Castle Point, Chelmsford, Colchester,
+  # Epping Forest, Harlow, Maldon, Rochford, Tendring, Uttlesford) were
+  # mapped to their real postcode outcodes by validating every candidate
+  # outcode in the CM/CO/SS/RM/IG/EN/CB areas against postcodes.io's
+  # /outcodes/{outcode} endpoint and keeping the 69 whose own admin_district
+  # list intersected the 12 real districts. For each of those 69 outcodes,
+  # queried all 10 possible sector digits (q="<outcode> <digit>", limit 100),
+  # kept results whose admin_district was a real Essex CC district, and
+  # randomly kept up to 20 per sector (matching the primary layer's own
+  # sampling density) - 4,189 stratified sample postcodes, deduplicated.
+  #
+  # Query: for each sampled postcode, called the same two SSRS endpoints as
+  # the primary layer (AddressListForGivenPostcode then
+  # PrimaryAndSecondarySearchReport on the first returned UPRN), this time
+  # parsing Details4/SchoolName2 instead of Details3/SchoolName. 4,189
+  # points queried across 6 sequential batches (~9-10 minutes each, this
+  # server's per-call latency dominates over client concurrency - raising
+  # concurrency from 12 to 30 measured no speedup, so kept at a moderate 15).
+  # Zero hard failures; 195 postcodes returned no UPRN (address not in the
+  # SSRS gazetteer) and were skipped. Of 3,994 successfully classified
+  # points: 3,123 resolved to a named secondary Priority Admission Area
+  # school (same "no priority area" freetext/SchoolId=9999 sentinel as the
+  # primary layer identifies the other 871 - most Essex secondaries are
+  # distance-based with no PAA, same as most primaries).
+  #
+  # Reconstruction: identical method to the primary layer - Voronoi
+  # tessellation over all 3,994 classified points (both PAA-school and
+  # no-PAA points as generators, reprojected to EPSG:27700; median
+  # nearest-neighbour spacing 111.4m, p90 449.1m - tighter than the primary
+  # layer's own sampling since a full-outcode autocomplete pull is denser
+  # than doogal's per-sector CSV rows), dissolved by school (no-PAA cells
+  # dropped), clipped to the real Essex county boundary (ONS Open Geography
+  # Portal's "Counties and Unitary Authorities December 2023 Boundaries UK
+  # BFC" live ArcGIS FeatureServer, CTYUA23CD=E10000012, replacing doogal's
+  # KML export used for the primary layer) and to the same 900m trust-radius
+  # buffer around every real sampled point. Reduced to the single largest
+  # connected polygon per school before verification, per this project's
+  # standard fragmentation fix.
+  #
+  # Verification: matched each harvested SchoolName2 label to this project's
+  # own open Essex schools by name (44 of 47 distinct harvested names
+  # matched an open school's current official name directly or by
+  # containment/qualifier-stripping with no ambiguity at all - secondary
+  # school names are far more distinctive than the primary layer's village
+  # primary schools, so no disambiguation guessing was needed anywhere).
+  # The remaining 3 required independent confirmation: "Tendring Technology
+  # College" and "Clacton Coastal Academy" are the SSRS system's stale
+  # pre-rename names for what this project's own schools table (sourced from
+  # current GIAS data) lists as "Lift Tendring" and "Lift Clacton" - both
+  # confirmed via Wikipedia/GIAS establishment records as the same site
+  # under Lift Schools' 2024 rebrand (identical coordinates in both cases),
+  # not a guess. "Helena Romanes School" matched directly by name but was
+  # missing from this session's first name-matching pass because it is
+  # phase-coded "All-through" rather than "Secondary" in this project's own
+  # table - included once found, since it is a real open Essex school with
+  # an exact name match. Applied this file's standard 100m
+  # own-school-coordinate-margin bar on top: of 47 dissolved polygons, 33
+  # passed comfortably (margins 133m-1,521m, most in the many hundreds of
+  # metres) and 33 were kept; 14 failed the margin bar (2 only marginally,
+  # 44.2m and 70.7m, correctly declined for falling short of the 100m bar;
+  # the other 12 by hundreds of metres to several kilometres - all 47 name
+  # matches were independently confident, so these are read as real
+  # PAA zones that do not happen to enclose the school's own site, e.g. a
+  # zone drawn around a satellite catchment area, rather than mismatches,
+  # and are declined rather than shipped on a marginal or absent fit).
+  - local_authority_code: "881"
+    local_authority_name: "Essex"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://secureapps.essex.gov.uk/cas/Priority-Admissions-(Catchment)-Area.aspx"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/essex/essex_secondary_catchments.geojson"
+    name_field: "db_school_name"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - same ReportProxy.aspx/SSRS tool as the primary_catchment_partial entry above, same caveat: no data licence statement found for the Priority Admission Area zone-membership data itself. Included per this project's private, non-commercial licensing policy, not represented as open-licensed."
+    last_verified_at: "2026-08-18"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "33 secondary Priority Admission Area polygons reconstructed from the same SSRS report server as the primary_catchment_partial entry above, extracting its previously-unused secondary-school field (see the block comment above for the full method, sampling density, and all exclusions). Point-sample-interpolated, not digitised from a published map - deliberately conservative (100m own-school-coordinate margin bar, 900m trust-radius-clipped territory) and filed as secondary_catchment_partial for that reason. Most Essex secondary schools use distance-based admissions with no Priority Admission Area at all; this covers only the real minority that have one, further limited to the subset whose reconstructed zone comfortably contains the school's own site."
+
   # Suffolk: the existing candidate note (removed by this session, was in
   # candidates: below) said "Suffolk's catchment information is published
   # per-school as PDF/list, not as a map" and stopped there without

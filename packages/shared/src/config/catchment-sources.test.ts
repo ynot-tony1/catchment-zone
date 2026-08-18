@@ -112,7 +112,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "841", name: "Darlington", sourceTypeCount: 2 },
   { code: "805", name: "Hartlepool", sourceTypeCount: 1 },
   { code: "356", name: "Stockport", sourceTypeCount: 4 },
-  { code: "881", name: "Essex", sourceTypeCount: 1 },
+  { code: "881", name: "Essex", sourceTypeCount: 2 },
   { code: "384", name: "Wakefield", sourceTypeCount: 2 },
   { code: "331", name: "Coventry", sourceTypeCount: 2 },
   { code: "344", name: "Wirral", sourceTypeCount: 1 },
