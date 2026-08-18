@@ -6748,6 +6748,77 @@ sources:
     enabled: true
     notes: "8 rural over-subscription priority-area polygons covering Areas A-H, copied directly from the council's own published KML (https://www.darlington.gov.uk/media/*/area-*.kml) with no reprojection or digitization - real WGS84 vertices throughout, valid geometry, sane Darlington-borough bounds (lat 54.45-54.62, lon -1.45 to -1.71) confirmed for every polygon."
 
+  # UPDATE (2026-08-18): this session re-audited Darlington's _partial flag
+  # specifically to check whether the "Hummersknott and Hurworth Academies"
+  # oversubscription maps - noted above as "flat raster scans... digitizing
+  # them would mean drawing boundaries by eye" and left undigitised - were a
+  # genuine dead end or an under-searched document, per this project's
+  # Suffolk-style pattern of _partial sources having more real data than
+  # first checked. Re-downloaded and re-inspected all 6 PDFs
+  # (hummersknott-associated-area-1/2.pdf, hurworth-and-hurworth-place-map.pdf,
+  # hurworth-priority-6-map-a/b/c.pdf): confirmed real (0-2 vector
+  # drawings, 1+ embedded raster image each) - the original "raster scan"
+  # finding was correct, this is not a parsing bug. But Advance Learning
+  # Partnership's own "School Admission Policy Darlington Schools 2027-28"
+  # PDF (alplearning.org.uk), read in full this session, resolves the
+  # ambiguity that mattered: Hummersknott Academy's oversubscription
+  # criterion (iv) "Associated Areas" is explicitly defined as "the Ward of
+  # Heighington and Coniscliffe" (Map 2, i.e. hummersknott-associated-area-1.pdf)
+  # in full, and separately "the hatched area... within the Ward of Park
+  # East" (Map 1, hummersknott-associated-area-2.pdf, a PART of that ward
+  # only, not the whole thing) - both real, named, geography-linked
+  # admissions criteria ranked above "Distance" and below "Family Links"/
+  # "Children of Staff", the same structural pattern as the rural Areas A-H
+  # above (an alternative-priority area, not the school's own designated
+  # catchment - Hummersknott's own site does not need to fall inside it).
+  #
+  # Since Map 2's associated area is stated to be the WHOLE electoral ward
+  # (no partial/hatched qualifier), no pixel georeferencing of the raster
+  # scan was needed at all: fetched the real "Heighington & Coniscliffe"
+  # ward polygon directly from ONS Open Geography Portal's live
+  # WD_MAY_2026_UK_BFC FeatureServer (E05010419) - the same
+  # real-administrative-boundary-instead-of-tracing-a-scan technique this
+  # project used for Suffolk's civil parishes. Cross-checked against the
+  # map image itself (not just trusted blindly): 6 real villages visible
+  # inside the map's own drawn magenta boundary (Heighington, High
+  # Coniscliffe, Denton, Walworth, Houghton-le-Side, Piercebridge, each
+  # geocoded via Nominatim) all fall inside the fetched ward polygon; 3
+  # villages visible clearly outside the drawn boundary (Newton Aycliffe,
+  # Darlington town centre, Barmpton) all fall outside it - 9/9 correct,
+  # confirming the ward polygon is the right real boundary, not merely a
+  # same-name coincidence.
+  #
+  # Map 1's associated area (Park East, "part") and Hurworth School's own
+  # separate "Priority 5"/"Priority 6" maps (hurworth-and-hurworth-place-map.pdf,
+  # hurworth-priority-6-map-a/b/c.pdf - a real further, lower-priority
+  # oversubscription tier, confirmed via the council's own page structure
+  # naming them "Priority 5"/"Priority 6", full defining policy text not
+  # found published for Hurworth specifically) do NOT match a single real
+  # administrative boundary this cleanly (Park East's associated area is
+  # explicitly only part of that ward; Hurworth's priority maps cover
+  # multi-ward, irregular hand-highlighted extents with no matching ONS
+  # boundary found). Both would need genuine pixel-level georeferencing of
+  # the raster scans (an OS 1km grid with faint two-digit labels is visible
+  # on several of these maps, and Hurworth's own scale bars are real - the
+  # project's proven OS-grid-line/landmark-pair techniques would very
+  # likely apply) - not attempted this session for time reasons, left as a
+  # genuine, confirmed-real, not-yet-attempted lead for a future session
+  # rather than declined as a dead end.
+  - local_authority_code: "841"
+    local_authority_name: "Darlington"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment_partial"
+    source_url: "https://www.darlington.gov.uk/education-and-learning/school-years/admissions/hummersknott-hurworth-academies/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/darlington/darlington_hummersknott_associated_areas.geojson"
+    name_field: "AREA_NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "UNCONFIRMED - no OGL or other licence statement found anywhere on the admissions page or its footer; ONS Open Geography Portal ward boundary geometry itself is Open Government Licence, but the council's own designation of this ward as Hummersknott Academy's Associated Area is an unlicensed council publication."
+    last_verified_at: "2026-08-18"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "1 secondary oversubscription-priority-area polygon for Hummersknott Academy's 'Associated Area' criterion (oversubscription criterion (iv), ranked above Distance) - the real 'Heighington & Coniscliffe' electoral ward boundary (ONS Open Geography Portal, WD_MAY_2026_UK_BFC, E05010419), used directly per the school's own admission policy PDF explicitly defining this associated area as the whole ward, not a digitised/traced scan. See the block comment above for the full re-audit, the 9/9 real-village point-in-polygon cross-check, and the remaining undigitised Park East/Hurworth Priority 5-6 leads found but not attempted this session. Same structural caveat as the rural Areas A-H above: this is an alternative-priority admissions area, not Hummersknott's own designated catchment, so the school's own site is not expected to fall inside it."
+
   # 2026-08-11 cross-cutting fix, applies to every point-sample-reconstructed
   # source below (Hartlepool, Essex, Wakefield, Coventry, Wirral, Luton):
   # the user visually inspected the live map and correctly flagged that
