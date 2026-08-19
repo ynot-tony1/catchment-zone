@@ -8612,6 +8612,21 @@ sources:
     enabled: true
     notes: "35 of 38 catchment features shipped (27 single-school + 8 joint/shared zones), covering 29 of the island's 32 DEC-status (government-funded) primary/junior schools with a real designated catchment area. Single-school margins against the government's own Schools point layer: Jurby Community Primary School 2582m, Andreas School 2869m, Sulby Primary School 1777m, Michael School 1163m, Ballaugh Primary School 2735m, Dhoon Primary School 3605m, Bunscoill Rhumsaa 335m, Braddan Primary School 963m, Ashley Hill Primary School 467m, Onchan Primary School 304m, Laxey Primary School 830m, Scoill Yn Jubilee 531m, Willaston Primary School 514m, Cronk-Y-Berry School 218m, Manor Park Primary School 227m, Anagh Coar School 188m, Ballacottier School 437m, Henry Bloom Noble Juniors 577m, St John's Primary School 2279m, Foxdale Primary School 2629m, Marown Primary School 2576m, Arbory Primary School 2150m, Scoill Phurt Le Moirrey 302m, Rushen Primary School 685m, Ballasalla Primary School 1776m, Victoria Road Primary School 229m, Peel Clothworkers Primary School 696m."
 
+  - local_authority_code: "706"
+    local_authority_name: "Guernsey (Channel Islands)"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "http://maps.digimap.gg/gsySchoolCatchmentPrimary.htm"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/guernsey/guernsey_primary_catchments.geojson"
+    name_field: "NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'No open reuse licence stated - the States of Guernsey''s Digimap viewer and its underlying ArcGIS Server (maps.digimap.gg, operated by Digimap Ltd, copyrightText "Digimap Ltd.") carry no published open-data licence. Guernsey is a Crown Dependency, outside UK Open Government Licence scope entirely - included per this project''s private, non-commercial licensing policy (licensing never gates inclusion), not represented as open-licensed.'
+    last_verified_at: "2026-08-19"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: 'All 9 primary catchment zones landed, covering all 9 of Guernsey''s OPEN government primary schools (LA code 706): Amherst, Castel, Forest, Hautes Capelles, La Houguette, La Mare De Carteret, St Martin''s, Vale, Vauvert. Recovered via colour-mask segmentation, not a queryable API: this MapServer (StatesOfGuernsey/gsySchoolCatchmentPrimaryOL) advertises capabilities: "Map" only (both /query and /identify return HTTP 400 against layer 1, confirmed directly), but its still-enabled /export capability renders the map as a PNG from an exact, caller-specified real-world bbox in the layer''s native CRS (ESRI:102070 / EPSG:3108 ETRS89 Guernsey Grid) - since the bbox is specified exactly, every pixel maps to an exact, known ground coordinate by construction, no ground-control-point pairing needed (unlike a scanned paper map). Exported at the service''s max 4096x3355px (fullExtent bbox, ~3.07m/pixel). The renderer''s own drawingInfo (uniqueValue on the SCHOOL field) gives 9 distinct real fill colours, one per school - genuine ground truth, not invented. Verified the georeferencing before segmenting: reprojected each school''s real-world coordinate (EPSG:4326->EPSG:3108) to a pixel, sampled a 71x71px window there, and confirmed a single, 94-100%-pure dominant colour at every one of the 9 points, each mutually distinct from the other 8 - i.e. every school''s real coordinate lands deep inside its own uniquely-coloured region, not near an edge or the wrong zone. The sampled colours were uniformly lighter than the renderer''s raw drawingInfo RGB (implied alpha 0.234-0.240 toward white across all 9, essentially identical per-school - a real, consistent server-side layer-transparency setting, not a georeferencing error), so segmentation thresholded on each school''s own sampled colour rather than the raw drawingInfo value. Per-school masks (exact-match threshold, small morphological close to bridge the ~0.4pt outline stroke and label-text halos, external contours only so label-text holes are absorbed rather than punching real holes) were contour-extracted, simplified (cv2.approxPolyDP, 1.5px epsilon), and reprojected pixel->EPSG:3108->EPSG:4326. One school (La Houguette) produced a genuine second, smaller landmass (Lihou, the tidal islet off the west coast, 0.8% of the main polygon''s area) correctly kept as a MultiPolygon rather than discarded as noise. Verified against real school coordinates (this project''s own DB has no lat/lon for Guernsey''s GIAS rows, so used OpenStreetMap: Nominatim geocoding cross-checked against an independent Overpass API amenity=school query over the same bbox, agreeing to within a few metres for 8 of 9 schools; La Houguette Primary has no amenity=school OSM node, so used the coordinate of the OSM bus-stop node literally named "La Houguette School" as the nearest available real-world proxy, flagged here as lower-confidence than the other 8). All 9 margins comfortably clear the 100m bar: Amherst 433m, Castel 596m, Forest 396m, Hautes Capelles 830m, La Houguette 835m (bus-stop proxy), La Mare De Carteret 507m, St Martin''s 1111m, Vale 735m, Vauvert 387m. Summed polygon area 63.19 sq km, matching Guernsey''s real land area (~63 sq km) almost exactly - a strong independent sanity check that the 9 zones tile the whole island with no major gap or overlap. Declined the sibling secondary/high-school catchment layer (gsySchoolCatchmentHighOL, 3 zones: Les Beaucamps, La Mare de Carteret, St Sampsons) despite it being technically recoverable by the identical technique: gov.gg''s own current School-Admissions/Catchment-Areas page states outright that secondary admissions have used a ''partner school'' system instead of catchment-area allocation since September 2019, and links only the primary Digimap tool, not the secondary one. Independently, this project''s own schools DB already shows ''La Mare De Carteret High School'' as CLOSED (the 2021-2025 Guernsey secondary reorganisation merged it into the newly opened Les Varendes High School at a different site) - the exact institution the secondary layer''s own drawingInfo names is no longer open. Shipping that layer as a current catchment would misrepresent both current government policy and current school status, so it was declined rather than guessed at or silently ''renamed''.'
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -8619,41 +8634,19 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
-  - local_authority_name: "Guernsey (Channel Islands)"
-    reason_not_enabled: >
-      Real catchment-polygon GIS data confirmed to exist, but genuinely
-      unreachable via any working API this session - a legitimate
-      technical dead end, not a login wall or "no data published". Found
-      via gov.gg's own admissions page, which links a Digimap viewer
-      (maps.digimap.gg/gsySchoolCatchmentPrimary.htm, States of Guernsey).
-      That page's own JS (DigiCore.js config block) names the real
-      backend: maps.digimap.gg/arcgis/rest/services/StatesOfGuernsey/
-      gsySchoolCatchmentPrimaryOL/MapServer, layer 1
-      ("NewPrimaryCatch2014", a real per-school SCHOOL-field polygon
-      layer, uniqueValue renderer with a distinct fill colour per
-      school - verified live via the layer's own drawingInfo). A sibling
-      service (gsySchoolCatchmentHighOL) covers secondary catchments and
-      a third (gsySchoolsOL) is the school-location point layer, same
-      server. All three, checked directly against their own MapServer
-      root JSON, advertise capabilities: "Map" only - no "Query" and no
-      "Identify" (both /query and /identify return HTTP 400 "Requested
-      operation is not supported by this service" / "The requested
-      capability is not supported", tested directly against layer 1,
-      with and without outSR reprojection). This is an old ArcGIS Server
-      instance (currentVersion 10.22) with feature access deliberately
-      disabled server-side, unlike Jersey and Isle of Man's equivalent
-      services (landed the same session) which both expose full Query
-      support. No amount of client-side retrying gets around a
-      server-side capability flag. A future session could still recover
-      this: the layer's own drawingInfo already gives a real, distinct
-      fill colour per school (a genuine ground truth, not invented), so
-      exporting a rendered map image via the still-enabled "Map"/export
-      capability and running this project's proven colour-mask
-      segmentation technique (per-school colour threshold, largest
-      connected component, contour extraction) against those exact
-      known colours is a real, documented path forward, just not
-      completed this session given the size of that undertaking relative
-      to the rest of this sweep.
+  # Guernsey (Channel Islands) primary catchments: landed above (LA code
+  # "706") via the colour-mask-segmentation route this entry used to
+  # propose - see that entry's notes for the full method and verification.
+  # Guernsey's secondary/high-school catchment layer (gsySchoolCatchmentHighOL)
+  # was investigated the same session and deliberately declined, not
+  # missed: gov.gg's current School-Admissions page states secondary
+  # admissions have used a "partner school" system instead of
+  # catchment-area allocation since September 2019, and this project's own
+  # schools DB shows the layer's own "La Mare de Carteret High School"
+  # value as CLOSED (superseded by Les Varendes High School in the
+  # 2021-2025 Guernsey secondary reorganisation). The layer is real GIS
+  # data but describes a superseded admissions system and a closed school,
+  # so shipping it would misrepresent current reality.
 
   - local_authority_name: "Bedford"
     reason_not_enabled: >

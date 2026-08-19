@@ -124,6 +124,7 @@ const PILOT_LOCAL_AUTHORITIES = [
   { code: "803", name: "South Gloucestershire", sourceTypeCount: 2 },
   { code: "707", name: "Jersey (Channel Islands)", sourceTypeCount: 2 },
   { code: "705", name: "Isle of Man", sourceTypeCount: 1 },
+  { code: "706", name: "Guernsey (Channel Islands)", sourceTypeCount: 1 },
 ];
 
 describe("catchment sources loaded from config/catchment-sources.yml", () => {
