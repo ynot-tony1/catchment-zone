@@ -8627,6 +8627,140 @@ sources:
     enabled: true
     notes: 'All 9 primary catchment zones landed, covering all 9 of Guernsey''s OPEN government primary schools (LA code 706): Amherst, Castel, Forest, Hautes Capelles, La Houguette, La Mare De Carteret, St Martin''s, Vale, Vauvert. Recovered via colour-mask segmentation, not a queryable API: this MapServer (StatesOfGuernsey/gsySchoolCatchmentPrimaryOL) advertises capabilities: "Map" only (both /query and /identify return HTTP 400 against layer 1, confirmed directly), but its still-enabled /export capability renders the map as a PNG from an exact, caller-specified real-world bbox in the layer''s native CRS (ESRI:102070 / EPSG:3108 ETRS89 Guernsey Grid) - since the bbox is specified exactly, every pixel maps to an exact, known ground coordinate by construction, no ground-control-point pairing needed (unlike a scanned paper map). Exported at the service''s max 4096x3355px (fullExtent bbox, ~3.07m/pixel). The renderer''s own drawingInfo (uniqueValue on the SCHOOL field) gives 9 distinct real fill colours, one per school - genuine ground truth, not invented. Verified the georeferencing before segmenting: reprojected each school''s real-world coordinate (EPSG:4326->EPSG:3108) to a pixel, sampled a 71x71px window there, and confirmed a single, 94-100%-pure dominant colour at every one of the 9 points, each mutually distinct from the other 8 - i.e. every school''s real coordinate lands deep inside its own uniquely-coloured region, not near an edge or the wrong zone. The sampled colours were uniformly lighter than the renderer''s raw drawingInfo RGB (implied alpha 0.234-0.240 toward white across all 9, essentially identical per-school - a real, consistent server-side layer-transparency setting, not a georeferencing error), so segmentation thresholded on each school''s own sampled colour rather than the raw drawingInfo value. Per-school masks (exact-match threshold, small morphological close to bridge the ~0.4pt outline stroke and label-text halos, external contours only so label-text holes are absorbed rather than punching real holes) were contour-extracted, simplified (cv2.approxPolyDP, 1.5px epsilon), and reprojected pixel->EPSG:3108->EPSG:4326. One school (La Houguette) produced a genuine second, smaller landmass (Lihou, the tidal islet off the west coast, 0.8% of the main polygon''s area) correctly kept as a MultiPolygon rather than discarded as noise. Verified against real school coordinates (this project''s own DB has no lat/lon for Guernsey''s GIAS rows, so used OpenStreetMap: Nominatim geocoding cross-checked against an independent Overpass API amenity=school query over the same bbox, agreeing to within a few metres for 8 of 9 schools; La Houguette Primary has no amenity=school OSM node, so used the coordinate of the OSM bus-stop node literally named "La Houguette School" as the nearest available real-world proxy, flagged here as lower-confidence than the other 8). All 9 margins comfortably clear the 100m bar: Amherst 433m, Castel 596m, Forest 396m, Hautes Capelles 830m, La Houguette 835m (bus-stop proxy), La Mare De Carteret 507m, St Martin''s 1111m, Vale 735m, Vauvert 387m. Summed polygon area 63.19 sq km, matching Guernsey''s real land area (~63 sq km) almost exactly - a strong independent sanity check that the 9 zones tile the whole island with no major gap or overlap. Declined the sibling secondary/high-school catchment layer (gsySchoolCatchmentHighOL, 3 zones: Les Beaucamps, La Mare de Carteret, St Sampsons) despite it being technically recoverable by the identical technique: gov.gg''s own current School-Admissions/Catchment-Areas page states outright that secondary admissions have used a ''partner school'' system instead of catchment-area allocation since September 2019, and links only the primary Digimap tool, not the secondary one. Independently, this project''s own schools DB already shows ''La Mare De Carteret High School'' as CLOSED (the 2021-2025 Guernsey secondary reorganisation merged it into the newly opened Les Varendes High School at a different site) - the exact institution the secondary layer''s own drawingInfo names is no longer open. Shipping that layer as a current catchment would misrepresent both current government policy and current school status, so it was declined rather than guessed at or silently ''renamed''.'
 
+  - local_authority_code: "317"
+    local_authority_name: "Redbridge (England)"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://my.redbridge.gov.uk/map/secondary-school-catchment-area/beal-high-school-catchment-area"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/redbridge/redbridge_secondary_catchments.geojson"
+    name_field: "NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "No open reuse licence stated anywhere on my.redbridge.gov.uk or its mapcache.redbridge.gov.uk tile backend - included per this project's private, non-commercial licensing policy (licensing never gates inclusion), not represented as open-licensed."
+    last_verified_at: "2026-08-19"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      8 of the 10 named secondary-school catchment zones landed (Beal High
+      School, Caterham High School, Oaks Park High School, Seven Kings
+      School, Forest Academy, Valentines High School, Wanstead High School,
+      Woodbridge High School), recovered via the same "render an exact
+      real-world bbox as a raster export, then segment it" family of
+      technique proven this session for Guernsey - but via a different
+      underlying platform (not ArcGIS): this candidate's own GetMapLocations
+      API returns only a bounding box per catchment, not real vertices,
+      and the interactive map instead draws the true boundary via a
+      Pitney-Bowes/MapInfo-style "MappingService" REST tile backend
+      (mapcache.redbridge.gov.uk/rest/Spatial/MappingService/maps/
+      NamedMaps/{layer}/image.png;w=..;h=..;b=<bbox>,epsg%3A3857) -
+      found by reading the deminified /scripts/pages/map.min.js client,
+      whose google.maps.MapInfoLayer wrapper builds exactly this URL
+      per tile. Unlike a tiled slippy map, this endpoint accepts an
+      arbitrary caller-specified bbox and canvas size in one request
+      (confirmed working up to 4000x4000px), so - exactly as with an
+      ArcGIS MapServer's /export - every output pixel maps to an exact,
+      known EPSG:3857 ground coordinate by construction, not by
+      landmark-pairing. Cross-checked this with two same-bbox exports at
+      different canvas aspect ratios (a square 1600x1600 vs. an
+      aspect-matched 1600x1931): both showed the identical ~90.4%/90.5%
+      vertical fill fraction of real map content, confirming the service
+      truly stretches the given bbox linearly to fill the exact requested
+      canvas rather than letterboxing/cropping to a preserved aspect
+      ratio - the geometry recovered is not distorted by this quirk.
+      The "Secondary_School_Catchment_Are" layer renders every zone in
+      one flat colour (solid red boundary lines plus a sparse periodic
+      red stipple fill, not a distinct colour per school), so unlike
+      Guernsey this session used region segmentation rather than colour
+      classification: red pixels with at least one red 8-neighbour are
+      boundary-line pixels (they form continuous multi-pixel-wide
+      chains), red pixels with none are isolated fill-stipple dots (a
+      fixed screen-space dot lattice, confirmed at ~8x4px spacing at
+      both tested resolutions) - trivially separable since fill dots
+      never touch each other or a line. The line mask was dilated
+      (10px at 4000x4000, closing this map's real dashed-line gaps)
+      purely to determine which side of which line each region falls
+      on; the actual exported polygon boundaries were then rebuilt from
+      the *undilated* line mask intersected with each dilated region's
+      footprint, so the final geometry sits at the true drawn line, not
+      shrunk inward by the closing operation. This produced 10 real,
+      distinct, named zones (matched 1:1 against each polygon's own
+      marker point from the GetMapLocations JSON - Beal, Caterham,
+      Loxford School Trust, Mayfield School, Oaks Park, Seven Kings,
+      The Forest Academy, Valentines, Wanstead, Woodbridge, each
+      landing in a different labelled region with no ambiguity) plus
+      one genuinely unexplained 11th polygon with no marker and no real
+      school's DB coordinate inside it anywhere in the borough - left
+      unassigned rather than guessed at. Verified each of the 10 named
+      zones against this project's own schools DB coordinate (restricted
+      to Redbridge's real OPEN secondary schools, phase-matched): 8
+      landed with comfortable margins clear of the 100m bar (Forest
+      Academy 741m, Wanstead High School 596m, Woodbridge High School
+      530m, Beal High School 315m, Caterham High School 274m, Seven
+      Kings School 230m, Valentines High School 203m, Oaks Park High
+      School 185m); Loxford School's real coordinate falls just outside
+      its own named "Loxford School Trust" polygon (19m short, not a
+      resolution artifact - reproduced consistently at both 1600px and
+      4000px export resolutions) and Mayfield School's real coordinate
+      falls 235m outside its own named polygon (a genuine mismatch, not
+      a boundary graze - the council's own marker point for this zone
+      sits materially west of the school's real GIAS site) - both left
+      out rather than shipped on a marginal or failing fit, matching
+      this project's standard practice (e.g. Central Bedfordshire/
+      Cardiff) of landing only the individually-verified subset of a
+      multi-feature source. The remaining 5 of Redbridge's 15 OPEN
+      secondary schools (Chadwell Heath Academy, Ilford County High
+      School, King Solomon High School, The Palmer Catholic Academy,
+      The Ursuline Academy Ilford, Trinity Catholic High School,
+      Woodford County High School - all faith, selective or academy
+      schools) have no catchment zone in this layer at all, consistent
+      with them setting their own admissions. A separate single-polygon
+      "Common_Catchment_Area" layer ("11+ Common Catchment Area",
+      /Map/GetMapLocations?layerId=143) was also test-exported
+      successfully with the identical technique, but covers a large
+      shared area of the borough with only one feature and no per-school
+      attribution possible - not landed, since this project does not
+      attribute a shared, ambiguously-scoped zone to an individual
+      school's row (this may well be the unexplained 11th region's real
+      identity or a related concept, but that is not established well
+      enough to ship either). Only a secondary catchment layer was found
+      for Redbridge; no primary-school catchment layer exists anywhere
+      in the same council mapping platform (its Education category has
+      only point layers for primary/private/UTC schools).
+
+  - local_authority_code: "201"
+    local_authority_name: "City of London (England)"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/COMPASS_School_Admissions/MapServer"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/city-of-london/city_of_london_primary_catchments.geojson"
+    name_field: "NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'No open reuse licence stated - copyrightText is simply "City of London Corporation" with no further terms published on the service. Included per this project''s private, non-commercial licensing policy (licensing never gates inclusion), not represented as open-licensed.'
+    last_verified_at: "2026-08-19"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: >
+      1 real catchment zone landed: The Aldgate School's Admissions
+      Priority Area, the City of London's only LA-administered,
+      catchment-using school (its other 8 open institutions are
+      independent schools, colleges, a university and a music/drama
+      conservatoire, none with an LA catchment). A previous session
+      found this MapServer's single feature has no name or other
+      identifying attribute field, and judged it "too degraded to
+      usefully import". Re-investigated this session: the service's
+      own root JSON (serviceDescription field, queried directly at
+      .../COMPASS_School_Admissions/MapServer?f=json) states outright
+      "This map shows the Admissions Priority Area as outlined in the
+      admissions criteria for The Aldgate School" - an authoritative
+      identification from the source itself, not an inference. Also
+      confirmed /query genuinely works (capabilities: "Map,Query,Data"),
+      contradicting the earlier "FeatureServer... but" framing - the real
+      blocker was always the missing attribute, not access. Verified The
+      Aldgate School's real DB coordinate (URN 100000) against the
+      queried polygon: comfortably inside, 420m clear of this project's
+      100m margin bar.
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -8829,7 +8963,7 @@ candidates:
   - local_authority_name: "Milton Keynes"
     reason_not_enabled: "Confirmed to run Astun iShare (mapping.milton-keynes.gov.uk/mym, PostGIS-backed per public commentary), the same platform successfully used for several other councils this session, but the host connection times out from this sandbox on every attempt - the same unreachability signature as Ealing/Hampshire/Salford, not a data-absence finding. Worth retrying from a different network origin. Re-confirmed 2026-08-11: DNS resolves fine (63.35.62.103), but TCP connect on both port 443 and 80 times out from this sandbox - a network/firewall-level block on this specific host's IP, not DNS or bot-JS, and therefore not something a Playwright/browser session run from the same sandbox network can route around. A WhatDoTheyKnow FOI thread titled 'School Catchment Area Coordinates' exists for Milton Keynes Council too (whatdotheyknow.com/request/school_catchment_area_coordinate_2) but is blocked by the same Cloudflare wall documented under Rotherham/Brighton and Hove/Islington below."
   - local_authority_name: "Bedford Borough"
-    reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published.'
+    reason_not_enabled: 'The council''s own ArcGIS Server has a schools-related service (Bedford_Internal_Use/External_Schools) but it is administratively disabled server-side ("Service ... not started", both MapServer and FeatureServer variants). No layer named catchment exists anywhere else on the server; only PDF catchment maps are published. Re-checked this session (map.bedford.gov.uk): also tried MapServer/export directly (the technique that unlocked Guernsey/Redbridge elsewhere this session, for cases where /query is blocked but rendering still works) - it also fails, returning a generic ArcGIS Server HTML error page rather than an image, confirming the whole service is genuinely down server-side, not just its query operation. This is a harder, different failure mode from a query-permissions block: there is no still-enabled capability left to exploit here. Also checked the server''s separate "Public_Map_Services" folder in full for a parallel externally-facing schools layer - none exists.'
   - local_authority_name: "Oxfordshire (remaining ~184 of 307 schools)"
     reason_not_enabled: >
       123 of Oxfordshire's 307 schools are now digitised and enabled
@@ -9069,7 +9203,19 @@ candidates:
       authentication requirement, a hard stop per this project's standing
       rule against bypassing access control, not attempted further. The
       public mybrummap/Schools_and_Leisure/MapServer service only has
-      point layers (school locations), no catchment polygons.
+      point layers (school locations), no catchment polygons. Re-checked
+      this session (found the real host is maps.birmingham.gov.uk/server,
+      not /arcgis - that path now 500s outright): the 499 Token Required
+      wall is even harder than previously recorded - it applies at the
+      SchoolsDataSvc *folder listing* level itself
+      (server/rest/services/SchoolsDataSvc?f=json), before any specific
+      service or layer name is even reachable, so there is no way to
+      discover the real service name to test an /export-style raster
+      workaround against (unlike Guernsey/Redbridge elsewhere this
+      session, where /query was blocked but the service's own identity
+      and export capability were still visible). A genuine, total
+      authentication wall, confirmed at a deeper level than before - not
+      attempted further.
   - local_authority_name: "Rotherham"
     reason_not_enabled: >
       RESOLVED (both layers) - primary AND secondary catchments are both
@@ -9640,6 +9786,26 @@ candidates:
       deprioritising further individual iShare-platform Welsh councils
       (Bridgend, Newport, etc. if also iShare-based) unless a way to
       reverse-engineer the click-query attribute lookup is found.
+      Re-investigated this session with the raster-export idea that
+      worked for Guernsey/Redbridge elsewhere this session (WMS GetMap
+      as the export-equivalent capability, since a plain WFS is
+      disabled): GetOWS.ashx is confirmed live and responsive
+      (?SERVICE=WMS&REQUEST=GetCapabilities returns a real "Invalid
+      mapsource specified" error rather than a network failure), but a
+      dozen+ plausible MAPSOURCE guesses (rctcbc, RCTCBC, RCT_Live,
+      Corporate, Base, Public, iShareLIVE, Live, etc.) all failed with
+      that same error - unlike North Lincolnshire/Hull's iShare
+      deployments elsewhere in this file, this council's real MAPSOURCE
+      value isn't a guessable council-name variant and isn't exposed in
+      the static page HTML/JS (atMapSettingsJS.aspx, responsivemap.js,
+      FileIncluderJS.aspx were all checked). Recovering it would need a
+      live browser session capturing the real network request the map
+      makes on load (the technique that has worked for other iShare/
+      Cadcorp platforms elsewhere in this file) - not available in this
+      session's toolset (no Playwright/browser automation installed).
+      Left unresolved rather than guessed at; a real, specific next step
+      for a future session with browser tooling, not a re-declared dead
+      end.
   - local_authority_name: "Newport, Swansea, Neath Port Talbot (Wales)"
     reason_not_enabled: "All three have a live ArcGIS Online Hub open-data portal (data-newport.opendata.arcgis.com, data-swansea.opendata.arcgis.com, data-nptc.opendata.arcgis.com), checked via their DCAT feed and arcgis.com/data.gov.uk search - no school catchment dataset found on any of the three."
   - local_authority_name: "Wrexham, Flintshire, Conwy, Isle of Anglesey, Gwynedd, Ceredigion, Carmarthenshire, Denbighshire, Torfaen, Caerphilly, Merthyr Tydfil, Blaenau Gwent, Vale of Glamorgan (Wales)"
@@ -9743,9 +9909,27 @@ candidates:
       26-point affine derivation with its RMS/scale cross-check) lives
       in this file's git history on this line if it's ever needed again.
   - local_authority_name: "City of London (England)"
-    reason_not_enabled: "COMPASS_School_Admissions ArcGIS FeatureServer found and verified live (mapping.cityoflondon.gov.uk) - real polygon geometry, but its single feature carries no school-name or any other identifying property at all. Too degraded to usefully import (the City of London administers very few schools as a tiny LA, which may explain the minimal dataset)."
+    reason_not_enabled: 'RESOLVED - now digitised, see the "201" primary_catchment entry in sources: above. The original finding stands as real (COMPASS_School_Admissions ArcGIS MapServer, single feature, no school-name or any other identifying attribute field), but re-checked this session and turned out not to be a hard stop: the service''s own root JSON metadata (serviceDescription field) states outright "This map shows the Admissions Priority Area as outlined in the admissions criteria for The Aldgate School" - an authoritative, unambiguous identification from the source itself, not a guess. Also found that /query is not actually blocked (capabilities: "Map,Query,Data") - the earlier "FeatureServer... but" framing was about the missing attribute, not a real access block. Queried the single feature directly and verified The Aldgate School''s real DB coordinate (URN 100000, the only Primary-phase, LA-admissions school among City of London''s 9 open institutions - the rest are independent schools, colleges or a university with no LA catchment) falls inside the polygon with a 420m margin, comfortably clear of the 100m bar.'
   - local_authority_name: "Redbridge (England)"
     reason_not_enabled: >
+      PARTIALLY RESOLVED - 8 of 10 secondary catchment zones now digitised,
+      see the "317" secondary_catchment entry in sources: above for the full
+      method (raster export of the MappingService tile backend at an exact
+      caller-specified bbox, then line/fill segmentation - the "true
+      boundary is rendered server-side as a raster map tile, no
+      vector/WFS endpoint found" finding below stands as real and was
+      exactly the roadmap followed, not a dead end after all once this
+      project's Guernsey-derived export technique was applied to it).
+      Loxford School Trust and Mayfield School's zones were investigated
+      and declined for a real, specific reason (documented in the sources:
+      entry) rather than a technical failure: their real school
+      coordinates fall outside their own named polygon (19m and 235m
+      respectively). A separate single-feature "11+ Common Catchment
+      Area" layer was also found and export-tested successfully but
+      declined as an unattributable shared zone. No primary-school
+      catchment layer exists on this platform. Original finding preserved
+      below for history:
+
       Real, live, named data found (my.redbridge.gov.uk/Map/GetMapLocations?layerId=142,
       10 features, field "Title", e.g. "Beal High School Catchment
       Area") - but the JSON response only contains a bounding-box
