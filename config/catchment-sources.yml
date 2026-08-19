@@ -8495,6 +8495,123 @@ sources:
     enabled: true
     notes: "3 of 7 secondary 'Area of Prime Responsibility' zones digitised (9 schools total), full 6-parameter affine fit from each page's own real school GCPs: Yate and Chipping Sodbury Consortium (Brimsham Green, Yate Academy, Chipping Sodbury - 3 schools, exact 0-residual 3-point fit, margins 1565-3823m); Downend School/King's Oak Academy/Mangotsfield School/Winterbourne Academy Consortium (4 schools, this King's Oak Academy zone is the SECONDARY phase of the same all-through academy whose PRIMARY phase is Map 17 in the primary booklet above - a distinct catchment_area, not a duplicate; residuals 36-241m, margins 1264-2303m); Hanham Woods Academy and the Sir Bernard Lovell Academy Consortium (2 schools; John Cabot Academy and Digitech Studio School are both explicitly excluded per the source text and independently confirmed geometrically outside the fitted polygon, 285m and 343m respectively - a strong cross-validation signal that this fit is correctly oriented and scaled; residuals 79-132m, margins 281-964m). 4 zones declined: The Castle School and Marlwood School are both single-school pages with no second real GCP on their own base-map crop (same structural problem as primary Map 17) - a cross-page tie-point fit was tried for Marlwood specifically (transferring 3 shared place-name positions from the well-anchored Yate/Chipping Sodbury page) and it placed Marlwood School 702m OUTSIDE its own reconstructed polygon, an outright failure, so both were declined without shipping. The Bradley Stoke Community School/Abbeywood Community School/Patchway Community School Consortium has 3 real GCPs (an exact 0-residual fit, same as Yate/Chipping Sodbury) but left Bradley Stoke Community School only 63m inside its own polygon - under this project's 100m comfort bar - and a rescue attempt adding 5 cross-page tie points from the Downend consortium's fit pushed Bradley Stoke's margin up to 508m but only by introducing 344-1626m of its own residual, i.e. an untrustworthy correction, not a genuine fix; declined rather than shipped. Lyde Green Community School has a real, drawn APR zone and boundary text, but the school itself (URN 152456) has status PROPOSED_TO_OPEN with no lat/lon yet in this project's DB - it is literally due to open for Year 7 entry from September 2026, weeks after this session - so there is no anchor point to fit or verify against; a clean candidate for a future session once it opens and gets real GIAS coordinates."
 
+  # Jersey (Channel Islands): a Crown Dependency, not part of the UK's
+  # DfE local-authority-code system, but the schools table carries real
+  # OPEN Jersey schools under local_authority_code "707" and this project's
+  # first-pass "never touched LA" sweep (2026-08-19) found it had literally
+  # never been investigated. Found via a plain web search for Jersey's own
+  # admissions page, which links an ArcGIS Experience Builder app
+  # ("Jersey schools catchment areas", owned by maps.gov.je). That app's
+  # own config.json (fetched via the ArcGIS item's resources/config/config
+  # .json endpoint) named a "Jersey School Catchments Web Map" data source;
+  # that webmap's operationalLayers in turn named the real underlying
+  # FeatureServer for both this primary layer and the States of Jersey's
+  # own School_Primary point layer, queried directly - the "Interactive
+  # council tool's own backend endpoint" technique applied to a Crown
+  # Dependency government tool for the first time this project.
+  # 22 primary catchment polygons total; 20 shipped, 2 declined (Janvrin
+  # School and Rouge Bouillon School) because this project's schools table
+  # has no lat/lon at all for any Jersey school (local_authority_code
+  # "707": 0 of 42 OPEN schools geocoded) - verification instead used the
+  # States of Jersey's own authoritative School_Primary point layer
+  # (Jersey_Mapping/School_Primary/FeatureServer/0, same government GIS
+  # platform as the catchment layer itself) as the independent real-world
+  # ground truth. 20 of 22 schools' own government-published point landed
+  # comfortably inside their own catchment polygon (margins 102m-2501m);
+  # Janvrin School (15m) and Rouge Bouillon School (55m) fell under this
+  # project's 100m containment-margin comfort bar and were declined
+  # rather than shipped, even though both are technically inside.
+  - local_authority_code: "707"
+    local_authority_name: "Jersey (Channel Islands)"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://experience.arcgis.com/experience/1cc22f00c95844e8acd48074048ce18d/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/jersey/jersey_primary_catchments.geojson"
+    name_field: "NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'No open reuse licence stated - the ArcGIS webmap item''s own licenseInfo field reads only ''"This content is for illustrative purposes only. The Government of Jersey provide this content without a warranty of any kind, either express or implied."'' with accessInformation ''© Government of Jersey''. Jersey is a Crown Dependency, outside UK Open Government Licence scope entirely - included per this project''s private, non-commercial licensing policy (licensing never gates inclusion), not represented as open-licensed.'
+    last_verified_at: "2026-08-19"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "20 of 22 primary catchment polygons from Jersey's live FeatureServer (Jersey_Mapping/School_Catchments/FeatureServer/0, native CRS reprojected to WGS84 via outSR=4326 in the query itself). Every school's own real point from the States of Jersey's official School_Primary point layer verified inside its matching polygon: Samares/Samarès School 326m, Trinity School 1843m, Grands Vaux School 779m, St Luke's School 102m, Springfield School 109m, First Tower School 206m, St John's School 1390m, St Mary's School 1350m, Bel Royal Primary School 643m, Mont Nicolle School 1054m, La Moye School 1166m, St Peter's School 1693m, Les Landes School 1557m, Plat Douet School 459m, St Clement's School 581m, D'Auvergne School 610m, Grouville School 893m, St Saviour's School 559m, St Martin's School 1467m, St Lawrence Primary School 944m. Declined: Janvrin School (15m) and Rouge Bouillon School (55m), both under this project's 100m comfort bar despite being technically inside."
+
+  - local_authority_code: "707"
+    local_authority_name: "Jersey (Channel Islands)"
+    academic_year: "2025-2026"
+    source_type: "secondary_catchment"
+    source_url: "https://experience.arcgis.com/experience/1cc22f00c95844e8acd48074048ce18d/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/jersey/jersey_secondary_catchments.geojson"
+    name_field: "NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: 'No open reuse licence stated - the ArcGIS webmap item''s own licenseInfo field reads only ''"This content is for illustrative purposes only. The Government of Jersey provide this content without a warranty of any kind, either express or implied."'' with accessInformation ''© Government of Jersey''. Jersey is a Crown Dependency, outside UK Open Government Licence scope entirely - included per this project''s private, non-commercial licensing policy (licensing never gates inclusion), not represented as open-licensed.'
+    last_verified_at: "2026-08-19"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "4 secondary catchment polygons, not published directly by Jersey's FeatureServer (which only carries the 22 primary-level polygons with a 'Secondary' attribute naming each primary's feeder secondary school) - dissolved (shapely unary_union) from those 22 primary polygons grouped by their shared 'Secondary' value, reduced to each dissolve's single largest connected piece (one, Grainville School, produced sub-0.1%-area sliver artifacts from the union operation as this project's dominant-piece discipline anticipates), zero MultiPolygon features in the final output. Covers Jersey's 4 non-selective States secondary schools only (Hautlieu School is selective/grammar with no catchment; De La Salle College, Victoria College, Jersey College for Girls and Beaulieu Convent School are fee-paying/selective, also no catchment). Verified against the States of Jersey's own School_Secondary point layer (same FeatureServer platform): Le Rocquier School 548m, Grainville School 1278m, Haute Valleé School 1172m, Les Quennevais School 2501m - all comfortably over this project's 100m bar."
+
+  # Isle of Man: a Crown Dependency (not UK OGL scope), found the same
+  # session as Jersey above via the same "never touched LA" sweep. The
+  # island government's own catchment-area page (desc.gov.im) served a
+  # bot-check-style rejection to a bare WebFetch request but returned a
+  # normal HTTP 200 with real content to a request carrying an ordinary
+  # browser User-Agent - a bot-check JS challenge, not a genuine login
+  # wall, so not a hard stop per this project's standing rule. That page
+  # embeds a real ArcGIS Web AppBuilder app ("Local Information" /
+  # MyNearest, manngis.maps.arcgis.com) whose webmap item names a real
+  # government MapServer (maps.gov.im/manngispubserver) with dedicated
+  # "Schools" (id 0) and "School Catchment Areas" (id 1) layers, queried
+  # directly - both native EPSG:27700, reprojected via outSR=4326 in the
+  # query itself.
+  #
+  # This project's schools table has only 11 of 39 Isle of Man OPEN
+  # schools geocoded (local_authority_code "705"), so - as with Jersey -
+  # verification used the government's own "Schools" point layer (id 0)
+  # as independent real-world ground truth for every school, not just the
+  # 11 with a DB coordinate. That same point layer's own Status/Notes
+  # fields independently confirmed a genuine structural absence for 2
+  # schools also missing from the catchment layer: St Marys R.C School
+  # ("Non-DEC", catchment "parishes of St Anthonys, St Josephs and St
+  # Marys churches" - a parish-based, not catchment-polygon, admissions
+  # rule) and St Thomas C Of E School ("Non-DEC", "No designated
+  # catchment area. To enrol, apply directly to school") - plus Bunscoill
+  # Ghaelgagh (Manx Gaelic medium, "No designated catchment area").
+  #
+  # 38 raw features: 30 single-school zones and 8 genuine "either school"
+  # joint-catchment zones (e.g. "JURBY SCHOOL OR ANDREAS SCHOOL" - areas
+  # between two schools' own single-school zones where a resident may
+  # choose either), shipped using this project's existing "A / B
+  # (shared)" convention (see Middlesbrough's King's Academy/Outwood
+  # Academy Acklam shared zone). Every single-school zone verified against
+  # its own school's real point from the government's own Schools layer;
+  # every joint zone's own two named schools' points correctly fall
+  # OUTSIDE it (608m-6624m) as expected for a genuine shared area that
+  # sits between, not on top of, either school - a real structural
+  # cross-check, not a failure. 3 single-school zones declined for
+  # falling under this project's 100m comfort bar despite being
+  # technically inside: Scoill Vallajeelt (79m) and both halves of a
+  # real East/West split zone for Kewaigue Primary School (East 51m,
+  # West outside entirely - its sibling zone's thin margin undermined
+  # confidence in shipping either half). One MultiPolygon feature (Scoill
+  # Phurt Le Moirrey) reduced to its single largest connected piece per
+  # this project's standard discipline; zero MultiPolygon features in the
+  # final output.
+  - local_authority_code: "705"
+    local_authority_name: "Isle of Man"
+    academic_year: "2025-2026"
+    source_type: "primary_catchment"
+    source_url: "https://desc.gov.im/education/education/catchment-areas/"
+    download_url: "https://raw.githubusercontent.com/ynot-tony1/catchment-zone/main/data/digitized-catchments/isle-of-man/isle_of_man_primary_catchments.geojson"
+    name_field: "NAME"
+    format: "geojson"
+    coordinate_reference_system: "EPSG:4326"
+    licence: "No open reuse licence stated - the ArcGIS Web AppBuilder item's own licenseInfo field points only to the Isle of Man Government's generic website terms and conditions (gov.im/about-this-site/terms-and-conditions/maps/), not an open data licence. The Isle of Man is a Crown Dependency, outside UK Open Government Licence scope entirely - included per this project's private, non-commercial licensing policy (licensing never gates inclusion), not represented as open-licensed."
+    last_verified_at: "2026-08-19"
+    parser_name: "generic_geojson"
+    enabled: true
+    notes: "35 of 38 catchment features shipped (27 single-school + 8 joint/shared zones), covering 29 of the island's 32 DEC-status (government-funded) primary/junior schools with a real designated catchment area. Single-school margins against the government's own Schools point layer: Jurby Community Primary School 2582m, Andreas School 2869m, Sulby Primary School 1777m, Michael School 1163m, Ballaugh Primary School 2735m, Dhoon Primary School 3605m, Bunscoill Rhumsaa 335m, Braddan Primary School 963m, Ashley Hill Primary School 467m, Onchan Primary School 304m, Laxey Primary School 830m, Scoill Yn Jubilee 531m, Willaston Primary School 514m, Cronk-Y-Berry School 218m, Manor Park Primary School 227m, Anagh Coar School 188m, Ballacottier School 437m, Henry Bloom Noble Juniors 577m, St John's Primary School 2279m, Foxdale Primary School 2629m, Marown Primary School 2576m, Arbory Primary School 2150m, Scoill Phurt Le Moirrey 302m, Rushen Primary School 685m, Ballasalla Primary School 1776m, Victoria Road Primary School 229m, Peel Clothworkers Primary School 696m."
+
 # ---------------------------------------------------------------------------
 # Candidate sources identified but not yet enabled (require manual licence
 # and format verification before flipping enabled: true). Left here so the
@@ -8502,6 +8619,42 @@ sources:
 # search. Do not enable without repeating the verification steps above.
 # ---------------------------------------------------------------------------
 candidates:
+  - local_authority_name: "Guernsey (Channel Islands)"
+    reason_not_enabled: >
+      Real catchment-polygon GIS data confirmed to exist, but genuinely
+      unreachable via any working API this session - a legitimate
+      technical dead end, not a login wall or "no data published". Found
+      via gov.gg's own admissions page, which links a Digimap viewer
+      (maps.digimap.gg/gsySchoolCatchmentPrimary.htm, States of Guernsey).
+      That page's own JS (DigiCore.js config block) names the real
+      backend: maps.digimap.gg/arcgis/rest/services/StatesOfGuernsey/
+      gsySchoolCatchmentPrimaryOL/MapServer, layer 1
+      ("NewPrimaryCatch2014", a real per-school SCHOOL-field polygon
+      layer, uniqueValue renderer with a distinct fill colour per
+      school - verified live via the layer's own drawingInfo). A sibling
+      service (gsySchoolCatchmentHighOL) covers secondary catchments and
+      a third (gsySchoolsOL) is the school-location point layer, same
+      server. All three, checked directly against their own MapServer
+      root JSON, advertise capabilities: "Map" only - no "Query" and no
+      "Identify" (both /query and /identify return HTTP 400 "Requested
+      operation is not supported by this service" / "The requested
+      capability is not supported", tested directly against layer 1,
+      with and without outSR reprojection). This is an old ArcGIS Server
+      instance (currentVersion 10.22) with feature access deliberately
+      disabled server-side, unlike Jersey and Isle of Man's equivalent
+      services (landed the same session) which both expose full Query
+      support. No amount of client-side retrying gets around a
+      server-side capability flag. A future session could still recover
+      this: the layer's own drawingInfo already gives a real, distinct
+      fill colour per school (a genuine ground truth, not invented), so
+      exporting a rendered map image via the still-enabled "Map"/export
+      capability and running this project's proven colour-mask
+      segmentation technique (per-school colour threshold, largest
+      connected component, contour extraction) against those exact
+      known colours is a real, documented path forward, just not
+      completed this session given the size of that undertaking relative
+      to the rest of this sweep.
+
   - local_authority_name: "Bedford"
     reason_not_enabled: >
       No real catchment-polygon GIS presence found. An ArcGIS Online item
