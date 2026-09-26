@@ -20,6 +20,6 @@
     "db:studio": "pnpm --filter @catchment-zone/database studio"
   },
   "devDependencies": {
-    "prettier": "^3.4.2"
+    "prettier": "^3.9.9"
   }
 }
